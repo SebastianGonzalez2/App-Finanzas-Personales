@@ -15,12 +15,12 @@ Aplicación web personal para **registrar, organizar y analizar gastos**, pensad
 - La aplicación registra **solo gastos**, no ingresos ni saldos.
 
 ### 2. Categorías y subcategorías
-- Contar con **categorías y subcategorías predefinidas**, tomando como referencia las que se habían definido en el proyecto anterior.
-- Permitir **crear nuevas categorías y subcategorías**.
-- Administrarlas sin perder la información histórica de los gastos asociados.
+- Conservar las **13 categorías originales de gastos** y sus subcategorías predefinidas, sin categorías de ingresos.
+- Permitir **crear nuevas categorías y subcategorías**, también desde el formulario de gasto.
+- Poder **renombrar, archivar y restaurar** categorías y subcategorías sin perder los gastos históricos asociados.
 
 ### 3. Estadísticas y gráficos
-- Mostrar totales **por moneda y sin conversión automática**; nunca sumar UYU, USD y EUR.
+- Utilizar un **selector compartido UYU / USD / EUR** en Resumen, Estadísticas y Presupuestos, recordado por usuario: los gráficos y totales muestran **solo la moneda seleccionada**, sin conversiones.
 
 Mantener el alcance de estadísticas que ya se había definido para la aplicación anterior, enfocado exclusivamente en gastos:
 
@@ -31,9 +31,10 @@ Mantener el alcance de estadísticas que ya se había definido para la aplicaci�
 - **Gráficos interactivos** que muestren importes y permitan explorar los gastos relacionados.
 
 ### 4. Presupuestos
-- Crear **presupuestos mensuales por categoría y moneda**, calculados solo con gastos de esa moneda.
+- Crear **presupuestos mensuales por categoría y moneda**, calculados automáticamente con los gastos registrados en esa categoría y sus subcategorías.
 - Mostrar **límite, monto gastado, importe restante y porcentaje utilizado**.
-- Comparar los gastos registrados con el presupuesto correspondiente.
+- Cada mes comienza un nuevo conteo, con el mismo límite hasta que el usuario lo cambie o elimine.
+- **Sin historial de límites ni presupuestos por subcategoría** en la V1.
 
 ### 5. Historial
 - Consultar la lista de gastos.
@@ -66,9 +67,7 @@ La base de datos se alojará en un servicio PostgreSQL en la nube, todavía por 
 
 ## Decisiones pendientes antes de desarrollar
 
-
-- Revisar el **catálogo inicial** de categorías y subcategorías.
-- Precisar los comportamientos de presupuestos, gráficos y filtros que requieran reglas adicionales.
+- Definir el período predeterminado y navegación de los **gráficos anuales**.
 - Definir el proveedor de PostgreSQL, la implementación de sesiones y el diseño visual.
 
 **Criterio de desarrollo:** empezar por lo esencial, mantener el código comprensible y organizado, probar cada funcionalidad antes de incorporar otra y no añadir complejidad pensando en funciones futuras.
