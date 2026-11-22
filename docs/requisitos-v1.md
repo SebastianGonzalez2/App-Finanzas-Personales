@@ -12,7 +12,7 @@ Crear una aplicación **simple, rápida y comprensible**, inicialmente para dos 
 Reglas de alcance:
 
 - Solo existen **gastos**, introducidos manualmente. No hay ingresos ni saldos financieros.
-- La V1 admite **UYU, USD y EUR, sin conversiones automáticas**. Cada gasto conserva su moneda original; totales, gráficos y presupuestos se calculan y muestran **por separado para cada moneda**. Nunca sumar importes de monedas diferentes ni mostrar un total consolidado multimoneda.
+- La V1 admite **UYU, USD y EUR, sin conversiones automáticas**. Cada gasto conserva su moneda original. **Resumen, Estadísticas y Presupuestos comparten un selector UYU / USD / EUR**, que muestra únicamente los datos de la moneda elegida en sus indicadores y gráficos; las preferencias de moneda se recuerdan por usuario. Nunca sumar importes de monedas diferentes ni mostrar un total consolidado multimoneda. El Historial puede mostrar gastos de distintas monedas en una lista, con el código de cada moneda visible.
 - Cada persona entra con su propia cuenta y ve **únicamente sus datos**.
 - Los gráficos y presupuestos se calculan a partir de los gastos efectivamente registrados; no se inventan movimientos ni estimaciones.
 - Se conservan **categorías y subcategorías**, los gráficos por categoría, la evolución mensual, la evolución anual por categoría y la comparación entre períodos.
@@ -64,17 +64,35 @@ Reglas de alcance:
 
 ### C. Categorías y subcategorías
 
-**RF-010 — Catálogo inicial.** Cada usuario dispondrá de categorías y subcategorías predeterminadas para clasificar gastos. El catálogo exacto se definirá antes de implementarlo, utilizando como referencia el proyecto anterior.
+**RF-010 — Catálogo inicial.** Cada usuario tendrá al iniciar las **13 categorías de gastos del proyecto anterior**, con las subcategorías iniciales aprobadas, sin categorías de ingresos. El catálogo será independiente para cada usuario.
 
-- **Aceptación:** una cuenta nueva presenta las categorías aprobadas, sin categorías de ingresos.
+- **Aceptación:** una cuenta nueva presenta las 13 categorías de la tabla siguiente y sus subcategorías iniciales, sin categorías de ingresos ni categorías de otro usuario.
+
+| Categoría | Subcategorías iniciales |
+| --- | --- |
+| Alimentación | Supermercado, Restaurantes, Delivery |
+| Vivienda | Alquiler, Mantenimiento |
+| Servicios | — |
+| Transporte | Transporte público, Taxi/Uber |
+| Auto | — |
+| Salud | — |
+| Educación | — |
+| Ropa | Ropa, Calzado |
+| Entretenimiento | — |
+| Viajes | — |
+| Seguros | — |
+| Impuestos | — |
+| Otros gastos | — |
+
+Las categorías sin subcategorías predefinidas admiten subcategorías nuevas creadas por el usuario.
 
 **RF-011 — Crear categorías.** El usuario podrá crear categorías propias y subcategorías bajo una categoría existente, tanto desde la sección de categorías como, cuando corresponda, desde el formulario de gasto.
 
 - **Aceptación:** crear una categoría mientras se registra un gasto conserva los datos ya ingresados, permite seleccionarla y **no guarda el gasto** hasta confirmar el formulario.
 
-**RF-012 — Administrar categorías.** El usuario podrá consultar y modificar los nombres de sus categorías y subcategorías, y dejar de utilizarlas para gastos futuros sin perder los registros históricos.
+**RF-012 — Administrar categorías.** El usuario podrá consultar, **renombrar y archivar** sus categorías y subcategorías, y restaurar las archivadas. Archivar impide utilizarlas normalmente en gastos nuevos, pero no elimina ni altera los gastos históricos asociados.
 
-- **Aceptación:** una categoría desactivada deja de aparecer como opción normal para nuevos gastos, pero los gastos históricos conservan su clasificación y son visibles.
+- **Aceptación:** una categoría archivada deja de aparecer como opción normal para nuevos gastos, pero sus gastos históricos siguen visibles y contabilizados; renombrarla no cambia importes ni borra registros. Archivar una categoría principal también impide seleccionar sus subcategorías para gastos nuevos.
 
 **RF-013 — Coherencia de la jerarquía.** La clasificación tendrá **dos niveles**: categoría y subcategoría opcional. No se crearán subcategorías huérfanas ni se permitirán duplicados accidentales por diferencias triviales de espacios o mayúsculas.
 
@@ -96,23 +114,25 @@ Reglas de alcance:
 
 ### E. Estadísticas y gráficos
 
-**RF-017 — Indicadores del período.** La sección Estadísticas mostrará el **total gastado separado por moneda (UYU, USD, EUR)** y la cantidad de gastos en el período elegido, además de datos suficientes para interpretar el resultado. No existirá un total único que sume monedas distintas.
+**RF-017 — Indicadores del período.** La sección Estadísticas mostrará el **total gastado y la cantidad de gastos de la moneda seleccionada (UYU, USD o EUR)** en el período elegido. No existirá un total único que sume monedas distintas.
 
-- **Aceptación:** tres gastos de UYU 100, UYU 200 y USD 300 muestran UYU 300, USD 300 y tres registros; **nunca** aparece un total ficticio de 600 en una única moneda.
+- **Aceptación:** con gastos de UYU 100, UYU 200 y USD 300, el selector UYU muestra total UYU 300 y dos gastos; al cambiar a USD muestra USD 300 y un gasto. **Nunca** aparece un total ficticio de 600 en una única moneda.
 
-**RF-018 — Gastos por categoría y subcategoría.** Se mostrarán gráficos y valores de distribución por categoría, y será posible consultar el detalle por subcategoría. Se incluirán importes y porcentajes calculados **dentro de cada moneda**, sin mezclar UYU, USD y EUR.
+**RF-018 — Gastos por categoría y subcategoría.** Se mostrarán gráficos y valores de distribución por categoría, y será posible consultar el detalle por subcategoría. Importes y porcentajes se calcularán **solamente con los gastos de la moneda seleccionada**. Un gráfico de categorías nunca mezcla importes UYU, USD y EUR.
 
 - **Aceptación:** dos subcategorías de Alimentación con gastos de 200 y 300 muestran Alimentación = 500, no 1.000; sus porcentajes corresponden al total real.
 
-**RF-019 — Evolución mensual.** Se mostrará un gráfico de gastos por mes, **diferenciando las monedas**, con posibilidad de observar la evolución y comparar el mes seleccionado con otro período equivalente **de la misma moneda** cuando existan datos.
+**RF-019 — Evolución mensual.** Se mostrará un gráfico de gastos por mes **en la moneda seleccionada**, con posibilidad de observar la evolución y comparar el mes seleccionado con otro período equivalente **de esa misma moneda** cuando existan datos.
 
 - **Aceptación:** gastos registrados en octubre y noviembre aparecen en los meses correctos; si el período de referencia tiene total cero, no se muestra un porcentaje de variación matemáticamente inválido.
 
-**RF-020 — Evolución anual y por categoría.** Se conservará el análisis **anual** que se había definido en la aplicación anterior: totales por año, evolución histórica entre años y **evolución anual por categoría**, con gráficos apropiados, incluidos gráficos de líneas. Las series, importes y comparaciones **deben identificar su moneda** y no sumar monedas distintas.
+**RF-020 — Evolución anual y por categoría.** Se conservará el análisis **anual** que se había definido en la aplicación anterior: totales por año, evolución histórica entre años y **evolución anual por categoría**, con gráficos apropiados, incluidos gráficos de líneas. Las series, importes y comparaciones **mostrarán únicamente la moneda seleccionada** y nunca sumarán monedas distintas.
 
 - **Aceptación:** al consultar distintos años o una categoría, la serie incluye únicamente los registros que correspondan a esos años y a esa categoría; los años sin datos no se presentan como gastos inventados.
 
-**RF-021 — Períodos, comparaciones y filtros estadísticos.** Estadísticas permitirá **seleccionar o separar UYU/USD/EUR**, y elegir períodos habituales (mes actual, mes anterior, últimos 3, 6 y 12 meses, año actual), un rango personalizado y filtros por categoría y subcategoría. También permitirá comparar los valores con un período de referencia claramente identificado.
+**RF-021 — Selector de moneda, períodos y filtros estadísticos.** Resumen, Estadísticas y Presupuestos compartirán un **selector UYU / USD / EUR**, cuya elección se recordará por usuario. Al cambiar de moneda se actualizarán **juntos todos los indicadores, gráficos y presupuestos visibles**, sin incorporar importes de las otras monedas. Estadísticas también permitirá elegir períodos habituales (mes actual, mes anterior, últimos 3, 6 y 12 meses, año actual), un rango personalizado y filtros por categoría y subcategoría, así como comparar períodos de la misma moneda.
+
+- **Aceptación:** al cambiar de UYU a EUR, todas las visualizaciones muestran exclusivamente gastos en EUR; al navegar entre Resumen, Estadísticas y Presupuestos se conserva EUR, y al volver a iniciar sesión se recuerda la elección del usuario.
 
 - **Aceptación:** cambiar el período o la categoría actualiza conjuntamente indicadores y gráficos, y se distingue visualmente qué períodos se comparan.
 
@@ -126,21 +146,21 @@ Reglas de alcance:
 
 ### F. Presupuestos mensuales
 
-**RF-024 — Crear presupuesto por categoría.** El usuario podrá definir un **límite de gasto mensual y su moneda (UYU, USD o EUR)** para una categoría propia. Los presupuestos son opcionales y no representan dinero reservado ni saldos bancarios.
+**RF-024 — Crear presupuesto por categoría.** El usuario podrá crear un presupuesto eligiendo **una categoría, una moneda (UYU, USD o EUR) y un límite mensual**. El presupuesto es un contador de gastos, no una reserva de dinero ni una operación bancaria. Se mantiene el mismo límite para los meses siguientes hasta que el usuario lo cambie o retire. Para evitar duplicados habrá como máximo un presupuesto activo por categoría y moneda; no se crean presupuestos separados para subcategorías en la V1.
 
-- **Aceptación:** un límite mensual de Alimentación de 2.000 se muestra como presupuesto de esa categoría en el mes correspondiente.
+- **Aceptación:** crear Alimentación · UYU 15.000 muestra un presupuesto para esa categoría y moneda, que comienza en cero si todavía no hay gastos registrados en el mes. Si ya existen gastos del mes en esa categoría y moneda, aparecen automáticamente en el contador.
 
-**RF-025 — Seguimiento del presupuesto.** Para cada presupuesto el sistema mostrará el límite, los gastos imputados al mes **en la misma moneda del presupuesto**, el saldo restante o exceso y el porcentaje utilizado. Los gastos de subcategorías se incluyen en el presupuesto de su categoría superior **una sola vez**. Los gastos de otras monedas no se convierten ni se suman al consumo de ese presupuesto.
+**RF-025 — Seguimiento del presupuesto.** El consumo del presupuesto es **la suma de los gastos registrados en su categoría (incluidas sus subcategorías), moneda y mes**. El contador aumenta automáticamente al registrar gastos, y se recalcula al editar o eliminar alguno. Se mostrarán límite, consumo, importe restante o exceso y porcentaje utilizado. Los gastos de otras monedas no se convierten ni se suman. **Al cambiar de mes, el consumo vuelve a empezar según los gastos registrados en el nuevo mes; el límite se mantiene**, sin acumular importes no gastados del mes anterior.
 
-- **Aceptación:** con límite 2.000 y gastos de 1.500 en Alimentación (incluidas subcategorías), muestra 75 % utilizado y 500 restantes; con 2.200 muestra exceso de 200.
+- **Aceptación:** con límite Alimentación · UYU 15.000, registrar gastos UYU 2.000 y UYU 3.000 deja consumo UYU 5.000 (33,33 %) y disponibles UYU 10.000. Un gasto USD 50 en Alimentación **no altera** ese contador. En el siguiente mes, sin gastos todavía, muestra 0 de 15.000.
 
-**RF-026 — Modificar o retirar presupuestos.** El usuario podrá editar el límite y retirar un presupuesto. Los gastos no se modificarán por editar o eliminar su límite.
+**RF-026 — Modificar o retirar presupuestos.** El usuario podrá **modificar el límite** de un presupuesto o retirarlo sin modificar ni eliminar los gastos registrados. En la V1 se controla **el presupuesto del mes actual**; no se implementa una pantalla de historial de límites de presupuestos, ni versiones o excepciones mensuales.
 
-- **Aceptación:** modificar un presupuesto de 2.000 a 3.000 cambia su porcentaje de uso, pero no el total de gastos. La regla de conservación de presupuestos históricos se especificará antes de programar esta función.
+- **Aceptación:** modificar un límite de UYU 15.000 a UYU 18.000 actualiza inmediatamente el porcentaje del mes actual, conservando intactos los gastos; retirar el presupuesto elimina el contador, no los gastos. Las estadísticas de gastos de meses anteriores permanecen consultables sin requerir historial de límites.
 
 ### G. Vista inicial
 
-**RF-027 — Resumen sencillo.** Tras entrar, el usuario dispondrá de una vista clara del gasto del mes, su distribución principal por categorías y el estado de sus presupuestos, con acceso rápido a registrar un gasto, al historial y a Estadísticas.
+**RF-027 — Resumen sencillo.** Tras entrar, el usuario dispondrá de una vista clara del gasto del mes **en la moneda seleccionada**, su distribución principal por categorías y el estado de sus presupuestos de esa moneda, con acceso rápido a registrar un gasto, al historial y a Estadísticas.
 
 - **Aceptación:** el total del Resumen coincide con Estadísticas para el mismo mes y permite registrar un gasto sin pasos financieros adicionales.
 
@@ -162,14 +182,14 @@ La ausencia de esas funciones es deliberada. Se podrán reconsiderar en otra ver
 
 ## 5. Decisiones cerradas
 
-- **D-01 — Monedas (aprobada):** UYU, USD y EUR, **sin cotización ni conversión automática** en V1. El importe original se conserva en su moneda. Historial, indicadores, estadísticas, gráficos y presupuestos identifican la moneda y muestran sus importes separados. Se prohíbe sumar monedas diferentes. No se incorpora un motor de tipo de cambio.
+- **D-01 — Monedas y visualización (aprobada):** UYU, USD y EUR sin cotizaciones ni conversiones. Un **único selector compartido** entre Resumen, Estadísticas y Presupuestos muestra solamente importes de la moneda elegida y la preferencia se recuerda por usuario. El Historial puede listar monedas diferentes identificadas por su código, sin sumarlas. No se incorpora un motor de tipo de cambio.
+- **D-02 — Categorías y subcategorías (aprobada):** recuperar las 13 categorías originales de gastos y sus subcategorías iniciales, sin categorías de ingresos. Cada usuario puede crear, renombrar, archivar y restaurar categorías y subcategorías propias, preservando los gastos históricos. Dos niveles como máximo.
+- **D-03 — Presupuestos (aprobada):** un presupuesto es un límite mensual elegido para una **categoría y moneda**, con contador automático de gastos de esa categoría y subcategorías. El consumo se calcula para el mes actual y vuelve a cero al pasar al siguiente mes si no hay gastos; el límite se conserva hasta cambiarlo. No hay presupuestos separados por subcategoría, acumulación de sobrantes, pagos recurrentes, excepciones mensuales ni historial de límites en V1. Las estadísticas históricas de gastos se conservan.
 
 ## 6. Decisiones pendientes antes de implementar los módulos afectados
 
-Estas cuestiones **no quedan aprobadas por este documento**. Deben resolverse antes de diseñar el esquema o programar las funciones correspondientes:
+Estas cuestiones **siguen pendientes** y deben resolverse antes de implementar los módulos correspondientes:
 
-2. **Catálogo inicial:** nombres concretos de categorías y subcategorías del proyecto anterior que vamos a conservar.
-3. **Presupuestos:** si el límite se define para un mes concreto o se repite mes a mes; qué sucede con el historial cuando se cambia o elimina el límite; si habrá presupuestos específicos de subcategoría.
 4. **Gráficos anuales:** ventana temporal predeterminada y modo exacto de navegación entre años; los tipos de gráfico y la evolución anual por categoría sí forman parte de la V1.
 5. **Cuentas:** confirmar en el diseño técnico el procedimiento de creación y recuperación de acceso para las dos personas, sin registro público.
 
