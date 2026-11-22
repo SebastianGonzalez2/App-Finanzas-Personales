@@ -4,6 +4,8 @@ Aplicación web personal para **registrar, organizar y analizar gastos**, pensad
 
 > **Estado:** planificación de la versión 1 (V1). Este documento define el alcance; las funcionalidades todavía no están implementadas.
 
+**Especificación detallada:** [Requisitos funcionales V1](docs/requisitos-v1.md) (requisitos numerados, criterios de aceptación y decisiones pendientes).
+
 ## Versión 1 — Alcance funcional
 
 ### 1. Registro de gastos
