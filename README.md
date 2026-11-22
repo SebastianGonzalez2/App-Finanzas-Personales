@@ -9,7 +9,7 @@ Aplicación web personal para **registrar, organizar y analizar gastos**, pensad
 ## Versión 1 — Alcance funcional
 
 ### 1. Registro de gastos
-- Registrar gastos con **importe, fecha y categoría**.
+- Registrar gastos con **importe, fecha, moneda (UYU/USD/EUR) y categoría**.
 - Seleccionar una **subcategoría** cuando corresponda y agregar una **descripción opcional**.
 - **Editar y eliminar** gastos registrados.
 - La aplicación registra **solo gastos**, no ingresos ni saldos.
@@ -20,6 +20,8 @@ Aplicación web personal para **registrar, organizar y analizar gastos**, pensad
 - Administrarlas sin perder la información histórica de los gastos asociados.
 
 ### 3. Estadísticas y gráficos
+- Mostrar totales **por moneda y sin conversión automática**; nunca sumar UYU, USD y EUR.
+
 Mantener el alcance de estadísticas que ya se había definido para la aplicación anterior, enfocado exclusivamente en gastos:
 
 - **Distribución por categoría y subcategoría**.
@@ -29,7 +31,7 @@ Mantener el alcance de estadísticas que ya se había definido para la aplicaci�
 - **Gráficos interactivos** que muestren importes y permitan explorar los gastos relacionados.
 
 ### 4. Presupuestos
-- Crear **presupuestos mensuales por categoría**.
+- Crear **presupuestos mensuales por categoría y moneda**, calculados solo con gastos de esa moneda.
 - Mostrar **límite, monto gastado, importe restante y porcentaje utilizado**.
 - Comparar los gastos registrados con el presupuesto correspondiente.
 
@@ -64,7 +66,7 @@ La base de datos se alojará en un servicio PostgreSQL en la nube, todavía por 
 
 ## Decisiones pendientes antes de desarrollar
 
-- Concretar **qué monedas** se admitirán en la V1 y cómo se tratarán en estadísticas y presupuestos.
+
 - Revisar el **catálogo inicial** de categorías y subcategorías.
 - Precisar los comportamientos de presupuestos, gráficos y filtros que requieran reglas adicionales.
 - Definir el proveedor de PostgreSQL, la implementación de sesiones y el diseño visual.
