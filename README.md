@@ -44,8 +44,9 @@ Mantener el alcance de estadísticas que ya se había definido para la aplicaci�
 - Acceder a las opciones de **edición y eliminación**.
 
 ### 6. Acceso privado
-- Acceso para **dos cuentas autorizadas**.
-- Inicio de sesión mediante **correo electrónico y contraseña**, con mecanismos de seguridad adecuados.
+- Acceso **solo con Google** mediante **Supabase Auth**, limitado a **dos cuentas autorizadas**.
+- Sin formulario de contraseña ni recuperación de contraseñas propias; recuperación de la cuenta a través de Google.
+- Alta inicial controlada de ambas identidades y deshabilitación posterior de nuevas altas en Supabase; **Express verifica sesión y autorización** en cada operación privada.
 - **Información separada** para cada usuario.
 
 ## Fuera del alcance de la V1
@@ -61,14 +62,15 @@ Podrán evaluarse más adelante, pero **no deben agregarse a la V1 sin una decis
 | Frontend | React + Vite |
 | Backend / API | Node.js + Express |
 | Lenguaje | JavaScript |
-| Base de datos | PostgreSQL |
+| Base de datos | PostgreSQL en Supabase |
 | ORM | Sequelize |
+| Autenticación | Supabase Auth + Google |
 | Despliegue | Vercel |
 
-La base de datos se alojará en un servicio PostgreSQL en la nube, todavía por elegir. La aplicación seguirá una estructura clara y sencilla, inspirada en el proyecto académico `lugares-fullstack`, con responsabilidades separadas (rutas, controladores, servicios, modelos y acceso a datos).
+PostgreSQL y la autenticación se gestionarán mediante Supabase, manteniendo Sequelize para las consultas y modelos propios. La aplicación seguirá una estructura clara y sencilla, inspirada en el proyecto académico `lugares-fullstack`, con responsabilidades separadas (rutas, controladores, servicios, modelos y acceso a datos).
 
-## Decisiones pendientes antes de desarrollar
+## Estado de la planificación
 
-- Definir el proveedor de PostgreSQL, la implementación de sesiones y el diseño visual.
+Las **cinco decisiones funcionales principales de la V1 están cerradas** y documentadas en [Requisitos funcionales V1](docs/requisitos-v1.md). El siguiente paso es definir el diseño técnico y las configuraciones de Supabase Auth, PostgreSQL y despliegue, además del diseño visual. **Todavía no se ha implementado la aplicación**.
 
 **Criterio de desarrollo:** empezar por lo esencial, mantener el código comprensible y organizado, probar cada funcionalidad antes de incorporar otra y no añadir complejidad pensando en funciones futuras.
