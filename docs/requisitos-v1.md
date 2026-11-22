@@ -24,17 +24,21 @@ Reglas de alcance:
 
 ### A. Usuarios y acceso privado
 
-**RF-001 — Acceso de usuarios autorizados.** El sistema permitirá iniciar sesión con correo electrónico y contraseña a las dos cuentas autorizadas para la aplicación. No ofrecerá registro público ni acceso a personas no autorizadas.
+**RF-001 — Acceso de usuarios autorizados con Google.** La aplicación permitirá iniciar sesión **únicamente mediante Google**, utilizando **Supabase Auth** como servicio de autenticación. La V1 está destinada a **dos identidades de Google autorizadas** (el titular y su padre). No tendrá formulario de contraseña propia, creación pública de cuentas ni proveedores adicionales.
 
-- **Aceptación:** una cuenta autorizada puede entrar con credenciales correctas; una cuenta no autorizada o una contraseña incorrecta no permite entrar.
+- **Aceptación:** una de las dos identidades autorizadas puede acceder mediante Google; una identidad no autorizada no recibe acceso a ninguna API ni a datos privados, aunque tenga una cuenta Google válida.
 
-**RF-002 — Sesión y cierre de sesión.** El sistema mantendrá una sesión autenticada hasta su vencimiento o cierre y permitirá cerrar sesión explícitamente. Las pantallas y operaciones de gastos deberán estar protegidas.
+**RF-002 — Sesiones, salida y recuperación de acceso.** Supabase Auth gestionará la sesión de Google y su renovación mediante mecanismos soportados. La aplicación permitirá cerrar sesión. **No implementará recuperación de contraseña propia:** si un usuario pierde acceso a su cuenta Google, utilizará los mecanismos de recuperación de Google.
 
-- **Aceptación:** después de cerrar sesión, intentar acceder directamente a una página o a la API de gastos no devuelve información privada.
+- **Aceptación:** una sesión válida permite continuar usando la aplicación; una sesión ausente, inválida o expirada no permite leer ni cambiar datos. Después de cerrar sesión, la aplicación deja de permitir operaciones privadas con esa sesión.
 
-**RF-003 — Independencia de datos.** Gastos, categorías, presupuestos y estadísticas serán privados para cada usuario. El servidor verificará siempre la identidad y la titularidad de cada recurso.
+**RF-003 — Independencia de datos y autorización.** Gastos, categorías, presupuestos, estadísticas y preferencias serán privados para cada usuario. En **todas las rutas privadas de Express**, el servidor comprobará la autenticidad de la sesión/token de Supabase Auth y la pertenencia de la identidad a las dos cuentas habilitadas. La verificación del servidor no dependerá de botones ocultos ni de datos de identidad enviados libremente por el cliente.
 
-- **Aceptación:** el usuario A no puede leer, editar ni eliminar un gasto o presupuesto del usuario B, ni cambiando el identificador en una petición.
+- **Aceptación:** el usuario A no puede leer, editar ni eliminar un gasto o presupuesto del usuario B, ni cambiando el identificador en una petición. Una identidad Google externa, aunque consiga autenticarse con Supabase, recibe acceso denegado en el backend.
+
+**RF-003A — Alta privada de las dos identidades.** El acceso inicial se habilitará administrativamente para las dos cuentas de Google elegidas, sin una interfaz pública de inscripción. Una vez creadas y verificadas esas dos identidades en Supabase Auth, se **deshabilitarán las nuevas altas**. El servidor conservará una **lista de autorización explícita** de los identificadores de usuario de Supabase correspondientes, sin publicar correos ni identificadores privados en este repositorio. No se abrirá un panel de administración de usuarios para la V1.
+
+- **Aceptación:** después de habilitar las dos identidades, otra cuenta Google no puede crear una cuenta nueva en Supabase Auth ni acceder a los datos de la aplicación. Una cuenta existente que no esté autorizada también es rechazada por Express.
 
 ### B. Registro y mantenimiento de gastos
 
@@ -181,7 +185,7 @@ Se mantienen filtros por fechas, moneda, categoría y subcategoría, y el acceso
 
 ## 3. Condiciones de calidad mínimas (no son nuevas funcionalidades)
 
-- **Privacidad:** autorización de todas las operaciones en el servidor, datos aislados entre usuarios y contraseñas protegidas con mecanismos probados; sin registro público.
+- **Privacidad:** autenticación Google gestionada por Supabase Auth, validación de identidad y autorización por usuario **en todas las rutas privadas de Express**, datos aislados entre usuarios; **sin contraseñas propias ni registro público**. Secretos y claves de servicio nunca se exponen al navegador.
 - **Exactitud monetaria:** almacenar y calcular importes con precisión decimal apropiada, sin errores de coma flotante en totales y presupuestos; mostrar formatos claros.
 - **Integridad:** operaciones de alta, edición y eliminación consistentes, sin duplicación por reintentos.
 - **Experiencia:** interfaz en español, usable con mouse y teclado en computadora y con pantalla táctil en celular; controles accesibles y mensajes de error claros.
@@ -201,14 +205,15 @@ La ausencia de esas funciones es deliberada. Se podrán reconsiderar en otra ver
 - **D-02 — Categorías y subcategorías (aprobada):** recuperar las 13 categorías originales de gastos y sus subcategorías iniciales, sin categorías de ingresos. Cada usuario puede crear, renombrar, archivar y restaurar categorías y subcategorías propias, preservando los gastos históricos. Dos niveles como máximo.
 - **D-03 — Presupuestos (aprobada):** un presupuesto es un límite mensual elegido para una **categoría y moneda**, con contador automático de gastos de esa categoría y subcategorías. El consumo se calcula para el mes actual y vuelve a cero al pasar al siguiente mes si no hay gastos; el límite se conserva hasta cambiarlo. No hay presupuestos separados por subcategoría, acumulación de sobrantes, pagos recurrentes, excepciones mensuales ni historial de límites en V1. Las estadísticas históricas de gastos se conservan.
 - **D-04 — Estadísticas y gráficos (aprobada):** se conservan todos los paneles del proyecto anterior que analizan exclusivamente **gastos**, incluido el gráfico **de líneas «Evolución anual por categoría»**, prioritario y con selección de categoría/moneda. Se muestran cinco años por defecto (hasta el año actual), con navegación a otros años, detalle de valores y marca de año parcial. Incluye indicadores, barras mensuales, barras por categoría, comparaciones por categoría y período, desglose hasta gastos, panel descriptivo determinista y «Todas / Mis favoritos». Se eliminan únicamente las visualizaciones basadas en módulos excluidos de la V1.
+- **D-05 — Autenticación y usuarios (aprobada):** solo **Google Sign-In con Supabase Auth** para dos identidades autorizadas. Sin contraseñas propias, reset por correo, inscripción pública ni desarrollo de un sistema casero de autenticación. Alta inicial controlada de las dos identidades y luego nuevas altas deshabilitadas en Supabase. **Express** valida sesión y autorización de cada recurso. Recuperación de la cuenta Google mediante Google; autorización independiente de la sola autenticación.
 
-## 6. Decisiones pendientes antes de implementar los módulos afectados
+## 6. Estado de la definición funcional
 
-Estas cuestiones **siguen pendientes** y deben resolverse antes de implementar los módulos correspondientes:
+Las **cinco decisiones de alcance están cerradas** (D-01 a D-05). La especificación funcional de la V1 queda lista como base del diseño técnico, **sin implicar que el código esté implementado**.
 
-5. **Cuentas:** confirmar en el diseño técnico el procedimiento de creación y recuperación de acceso para las dos personas, sin registro público.
+La siguiente etapa será definir el diseño técnico, especialmente: flujo de autenticación Google/Supabase para React y Express, configuración segura de sesiones, incorporación inicial de las dos identidades y lista de autorización; modelo PostgreSQL/Sequelize; endpoints; validaciones y pruebas. Estas decisiones de implementación **no autorizan agregar funcionalidades fuera de la V1**.
 
-Hasta que se resuelvan, **no inventar comportamientos** ni ampliar el alcance para resolverlos.
+**Infraestructura elegida:** React + Vite, Node.js + Express, JavaScript, Sequelize y **PostgreSQL alojado en Supabase**, con autenticación gestionada por **Supabase Auth** y despliegue web en Vercel. Las credenciales y pasos de configuración se prepararán en la etapa técnica; no se presupone que Supabase o Google ya estén configurados.
 
 ## 7. Referencias de origen
 
