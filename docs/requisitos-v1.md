@@ -114,35 +114,50 @@ Las categorías sin subcategorías predefinidas admiten subcategorías nuevas cr
 
 ### E. Estadísticas y gráficos
 
-**RF-017 — Indicadores del período.** La sección Estadísticas mostrará el **total gastado y la cantidad de gastos de la moneda seleccionada (UYU, USD o EUR)** en el período elegido. No existirá un total único que sume monedas distintas.
+**RF-017 — Indicadores del período.** La sección Estadísticas mostrará el **total gastado y la cantidad de gastos de la moneda seleccionada (UYU, USD o EUR)** en el período elegido, junto con comparaciones del gasto frente al período de referencia cuando sea posible. No existirá un total único que sume monedas distintas.
 
 - **Aceptación:** con gastos de UYU 100, UYU 200 y USD 300, el selector UYU muestra total UYU 300 y dos gastos; al cambiar a USD muestra USD 300 y un gasto. **Nunca** aparece un total ficticio de 600 en una única moneda.
 
-**RF-018 — Gastos por categoría y subcategoría.** Se mostrarán gráficos y valores de distribución por categoría, y será posible consultar el detalle por subcategoría. Importes y porcentajes se calcularán **solamente con los gastos de la moneda seleccionada**. Un gráfico de categorías nunca mezcla importes UYU, USD y EUR.
+**RF-018 — Gastos por categoría y subcategoría.** Se conservará el **gráfico de barras por categoría** del proyecto anterior, con importe, cantidad de gastos y participación sobre el total. Se podrá consultar el detalle por subcategoría y la **comparación por categoría entre períodos** (importe y variación cuando haya base válida). Importes y porcentajes se calcularán **solamente con los gastos de la moneda seleccionada**. Un gráfico nunca mezcla importes UYU, USD y EUR.
 
 - **Aceptación:** dos subcategorías de Alimentación con gastos de 200 y 300 muestran Alimentación = 500, no 1.000; sus porcentajes corresponden al total real.
 
-**RF-019 — Evolución mensual.** Se mostrará un gráfico de gastos por mes **en la moneda seleccionada**, con posibilidad de observar la evolución y comparar el mes seleccionado con otro período equivalente **de esa misma moneda** cuando existan datos.
+**RF-019 — Evolución mensual.** Se conservará el **gráfico de barras de gastos por mes** de la aplicación anterior, **en la moneda seleccionada**, con importes mensuales visibles o consultables, posibilidad de observar la evolución y comparación entre meses o períodos equivalentes **de esa misma moneda** cuando existan datos.
 
 - **Aceptación:** gastos registrados en octubre y noviembre aparecen en los meses correctos; si el período de referencia tiene total cero, no se muestra un porcentaje de variación matemáticamente inválido.
 
-**RF-020 — Evolución anual y por categoría.** Se conservará el análisis **anual** que se había definido en la aplicación anterior: totales por año, evolución histórica entre años y **evolución anual por categoría**, con gráficos apropiados, incluidos gráficos de líneas. Las series, importes y comparaciones **mostrarán únicamente la moneda seleccionada** y nunca sumarán monedas distintas.
+**RF-020 — Evolución anual y por categoría (prioridad funcional alta).** Se conservará el gráfico **«Evolución anual por categoría»** de la aplicación anterior como **gráfico de líneas**, para conocer cuánto se gastó en una categoría determinada en cada año. El usuario podrá elegir **cualquier categoría**, incluida su clasificación por subcategorías, o **todas las categorías** para analizar el gasto anual general. La ventana inicial será de **cinco años, terminando en el año actual**, con navegación a bloques de años anteriores y más recientes. La serie, los importes y las comparaciones mostrarán **solo la moneda seleccionada**. Cada punto permitirá conocer el año y su gasto exacto.
 
-- **Aceptación:** al consultar distintos años o una categoría, la serie incluye únicamente los registros que correspondan a esos años y a esa categoría; los años sin datos no se presentan como gastos inventados.
+- **Aceptación:** al seleccionar Alimentación y UYU se muestran importes anuales separados para 2023, 2024, 2025 y 2026 cuando haya registros de esos años; los totales de Alimentación incluyen sus subcategorías una sola vez, sin sumar otras categorías o monedas.
+- **Aceptación:** si el año actual no terminó, se identifica como **parcial**. Un año sin registros suficientes se indica como **«Sin registros»**, en lugar de inventar un gasto cero o unir la línea como si se conociera su valor. Se pueden consultar años anteriores a la ventana inicial sin perder los registros históricos.
 
-**RF-021 — Selector de moneda, períodos y filtros estadísticos.** Resumen, Estadísticas y Presupuestos compartirán un **selector UYU / USD / EUR**, cuya elección se recordará por usuario. Al cambiar de moneda se actualizarán **juntos todos los indicadores, gráficos y presupuestos visibles**, sin incorporar importes de las otras monedas. Estadísticas también permitirá elegir períodos habituales (mes actual, mes anterior, últimos 3, 6 y 12 meses, año actual), un rango personalizado y filtros por categoría y subcategoría, así como comparar períodos de la misma moneda.
+**RF-021 — Selector de moneda, períodos, filtros y favoritos.** Resumen, Estadísticas y Presupuestos compartirán un **selector UYU / USD / EUR**, cuya elección se recordará por usuario. Al cambiar de moneda se actualizarán **juntos todos los indicadores, gráficos y presupuestos visibles**, sin incorporar importes de las otras monedas. Estadísticas también permitirá elegir períodos habituales (mes actual, mes anterior, últimos 3, 6 y 12 meses, año actual), un rango personalizado y filtros por categoría y subcategoría, así como comparar períodos de la misma moneda. Se conservarán las vistas **«Todas»** y **«Mis favoritos»** de la versión anterior para elegir qué paneles estadísticos consultar habitualmente.
 
 - **Aceptación:** al cambiar de UYU a EUR, todas las visualizaciones muestran exclusivamente gastos en EUR; al navegar entre Resumen, Estadísticas y Presupuestos se conserva EUR, y al volver a iniciar sesión se recuerda la elección del usuario.
 
-- **Aceptación:** cambiar el período o la categoría actualiza conjuntamente indicadores y gráficos, y se distingue visualmente qué períodos se comparan.
+- **Aceptación:** cambiar el período o la categoría actualiza conjuntamente indicadores y gráficos, y se distingue visualmente qué períodos se comparan. Marcar un panel como favorito lo hace aparecer en «Mis favoritos» solo para ese usuario.
 
 **RF-022 — Interacción y desglose.** Los gráficos mostrarán importe, período y categoría mediante leyendas, etiquetas o información al interactuar (mouse, teclado o toque). Cuando sea pertinente, se podrá acceder desde el gráfico a los gastos que forman un total.
 
 - **Aceptación:** seleccionar la categoría Transporte de un mes permite consultar los gastos de Transporte que componen ese importe; el detalle coincide con el gráfico.
 
-**RF-023 — Consistencia y ausencia de datos.** Indicadores, gráficos, historial y presupuestos utilizarán criterios coherentes, con **monedas siempre identificadas y sin conversiones implícitas**. No se fabricarán porcentajes, tendencias o valores cuando falten registros suficientes. Las ediciones y eliminaciones se reflejarán en el período correcto.
+**RF-023 — Consistencia, resumen descriptivo y ausencia de datos.** Indicadores, gráficos, historial y presupuestos utilizarán criterios coherentes, con **monedas siempre identificadas y sin conversiones implícitas**. Se conservará el panel **«Resumen inteligente»** de la aplicación anterior **solo como resumen textual determinista de los gastos realmente registrados**, sin introducir IA generativa ni cifras inventadas. No se fabricarán porcentajes, tendencias o valores cuando falten registros suficientes. Las ediciones y eliminaciones se reflejarán en el período correcto.
 
-- **Aceptación:** editar un gasto de noviembre de 300 a 200 reduce el total de noviembre en 100 en todas las vistas pertinentes; una comparación imposible aparece como «No disponible» o equivalente.
+- **Aceptación:** editar un gasto de noviembre de 300 a 200 reduce el total de noviembre en 100 en todas las vistas pertinentes; una comparación imposible aparece como «No disponible» o equivalente. Si no hay información suficiente para resumir una tendencia, el resumen lo indica explícitamente, sin generar conclusiones falsas.
+
+**Inventario de estadísticas y visualizaciones de gastos de la V1 (derivado de la aplicación anterior):**
+
+| Panel o visualización | Contenido | Presentación |
+| --- | --- | --- |
+| Indicadores del período | Total gastado, cantidad de gastos y variación frente a un período comparable | Tarjetas / valores y tabla |
+| Gastos por mes | Evolución de gastos durante los meses del período | Gráfico de barras |
+| Gastos por categoría | Importe y participación por categoría, con acceso a subcategorías y a movimientos | Barras horizontales y detalle |
+| Comparación por categoría | Categorías del período actual frente al elegido como referencia | Tabla comparativa de importes y variaciones |
+| Evolución anual por categoría | Gasto anual de la categoría elegida o todas, cinco años visibles inicialmente y navegación histórica | **Gráfico de líneas interactivo, prioritario** |
+| Resumen inteligente | Descripción verificable de los gastos registrados, con advertencia si faltan datos | Panel textual determinista |
+| Todas / Mis favoritos | Consulta de todos los paneles o de los seleccionados como favoritos | Organización de la vista, privada por usuario |
+
+Se mantienen filtros por fechas, moneda, categoría y subcategoría, y el acceso desde los resultados a los gastos que originaron los valores. **Se excluyen** los gráficos originales de ingresos, medios de pago, saldo o patrimonio, deudas y gastos recurrentes, porque esos datos no forman parte de la V1. El gráfico denominado «Histórico por fecha» del sistema antiguo representaba movimientos financieros y saldos; **no debe copiarse como tal**. La evolución temporal de gastos se cubre mediante los gráficos mensual y anual.
 
 ### F. Presupuestos mensuales
 
@@ -185,12 +200,12 @@ La ausencia de esas funciones es deliberada. Se podrán reconsiderar en otra ver
 - **D-01 — Monedas y visualización (aprobada):** UYU, USD y EUR sin cotizaciones ni conversiones. Un **único selector compartido** entre Resumen, Estadísticas y Presupuestos muestra solamente importes de la moneda elegida y la preferencia se recuerda por usuario. El Historial puede listar monedas diferentes identificadas por su código, sin sumarlas. No se incorpora un motor de tipo de cambio.
 - **D-02 — Categorías y subcategorías (aprobada):** recuperar las 13 categorías originales de gastos y sus subcategorías iniciales, sin categorías de ingresos. Cada usuario puede crear, renombrar, archivar y restaurar categorías y subcategorías propias, preservando los gastos históricos. Dos niveles como máximo.
 - **D-03 — Presupuestos (aprobada):** un presupuesto es un límite mensual elegido para una **categoría y moneda**, con contador automático de gastos de esa categoría y subcategorías. El consumo se calcula para el mes actual y vuelve a cero al pasar al siguiente mes si no hay gastos; el límite se conserva hasta cambiarlo. No hay presupuestos separados por subcategoría, acumulación de sobrantes, pagos recurrentes, excepciones mensuales ni historial de límites en V1. Las estadísticas históricas de gastos se conservan.
+- **D-04 — Estadísticas y gráficos (aprobada):** se conservan todos los paneles del proyecto anterior que analizan exclusivamente **gastos**, incluido el gráfico **de líneas «Evolución anual por categoría»**, prioritario y con selección de categoría/moneda. Se muestran cinco años por defecto (hasta el año actual), con navegación a otros años, detalle de valores y marca de año parcial. Incluye indicadores, barras mensuales, barras por categoría, comparaciones por categoría y período, desglose hasta gastos, panel descriptivo determinista y «Todas / Mis favoritos». Se eliminan únicamente las visualizaciones basadas en módulos excluidos de la V1.
 
 ## 6. Decisiones pendientes antes de implementar los módulos afectados
 
 Estas cuestiones **siguen pendientes** y deben resolverse antes de implementar los módulos correspondientes:
 
-4. **Gráficos anuales:** ventana temporal predeterminada y modo exacto de navegación entre años; los tipos de gráfico y la evolución anual por categoría sí forman parte de la V1.
 5. **Cuentas:** confirmar en el diseño técnico el procedimiento de creación y recuperación de acceso para las dos personas, sin registro público.
 
 Hasta que se resuelvan, **no inventar comportamientos** ni ampliar el alcance para resolverlos.
