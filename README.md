@@ -26,7 +26,9 @@ Mantener el alcance de estadísticas que ya se había definido para la aplicaci�
 
 - **Distribución por categoría y subcategoría**.
 - **Evolución mensual** de gastos y **comparaciones entre períodos**.
-- **Evolución anual** de gastos, tanto general como **por categoría** (por ejemplo, con gráficos de líneas).
+- **Evolución anual de gastos por categoría** mediante **gráfico de líneas interactivo**: elegir categoría y moneda, comparar los últimos cinco años y navegar hacia años anteriores; identificar el año en curso como parcial.
+- **Indicadores, gráficos de barras mensuales, barras por categoría, comparaciones entre períodos y por categoría**, desglose a gastos y resumen descriptivo basado solo en datos registrados.
+- Vistas **«Todas» y «Mis favoritos»** para los paneles de Estadísticas.
 - **Filtros** por fechas, categorías y subcategorías.
 - **Gráficos interactivos** que muestren importes y permitan explorar los gastos relacionados.
 
@@ -67,7 +69,6 @@ La base de datos se alojará en un servicio PostgreSQL en la nube, todavía por 
 
 ## Decisiones pendientes antes de desarrollar
 
-- Definir el período predeterminado y navegación de los **gráficos anuales**.
 - Definir el proveedor de PostgreSQL, la implementación de sesiones y el diseño visual.
 
 **Criterio de desarrollo:** empezar por lo esencial, mantener el código comprensible y organizado, probar cada funcionalidad antes de incorporar otra y no añadir complejidad pensando en funciones futuras.
