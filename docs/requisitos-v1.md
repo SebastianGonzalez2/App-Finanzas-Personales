@@ -36,7 +36,7 @@ Reglas de alcance:
 
 - **Aceptación:** el usuario A no puede leer, editar ni eliminar un gasto o presupuesto del usuario B, ni cambiando el identificador en una petición. Una identidad Google externa, aunque consiga autenticarse con Supabase, recibe acceso denegado en el backend.
 
-**RF-003A — Alta privada de las dos identidades.** El acceso inicial se habilitará administrativamente para las dos cuentas de Google elegidas, sin una interfaz pública de inscripción. Una vez creadas y verificadas esas dos identidades en Supabase Auth, se **deshabilitarán las nuevas altas**. El servidor conservará una **lista de autorización explícita** de los identificadores de usuario de Supabase correspondientes, sin publicar correos ni identificadores privados en este repositorio. No se abrirá un panel de administración de usuarios para la V1.
+**Regla de configuración — Alta privada de las dos identidades.** El acceso inicial se habilitará administrativamente para las dos cuentas de Google elegidas, sin una interfaz pública de inscripción. Una vez creadas y verificadas esas dos identidades en Supabase Auth, se **deshabilitarán las nuevas altas**. El servidor conservará una **lista de autorización explícita** de los identificadores de usuario de Supabase correspondientes, sin publicar correos ni identificadores privados en este repositorio. No se abrirá un panel de administración de usuarios para la V1.
 
 - **Aceptación:** después de habilitar las dos identidades, otra cuenta Google no puede crear una cuenta nueva en Supabase Auth ni acceder a los datos de la aplicación. Una cuenta existente que no esté autorizada también es rechazada por Express.
 
