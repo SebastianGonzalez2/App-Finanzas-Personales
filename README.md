@@ -2,7 +2,7 @@
 
 Aplicación web personal para **registrar, organizar y analizar gastos**, pensada inicialmente para dos usuarios.
 
-> **Estado:** base técnica y acceso privado de IMP-01 implementados. La aceptación queda pendiente de verificar el acceso con Google y la Data API en Supabase de pruebas.
+> **Estado:** base técnica y acceso privado de IMP-01 implementados. La cuenta principal ya entra con Google en desarrollo. La aceptación con sesiones reales y las otras dos cuentas sigue pendiente.
 
 ## Desarrollo
 

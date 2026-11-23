@@ -11,7 +11,7 @@ const sessionB = '10000000-0000-4000-a000-000000000002';
 const sessionOutsider = '10000000-0000-4000-a000-000000000003';
 const sessionA2 = '10000000-0000-4000-a000-000000000004';
 
-test('migración desde cero, privilegios, políticas y sesiones en PostgreSQL embebido', async (t) => {
+test('migraciones desde cero, privilegios, políticas y sesiones en PostgreSQL embebido', async (t) => {
   const db = await PGlite.create();
   t.after(() => db.close());
   const query = async (sql, args) => (await db.query(sql, args)).rows;
@@ -38,7 +38,12 @@ test('migración desde cero, privilegios, políticas y sesiones en PostgreSQL em
     $$;
     grant usage on schema auth to authenticated, anon, service_role;
   `);
-  await db.exec(await readFile(new URL('../../migrations/20261123000000_security.sql', import.meta.url), 'utf8'));
+  const migrations = new URL('../../migrations/', import.meta.url);
+  await db.exec(await readFile(new URL('20261123215123_security.sql', migrations), 'utf8'));
+
+  // The hosted exposed-schema setup added EXECUTE outside the initial migration.
+  await db.exec('grant execute on all functions in schema api to public, anon, service_role;');
+  await db.exec(await readFile(new URL('20261123222557_restrict_api_rpc_grants.sql', migrations), 'utf8'));
 
   await db.exec(`
     insert into auth.users values ('${a}'), ('${b}'), ('${outsider}');
