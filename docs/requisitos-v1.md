@@ -2,7 +2,7 @@
 
 **Producto:** App Finanzas Personales — aplicación web de registro y análisis de gastos personales.  
 **Estado:** especificación inicial para revisión; no significa que estas funciones estén desarrolladas.  
-**Última revisión:** 22/11/2026.  
+**Última revisión:** 23/11/2026.\
 **Documento principal:** [README](../README.md).
 
 ## 1. Objetivo y límites
@@ -32,13 +32,13 @@ Reglas de alcance:
 
 - **Aceptación:** una sesión válida permite continuar usando la aplicación; una sesión ausente, inválida o expirada no permite leer ni cambiar datos. Después de cerrar sesión, la aplicación deja de permitir operaciones privadas con esa sesión.
 
-**RF-003 — Independencia de datos y autorización.** Gastos, categorías, presupuestos, estadísticas y preferencias serán privados para cada usuario. En **todas las rutas privadas de Express**, el servidor comprobará la autenticidad de la sesión/token de Supabase Auth y la pertenencia de la identidad a las dos cuentas habilitadas. La verificación del servidor no dependerá de botones ocultos ni de datos de identidad enviados libremente por el cliente.
+**RF-003 — Independencia de datos y autorización.** Gastos, categorías, presupuestos, estadísticas y preferencias serán privados para cada usuario. En cada operación privada, la Data API verificará el token de Supabase Auth. La función RPC comprobará en PostgreSQL que el UUID autenticado ocupa una de las dos plazas y que la sesión exacta del token sigue vigente. Las políticas RLS limitarán el acceso a las filas de su propietario. La verificación del servidor no dependerá de botones ocultos ni de datos de identidad enviados libremente por el cliente.
 
-- **Aceptación:** el usuario A no puede leer, editar ni eliminar un gasto o presupuesto del usuario B, ni cambiando el identificador en una petición. Una identidad Google externa, aunque consiga autenticarse con Supabase, recibe acceso denegado en el backend.
+- **Aceptación:** el usuario A no puede leer, editar ni eliminar un gasto o presupuesto del usuario B, ni cambiando el identificador en una petición. Una identidad Google externa, aunque consiga autenticarse con Supabase, recibe acceso denegado al invocar una operación privada de la Data API.
 
-**Regla de configuración — Alta privada de las dos identidades.** El acceso inicial se habilitará administrativamente para las dos cuentas de Google elegidas, sin una interfaz pública de inscripción. Una vez creadas y verificadas esas dos identidades en Supabase Auth, se **deshabilitarán las nuevas altas**. El servidor conservará una **lista de autorización explícita** de los identificadores de usuario de Supabase correspondientes, sin publicar correos ni identificadores privados en este repositorio. No se abrirá un panel de administración de usuarios para la V1.
+**Regla de configuración — Alta privada de las dos identidades.** El acceso inicial se habilitará administrativamente para las dos cuentas de Google elegidas, sin una interfaz pública de inscripción. Una vez creadas y verificadas esas dos identidades en Supabase Auth, se **deshabilitarán las nuevas altas**. PostgreSQL conservará en un esquema privado una **lista de autorización explícita** de los identificadores de usuario de Supabase correspondientes, sin publicar correos ni identificadores privados en este repositorio. No se abrirá un panel de administración de usuarios para la V1.
 
-- **Aceptación:** después de habilitar las dos identidades, otra cuenta Google no puede crear una cuenta nueva en Supabase Auth ni acceder a los datos de la aplicación. Una cuenta existente que no esté autorizada también es rechazada por Express.
+- **Aceptación:** después de habilitar las dos identidades, otra cuenta Google no puede crear una cuenta nueva en Supabase Auth ni acceder a los datos de la aplicación. Una cuenta existente que no esté autorizada también es rechazada por los RPC de la Data API.
 
 ### B. Registro y mantenimiento de gastos
 
@@ -130,16 +130,17 @@ Las categorías sin subcategorías predefinidas admiten subcategorías nuevas cr
 
 - **Aceptación:** gastos registrados en octubre y noviembre aparecen en los meses correctos; si el período de referencia tiene total cero, no se muestra un porcentaje de variación matemáticamente inválido.
 
-**RF-020 — Evolución anual y por categoría (prioridad funcional alta).** Se conservará el gráfico **«Evolución anual por categoría»** de la aplicación anterior como **gráfico de líneas**, para conocer cuánto se gastó en una categoría determinada en cada año. El usuario podrá elegir **cualquier categoría**, incluida su clasificación por subcategorías, o **todas las categorías** para analizar el gasto anual general. La ventana inicial será de **cinco años, terminando en el año actual**, con navegación a bloques de años anteriores y más recientes. La serie, los importes y las comparaciones mostrarán **solo la moneda seleccionada**. Cada punto permitirá conocer el año y su gasto exacto.
+**RF-020 — Evolución anual y por categoría (prioridad funcional alta).** Se conservará el gráfico **«Evolución anual por categoría»** de la aplicación anterior como **gráfico de líneas**, para conocer cuánto se gastó en una categoría determinada en cada año. El usuario podrá elegir **cualquier categoría**, incluida su clasificación por subcategorías, o **todas las categorías** para analizar el gasto anual general. La ventana inicial será de **cinco años, terminando en el año actual**, con su propio selector de años independiente del período general de Estadísticas y navegación a bloques de años anteriores y más recientes. La serie, los importes y las comparaciones mostrarán **solo la moneda seleccionada**. Cada punto permitirá conocer el año y su gasto exacto.
 
 - **Aceptación:** al seleccionar Alimentación y UYU se muestran importes anuales separados para 2023, 2024, 2025 y 2026 cuando haya registros de esos años; los totales de Alimentación incluyen sus subcategorías una sola vez, sin sumar otras categorías o monedas.
 - **Aceptación:** si el año actual no terminó, se identifica como **parcial**. Un año sin registros suficientes se indica como **«Sin registros»**, en lugar de inventar un gasto cero o unir la línea como si se conociera su valor. Se pueden consultar años anteriores a la ventana inicial sin perder los registros históricos.
+- **Aceptación:** en un bloque de cinco años, incluso uno anterior, cambiar «Mes actual» por otro período conserva los años y sus importes. Cambiar la moneda o la categoría recalcula la serie en ese mismo bloque.
 
-**RF-021 — Selector de moneda, períodos, filtros y favoritos.** Resumen, Estadísticas y Presupuestos compartirán un **selector UYU / USD / EUR**, cuya elección se recordará por usuario. Al cambiar de moneda se actualizarán **juntos todos los indicadores, gráficos y presupuestos visibles**, sin incorporar importes de las otras monedas. Estadísticas también permitirá elegir períodos habituales (mes actual, mes anterior, últimos 3, 6 y 12 meses, año actual), un rango personalizado y filtros por categoría y subcategoría, así como comparar períodos de la misma moneda. Se conservarán las vistas **«Todas»** y **«Mis favoritos»** de la versión anterior para elegir qué paneles estadísticos consultar habitualmente.
+**RF-021 — Selector de moneda, períodos, filtros y favoritos.** Resumen, Estadísticas y Presupuestos compartirán un **selector UYU / USD / EUR**, cuya elección se recordará por usuario. Al cambiar de moneda se actualizarán **juntos todos los indicadores, gráficos y presupuestos visibles**, sin incorporar importes de las otras monedas. Estadísticas también permitirá elegir períodos habituales (mes actual, mes anterior, últimos 3, 6 y 12 meses, año actual), un rango personalizado y filtros por categoría y subcategoría, así como comparar períodos de la misma moneda. El período general se aplica a los paneles de período. La serie anual comparte los filtros de moneda y clasificación y usa el selector de años de RF-020. Se conservarán las vistas **«Todas»** y **«Mis favoritos»** de la versión anterior para elegir qué paneles estadísticos consultar habitualmente.
 
 - **Aceptación:** al cambiar de UYU a EUR, todas las visualizaciones muestran exclusivamente gastos en EUR; al navegar entre Resumen, Estadísticas y Presupuestos se conserva EUR, y al volver a iniciar sesión se recuerda la elección del usuario.
 
-- **Aceptación:** cambiar el período o la categoría actualiza conjuntamente indicadores y gráficos, y se distingue visualmente qué períodos se comparan. Marcar un panel como favorito lo hace aparecer en «Mis favoritos» solo para ese usuario.
+- **Aceptación:** cambiar el período actualiza conjuntamente los indicadores y gráficos de período, con los rangos comparados visibles. Cambiar la categoría actualiza tanto esos paneles como la serie anual, que conserva su ventana de años. Marcar un panel como favorito lo hace aparecer en «Mis favoritos» solo para ese usuario.
 
 **RF-022 — Interacción y desglose.** Los gráficos mostrarán importe, período y categoría mediante leyendas, etiquetas o información al interactuar (mouse, teclado o toque). Cuando sea pertinente, se podrá acceder desde el gráfico a los gastos que forman un total.
 
@@ -185,12 +186,12 @@ Se mantienen filtros por fechas, moneda, categoría y subcategoría, y el acceso
 
 ## 3. Condiciones de calidad mínimas (no son nuevas funcionalidades)
 
-- **Privacidad:** autenticación Google gestionada por Supabase Auth, validación de identidad y autorización por usuario **en todas las rutas privadas de Express**, datos aislados entre usuarios; **sin contraseñas propias ni registro público**. Secretos y claves de servicio nunca se exponen al navegador.
+- **Privacidad:** autenticación Google gestionada por Supabase Auth, validación del token en la Data API, autorización por plaza y sesión en cada RPC, datos aislados por propietario mediante RLS; **sin contraseñas propias ni registro público**. Secretos y claves de servicio nunca se exponen al navegador.
 - **Exactitud monetaria:** almacenar y calcular importes con precisión decimal apropiada, sin errores de coma flotante en totales y presupuestos; mostrar formatos claros.
 - **Integridad:** operaciones de alta, edición y eliminación consistentes, sin duplicación por reintentos.
 - **Experiencia:** interfaz en español, usable con mouse y teclado en computadora y con pantalla táctil en celular; controles accesibles y mensajes de error claros.
 - **Rendimiento:** navegación y desplazamiento fluidos en dispositivos reales. Medir tiempos de carga y fluidez desde el primer incremento; los gráficos y efectos decorativos no deben comprometer la interacción.
-- **Calidad del código:** separación comprensible entre interfaz, rutas, controladores, servicios, modelos y acceso a datos; pruebas automáticas para gastos, permisos, agregaciones, presupuestos y cambios históricos.
+- **Calidad del código:** separación comprensible entre interfaz, servicios de acceso a la Data API, funciones RPC y políticas RLS; pruebas automáticas para gastos, permisos, agregaciones, presupuestos y cambios históricos.
 - **Conectividad:** la V1 funciona en línea; ante pérdida de conexión no promete guardar datos que el servidor no confirmó.
 
 ## 4. Exclusiones expresas de la V1
@@ -205,15 +206,15 @@ La ausencia de esas funciones es deliberada. Se podrán reconsiderar en otra ver
 - **D-02 — Categorías y subcategorías (aprobada):** recuperar las 13 categorías originales de gastos y sus subcategorías iniciales, sin categorías de ingresos. Cada usuario puede crear, renombrar, archivar y restaurar categorías y subcategorías propias, preservando los gastos históricos. Dos niveles como máximo.
 - **D-03 — Presupuestos (aprobada):** un presupuesto es un límite mensual elegido para una **categoría y moneda**, con contador automático de gastos de esa categoría y subcategorías. El consumo se calcula para el mes actual y vuelve a cero al pasar al siguiente mes si no hay gastos; el límite se conserva hasta cambiarlo. No hay presupuestos separados por subcategoría, acumulación de sobrantes, pagos recurrentes, excepciones mensuales ni historial de límites en V1. Las estadísticas históricas de gastos se conservan.
 - **D-04 — Estadísticas y gráficos (aprobada):** se conservan todos los paneles del proyecto anterior que analizan exclusivamente **gastos**, incluido el gráfico **de líneas «Evolución anual por categoría»**, prioritario y con selección de categoría/moneda. Se muestran cinco años por defecto (hasta el año actual), con navegación a otros años, detalle de valores y marca de año parcial. Incluye indicadores, barras mensuales, barras por categoría, comparaciones por categoría y período, desglose hasta gastos, panel descriptivo determinista y «Todas / Mis favoritos». Se eliminan únicamente las visualizaciones basadas en módulos excluidos de la V1.
-- **D-05 — Autenticación y usuarios (aprobada):** solo **Google Sign-In con Supabase Auth** para dos identidades autorizadas. Sin contraseñas propias, reset por correo, inscripción pública ni desarrollo de un sistema casero de autenticación. Alta inicial controlada de las dos identidades y luego nuevas altas deshabilitadas en Supabase. **Express** valida sesión y autorización de cada recurso. Recuperación de la cuenta Google mediante Google; autorización independiente de la sola autenticación.
+- **D-05 — Autenticación y usuarios (aprobada):** solo **Google Sign-In con Supabase Auth** para dos identidades autorizadas. Sin contraseñas propias, reset por correo, inscripción pública ni desarrollo de un sistema casero de autenticación. Alta inicial controlada de las dos identidades y luego nuevas altas deshabilitadas en Supabase. La Data API verifica el token y cada RPC exige plaza habilitada y sesión vigente del JWT. PostgreSQL aplica RLS por propietario. Recuperación de la cuenta Google mediante Google; autorización independiente de la sola autenticación.
 
 ## 6. Estado de la definición funcional
 
 Las **cinco decisiones de alcance están cerradas** (D-01 a D-05). La especificación funcional de la V1 queda lista como base del diseño técnico, **sin implicar que el código esté implementado**.
 
-La siguiente etapa será definir el diseño técnico, especialmente: flujo de autenticación Google/Supabase para React y Express, configuración segura de sesiones, incorporación inicial de las dos identidades y lista de autorización; modelo PostgreSQL/Sequelize; endpoints; validaciones y pruebas. Estas decisiones de implementación **no autorizan agregar funcionalidades fuera de la V1**.
+La [arquitectura V1](arquitectura-v1.md) define el acceso Google, la incorporación de ambas identidades, el modelo PostgreSQL, los permisos RLS, los contratos RPC y sus pruebas. Estas decisiones de implementación **no autorizan agregar funcionalidades fuera de la V1**.
 
-**Infraestructura elegida:** React + Vite, Node.js + Express, JavaScript, Sequelize y **PostgreSQL alojado en Supabase**, con autenticación gestionada por **Supabase Auth** y despliegue web en Vercel. Las credenciales y pasos de configuración se prepararán en la etapa técnica; no se presupone que Supabase o Google ya estén configurados.
+**Infraestructura elegida:** React + Vite con JavaScript, Supabase Auth con Google, Data API y funciones RPC en PostgreSQL con RLS. Vercel sirve la aplicación web. La configuración y la verificación de estos servicios corresponden a la implementación.
 
 ## 7. Referencias de origen
 

@@ -4,7 +4,9 @@ Aplicación web personal para **registrar, organizar y analizar gastos**, pensad
 
 > **Estado:** planificación de la versión 1 (V1). Este documento define el alcance; las funcionalidades todavía no están implementadas.
 
-**Especificación detallada:** [Requisitos funcionales V1](docs/requisitos-v1.md) (requisitos numerados, criterios de aceptación y decisiones pendientes).
+**Especificación detallada:** [Requisitos funcionales V1](docs/requisitos-v1.md) (requisitos numerados, criterios de aceptación y decisiones aprobadas).
+
+La [arquitectura técnica aprobada de la V1](docs/arquitectura-v1.md) define el acceso a datos, los permisos y los procedimientos de verificación.
 
 ## Versión 1 — Alcance funcional
 
@@ -26,7 +28,7 @@ Mantener el alcance de estadísticas que ya se había definido para la aplicaci�
 
 - **Distribución por categoría y subcategoría**.
 - **Evolución mensual** de gastos y **comparaciones entre períodos**.
-- **Evolución anual de gastos por categoría** mediante **gráfico de líneas interactivo**: elegir categoría y moneda, comparar los últimos cinco años y navegar hacia años anteriores; identificar el año en curso como parcial.
+- **Evolución anual de gastos por categoría** en un gráfico de líneas interactivo. Comparte moneda y categoría con Estadísticas y tiene su propio selector de años. Muestra cinco años inicialmente, permite navegar a bloques anteriores e identifica el año en curso como parcial.
 - **Indicadores, gráficos de barras mensuales, barras por categoría, comparaciones entre períodos y por categoría**, desglose a gastos y resumen descriptivo basado solo en datos registrados.
 - Vistas **«Todas» y «Mis favoritos»** para los paneles de Estadísticas.
 - **Filtros** por fechas, categorías y subcategorías.
@@ -46,7 +48,7 @@ Mantener el alcance de estadísticas que ya se había definido para la aplicaci�
 ### 6. Acceso privado
 - Acceso **solo con Google** mediante **Supabase Auth**, limitado a **dos cuentas autorizadas**.
 - Sin formulario de contraseña ni recuperación de contraseñas propias; recuperación de la cuenta a través de Google.
-- Alta inicial controlada de ambas identidades y deshabilitación posterior de nuevas altas en Supabase; **Express verifica sesión y autorización** en cada operación privada.
+- Tras el alta controlada de ambas identidades se cierran las nuevas altas. En cada operación privada, la Data API valida el token de Supabase Auth y PostgreSQL verifica la plaza, la sesión exacta y la propiedad de los datos mediante RPC y políticas RLS.
 - **Información separada** para cada usuario.
 
 ## Fuera del alcance de la V1
@@ -55,22 +57,21 @@ No implementar por ahora: ingresos, cuentas y saldos bancarios, transferencias, 
 
 Podrán evaluarse más adelante, pero **no deben agregarse a la V1 sin una decisión explícita**.
 
-## Tecnologías elegidas como punto de partida
+## Arquitectura aprobada para la V1
 
 | Área | Tecnología |
 | --- | --- |
 | Frontend | React + Vite |
-| Backend / API | Node.js + Express |
+| Acceso a datos | Supabase Data API (PostgREST) y funciones RPC de PostgreSQL |
 | Lenguaje | JavaScript |
 | Base de datos | PostgreSQL en Supabase |
-| ORM | Sequelize |
+| Autorización | Comprobación de plaza y sesión en cada RPC, aislamiento por propietario mediante RLS |
 | Autenticación | Supabase Auth + Google |
 | Despliegue | Vercel |
 
-PostgreSQL y la autenticación se gestionarán mediante Supabase, manteniendo Sequelize para las consultas y modelos propios. La aplicación seguirá una estructura clara y sencilla, inspirada en el proyecto académico `lugares-fullstack`, con responsabilidades separadas (rutas, controladores, servicios, modelos y acceso a datos).
 
 ## Estado de la planificación
 
-Las **cinco decisiones funcionales principales de la V1 están cerradas** y documentadas en [Requisitos funcionales V1](docs/requisitos-v1.md). El siguiente paso es definir el diseño técnico y las configuraciones de Supabase Auth, PostgreSQL y despliegue, además del diseño visual. **Todavía no se ha implementado la aplicación**.
+Las **cinco decisiones funcionales principales de la V1 están cerradas** y documentadas en [Requisitos funcionales V1](docs/requisitos-v1.md). La arquitectura está definida. La configuración de los servicios y sus pruebas corresponden a la implementación. **Todavía no se ha implementado la aplicación**.
 
 **Criterio de desarrollo:** empezar por lo esencial, mantener el código comprensible y organizado, probar cada funcionalidad antes de incorporar otra y no añadir complejidad pensando en funciones futuras.
