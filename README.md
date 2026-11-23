@@ -2,7 +2,7 @@
 
 Aplicación web personal para **registrar, organizar y analizar gastos**, pensada inicialmente para dos usuarios.
 
-> **Estado:** base técnica y acceso privado de IMP-01 implementados. La cuenta principal ya entra con Google en desarrollo. La aceptación con sesiones reales y las otras dos cuentas sigue pendiente.
+> **Estado:** IMP-02 implementa categorías y registro, edición y eliminación de gastos. La primera cuenta de desarrollo ya tiene su catálogo inicial. Consultá el [informe de pruebas y las capturas](docs/imp-02/README.md).
 
 ## Desarrollo
 

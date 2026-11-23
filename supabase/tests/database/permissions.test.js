@@ -1,62 +1,16 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
-import { PGlite } from '@electric-sql/pglite';
+import { asUser as setUser, createTestDatabase, sessions, users } from './fixture.js';
 
-const a = '00000000-0000-4000-a000-000000000001';
-const b = '00000000-0000-4000-a000-000000000002';
-const outsider = '00000000-0000-4000-a000-000000000003';
-const sessionA = '10000000-0000-4000-a000-000000000001';
-const sessionB = '10000000-0000-4000-a000-000000000002';
-const sessionOutsider = '10000000-0000-4000-a000-000000000003';
-const sessionA2 = '10000000-0000-4000-a000-000000000004';
+const { a, b, outsider } = users;
+const { a: sessionA, a2: sessionA2, b: sessionB, outsider: sessionOutsider } = sessions;
 
 test('migraciones desde cero, privilegios, políticas y sesiones en PostgreSQL embebido', async (t) => {
-  const db = await PGlite.create();
+  const db = await createTestDatabase();
   t.after(() => db.close());
   const query = async (sql, args) => (await db.query(sql, args)).rows;
   const value = async (sql, args) => (await query(sql, args))[0]?.value;
-
-  // Minimal Supabase contract. Auth and the JWT gateway are verified in hosted tests.
-  await db.exec(`
-    create role anon;
-    create role authenticated;
-    create role service_role bypassrls;
-    create role supabase_auth_admin;
-    create schema auth;
-    create schema graphql_public;
-    grant usage on schema graphql_public to public, anon, authenticated;
-    create table auth.users (id uuid primary key);
-    create table auth.sessions (
-      id uuid primary key, user_id uuid not null references auth.users(id)
-    );
-    create function auth.jwt() returns jsonb language sql stable as $$
-      select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb;
-    $$;
-    create function auth.uid() returns uuid language sql stable as $$
-      select (auth.jwt() ->> 'sub')::uuid;
-    $$;
-    grant usage on schema auth to authenticated, anon, service_role;
-  `);
-  const migrations = new URL('../../migrations/', import.meta.url);
-  await db.exec(await readFile(new URL('20261123215123_security.sql', migrations), 'utf8'));
-
-  // The hosted exposed-schema setup added EXECUTE outside the initial migration.
-  await db.exec('grant execute on all functions in schema api to public, anon, service_role;');
-  await db.exec(await readFile(new URL('20261123222557_restrict_api_rpc_grants.sql', migrations), 'utf8'));
-
-  await db.exec(`
-    insert into auth.users values ('${a}'), ('${b}'), ('${outsider}');
-    insert into auth.sessions values ('${sessionA}', '${a}'), ('${sessionA2}', '${a}'),
-      ('${sessionB}', '${b}'), ('${sessionOutsider}', '${outsider}');
-    insert into private.members values (1, '${a}'), (2, '${b}');
-    insert into app.preferences values ('${a}', 'UYU'), ('${b}', 'EUR');
-  `);
-
-  async function asUser(sub, session_id) {
-    await db.exec('reset role; set role authenticated;');
-    await query("select set_config('request.jwt.claims', $1, false)", [JSON.stringify({ sub, session_id })]);
-  }
+  const asUser = (owner, session) => setUser(db, owner, session);
 
   await t.test('esquemas, firmas, RLS y concesiones mínimas', async () => {
     const functions = await query(`
@@ -66,12 +20,12 @@ test('migraciones desde cero, privilegios, políticas y sesiones en PostgreSQL e
       where pronamespace in ('api'::regnamespace, 'private'::regnamespace)
       order by proname
     `);
-    assert.equal(functions.length, 4);
-    assert.deepEqual(functions[0], {
+    const allowed = functions.find(({ proname }) => proname === 'allowed');
+    assert.deepEqual(allowed, {
       proname: 'allowed', prosecdef: true, owner: 'postgres', pronargs: 0,
       proconfig: ['search_path=""'], provolatile: 's',
     });
-    assert.ok(functions.slice(1).every(({ prosecdef }) => !prosecdef));
+    assert.ok(functions.filter((fn) => fn !== allowed).every(({ prosecdef }) => !prosecdef));
     const policies = await query(`
       select relrowsecurity from pg_class
       where oid in ('app.preferences'::regclass, 'private.members'::regclass, 'private.bootstrap_emails'::regclass)

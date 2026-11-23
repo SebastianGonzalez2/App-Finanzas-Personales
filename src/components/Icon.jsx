@@ -1,4 +1,8 @@
 const paths = {
+  edit: 'M4 16 15 5l4 4-11 11-5 1z M13 7l4 4',
+  check: 'm4 12 5 5L20 6',
+  down: 'm6 9 6 6 6-6',
+  upChevron: 'm6 15 6-6 6 6',
   resumen: 'M3 10 12 3l9 7v10h-6v-6H9v6H3z',
   historial: 'M6 3h12v18l-3-2-3 2-3-2-3 2z M9 8h6m-6 4h6',
   estadisticas: 'M4 20h16 M6 16v-4m6 4V5m6 11V9',
