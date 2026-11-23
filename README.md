@@ -1,8 +1,23 @@
-# App Finanzas Personales
+# Cifra
 
 Aplicación web personal para **registrar, organizar y analizar gastos**, pensada inicialmente para dos usuarios.
 
-> **Estado:** planificación de la versión 1 (V1). Este documento define el alcance; las funcionalidades todavía no están implementadas.
+> **Estado:** base técnica y acceso privado de IMP-01 implementados. La aceptación queda pendiente de verificar el acceso con Google y la Data API en Supabase de pruebas.
+
+## Desarrollo
+
+Usá Node.js 24 LTS o Node.js 22 a partir de 22.22. Copiá `.env.example` a `.env.local` y completá la URL y la clave publicable de Supabase de desarrollo. La [guía de IMP-01](docs/imp-01.md) cubre la configuración de Google, la habilitación de las dos plazas y las pruebas con sesiones reales.
+
+```sh
+npm ci
+npm run dev
+npm run lint
+npm test
+npm run test:db
+npm run build
+```
+
+La aplicación local se abre en `http://localhost:5173`. El build y las pruebas unitarias y de PostgreSQL embebido también se pueden ejecutar con las variables de Supabase vacías.
 
 **Especificación detallada:** [Requisitos funcionales V1](docs/requisitos-v1.md) (requisitos numerados, criterios de aceptación y decisiones aprobadas).
 
@@ -72,6 +87,6 @@ Podrán evaluarse más adelante, pero **no deben agregarse a la V1 sin una decis
 
 ## Estado de la planificación
 
-Las **cinco decisiones funcionales principales de la V1 están cerradas** y documentadas en [Requisitos funcionales V1](docs/requisitos-v1.md). La arquitectura está definida. La configuración de los servicios y sus pruebas corresponden a la implementación. **Todavía no se ha implementado la aplicación**.
+Las **cinco decisiones funcionales principales de la V1 están cerradas** y documentadas en [Requisitos funcionales V1](docs/requisitos-v1.md). Las rutas de las funciones financieras están preparadas para sus siguientes etapas.
 
 **Criterio de desarrollo:** empezar por lo esencial, mantener el código comprensible y organizado, probar cada funcionalidad antes de incorporar otra y no añadir complejidad pensando en funciones futuras.

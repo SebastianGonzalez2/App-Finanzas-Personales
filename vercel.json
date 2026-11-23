@@ -1,0 +1,17 @@
+{
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/((?!assets/|cifra\\.svg$|index\\.html$).*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "frame-ancestors 'none'" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    }
+  ]
+}
