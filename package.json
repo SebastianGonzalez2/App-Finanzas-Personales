@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:db": "node --test supabase/tests/database/permissions.test.js",
+    "test:db": "node --test supabase/tests/database/*.test.js",
     "test:e2e": "playwright test",
     "test:integration": "node --test tests/integration/*.test.js"
   },

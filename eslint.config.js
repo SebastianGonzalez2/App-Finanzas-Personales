@@ -4,7 +4,7 @@ import hooks from 'eslint-plugin-react-hooks';
 import { defineConfig } from 'eslint/config';
 
 export default defineConfig(
-  { ignores: ['dist/**', 'docs/**', 'playwright-report/**', 'test-results/**'] },
+  { ignores: ['dist/**', 'dist-e2e/**', 'supabase/.temp/**', 'docs/**', 'playwright-report/**', 'test-results/**'] },
   js.configs.recommended,
   { languageOptions: { globals: { ...globals.node, ...globals.browser } } },
   {
