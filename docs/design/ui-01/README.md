@@ -6,7 +6,7 @@
 
 ## Galería
 
-Cada PNG muestra la página completa. Las capturas de escritorio parten de una ventana de 1440 × 960 y las de móvil de 375 × 812. El contenido continúa debajo del primer pliegue.
+Cada PNG muestra la página completa. Las capturas de escritorio parten de una ventana de 1440 × 960 y las de móvil de 375 × 812. El contenido continúa al desplazarse hacia abajo.
 
 | Pantalla | Escritorio | Móvil a 375 px | Qué revisar |
 | --- | --- | --- | --- |
@@ -27,7 +27,7 @@ Abrir el archivo HTML desde una copia local del repositorio. Los enlaces de nave
 
 ## Decisiones para aprobación
 
-- **Identidad.** «Pliegue» es el nombre propuesto para evaluar la marca. Un símbolo de tres pliegues y una ilustración de recibos acompañan la interfaz. La denominación puede aprobarse por separado de la composición.
+- **Identidad.** Cifra es el nombre definitivo de la aplicación. El símbolo original de la marca y la ilustración de recibos acompañan la interfaz.
 - **Cuotas.** El encargo menciona compras en cuotas. La exclusión expresa de la V1 determina los campos de la propuesta. Incorporarlas requeriría una decisión funcional posterior. [Alcance V1, §4](../../requisitos-v1.md#4-exclusiones-expresas-de-la-v1)
 - **Tema.** La propuesta utiliza modo oscuro. Los requisitos vigentes contemplan un solo sistema de componentes y no piden un selector de tema.
 - **Datos.** Los ejemplos son ficticios, con fecha de referencia del 23/11/2026 en Montevideo. En el Resumen, noviembre sigue abierto. Estadísticas muestra mayo–octubre para ilustrar una comparación entre períodos cerrados.

@@ -45,7 +45,7 @@ const paths = {
 function icon(id) {
   return `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="${paths[id]}"/></svg>`;
 }
-const brand = `<span class="brand"><svg class="mark" viewBox="0 0 36 36" aria-hidden="true"><path d="m3 25 10-17 8-4-11 19z" fill="#f4f2eb"/><path d="m11 27 11-19 6 1-11 19z" fill="#aeb1af"/><path d="m18 30 11-19 4 4-8 14z" fill="#717775"/></svg><span class="name">Pliegue</span></span>`;
+const brand = `<span class="brand"><svg class="mark" viewBox="0 0 36 36" aria-hidden="true"><path d="m3 25 10-17 8-4-11 19z" fill="#f4f2eb"/><path d="m11 27 11-19 6 1-11 19z" fill="#aeb1af"/><path d="m18 30 11-19 4 4-8 14z" fill="#717775"/></svg><span class="name">Cifra</span></span>`;
 const url = (id, rail = false) =>
   `?vista=${id}${rail ? "&amp;nav=compacta" : ""}`;
 function btn(label, id = "", style = "", href = "") {
@@ -367,7 +367,7 @@ const pages = {
   gasto: formPage,
   login: accessPage,
 };
-document.title = names[page] + " · Pliegue · UI-01";
+document.title = names[page] + " · Cifra · UI-01";
 document.getElementById("lamina").innerHTML =
   page === "login"
     ? accessPage()
