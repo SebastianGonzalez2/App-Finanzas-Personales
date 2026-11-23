@@ -6,6 +6,10 @@ import { SessionContext } from './sessionContext.js';
 const pendingKey = 'cifra:remote-logout-pending';
 const initialSnapshot = { ready: false, session: null, revision: 0 };
 
+function sessionMemory() {
+  return { drafts: new Map(), lastExpenseId: null };
+}
+
 function readPendingLogout() {
   try {
     return window.localStorage.getItem(pendingKey) === '1';
@@ -30,6 +34,8 @@ export function SessionProvider({ client, children }) {
   const current = useRef(initialSnapshot);
   const logoutInFlight = useRef(false);
   const refreshAttempted = useRef(false);
+  const memory = useRef(null);
+  if (!memory.current) memory.current = sessionMemory();
 
   useEffect(() => {
     if (!client) return;
@@ -37,7 +43,10 @@ export function SessionProvider({ client, children }) {
     const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
       const previous = current.current;
       const tokenChanged = previous.session?.access_token !== session?.access_token;
-      if (previous.session?.user.id !== session?.user.id) refreshAttempted.current = false;
+      if (previous.session?.user.id !== session?.user.id) {
+        refreshAttempted.current = false;
+        memory.current = sessionMemory();
+      }
       if (tokenChanged) queryClient.clear();
 
       const next = { ready: true, session, revision: previous.revision + Number(tokenChanged) };
@@ -48,6 +57,7 @@ export function SessionProvider({ client, children }) {
     function syncPendingLogout(event) {
       if (event.key !== pendingKey) return;
       if (event.newValue === '1') {
+        memory.current = sessionMemory();
         queryClient.clear();
         setLogout('logoutPending');
       } else if (!logoutInFlight.current) {
@@ -85,6 +95,7 @@ export function SessionProvider({ client, children }) {
     if (logoutInFlight.current) return;
     logoutInFlight.current = true;
     persistPendingLogout(true);
+    memory.current = sessionMemory();
     setLogout('signingOut');
     queryClient.clear();
 
@@ -115,7 +126,7 @@ export function SessionProvider({ client, children }) {
   }
 
   return (
-    <SessionContext.Provider value={{ client, snapshot, logout, checkSession, signOut }}>
+    <SessionContext.Provider value={{ client, snapshot, logout, checkSession, signOut, memory: memory.current }}>
       {children}
     </SessionContext.Provider>
   );

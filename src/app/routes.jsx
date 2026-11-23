@@ -1,38 +1,59 @@
-import { Navigate, Route, Routes } from 'react-router';
+import { Link, Navigate, Route, Routes, ScrollRestoration, useLocation } from 'react-router';
 import { AppShell } from '../components/AppShell.jsx';
 import { AccessState } from '../features/auth/AccessState.jsx';
 import { CallbackPage } from '../features/auth/CallbackPage.jsx';
 import { LoginPage } from '../features/auth/LoginPage.jsx';
 import { AccountMenu } from '../features/settings/AccountMenu.jsx';
+import { CatalogPage } from '../features/catalog/CatalogPage.jsx';
+import { ExpensePage } from '../features/expenses/ExpensePage.jsx';
+import { HistoryPage } from '../features/history/HistoryPage.jsx';
 import { account, categories, sections } from './navigation.js';
 import { useAccess } from './sessionContext.js';
 
-function PrivatePage({ title, isAccount = false }) {
+function PrivatePage({ title, subtitle, page }) {
   const access = useAccess();
+  const location = useLocation();
   if (access.status === 'signedOut') return <Navigate to="/login" replace />;
   if (access.status !== 'allowed') return <AccessState {...access} />;
 
   return (
-    <AppShell title={title} today={access.preferences.today}>
-      {isAccount
-        ? <AccountMenu session={access.session} />
+    <AppShell key={access.session.user.id} title={title} subtitle={subtitle} today={access.preferences.today}>
+      {location.state?.notice?.owner === access.session.user.id && <div className="feedback" role="status">
+        {location.state.notice.text}{location.state.notice.id && <Link className="notice-link"
+          to={'/gastos/' + location.state.notice.id + '/editar'} state={{ from: location.pathname }}>Ver gasto</Link>}
+      </div>}
+      {page === 'account' ? <AccountMenu session={access.session} /> : page === 'catalog' ? <CatalogPage />
+        : page === 'expense' ? <ExpensePage preferences={access.preferences} />
+        : page === 'history' ? <HistoryPage today={access.preferences.today} />
         : <p className="page-note">Esta sección estará disponible más adelante.</p>}
     </AppShell>
   );
 }
 
+// The history restores its scroll per exact query (path + filters), also after
+// returning from the edit form; other views keep the default per-entry behaviour.
+function scrollKey(location) {
+  return location.pathname === '/historial' ? location.pathname + location.search : location.key;
+}
+
 export function AppRoutes() {
   return (
+    <>
+    <ScrollRestoration getKey={scrollKey} />
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<CallbackPage />} />
-      {[...sections, categories].map(({ path, title }) => (
-        <Route key={path} path={path} element={<PrivatePage title={title} />} />
+      {sections.map(({ path, title }) => (
+        <Route key={path} path={path} element={path === '/historial'
+          ? <PrivatePage title={title} subtitle="Consulta y edición de gastos registrados." page="history" />
+          : <PrivatePage title={title} />} />
       ))}
-      <Route path={account.path} element={<PrivatePage title={account.title} isAccount />} />
-      <Route path="/gastos/nuevo" element={<PrivatePage title="Nuevo gasto" />} />
-      <Route path="/gastos/:id/editar" element={<PrivatePage title="Editar gasto" />} />
+      <Route path={categories.path} element={<PrivatePage title={categories.title} page="catalog" />} />
+      <Route path={account.path} element={<PrivatePage title={account.title} page="account" />} />
+      <Route path="/gastos/nuevo" element={<PrivatePage title="Nuevo gasto" subtitle="Registrá el importe, la fecha y la categoría." page="expense" />} />
+      <Route path="/gastos/:id/editar" element={<PrivatePage title="Editar gasto" page="expense" />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }
