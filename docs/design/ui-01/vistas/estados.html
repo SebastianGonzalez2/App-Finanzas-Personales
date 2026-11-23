@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es-UY">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Componentes y estados · Cifra · UI-01</title>
+  <link rel="stylesheet" href="estilo.css">
+  <style>
+    main { max-width: 1120px }
+    .sample { display: grid; gap: 16px; align-content: start }
+    .sample .spread { flex-wrap: wrap }
+    .dialog { background: var(--alto); border: 1px solid #595d5e; padding: 24px; border-radius: 12px; display: grid; gap: 16px }
+    .backdrop { padding: 24px; background: #0b0c0d }
+    .invalid { border-color: var(--rosa) }
+    .focused { outline: 2px solid var(--salvia); outline-offset: 3px }
+    .skeleton { height: 12px; max-width: 70%; background: #343638; border-radius: 4px }
+    .dialog .actions { justify-content: flex-end }
+    @media(max-width:620px){.backdrop,.dialog{padding:16px}}
+  </style>
+</head>
+<body>
+  <main>
+    <header class="page-head"><div><h1>Componentes y estados</h1><p class="subtitle">Especificación visual de interacciones secundarias.</p></div></header>
+    <div class="grid even">
+      <section class="panel pad sample">
+        <div class="eyebrow">Nuevo gasto · Validación</div>
+        <h2>Importe del gasto</h2>
+        <div class="input invalid">0,00 <span class="unit">UYU</span></div>
+        <p class="neg">Ingresá un importe mayor que cero.</p>
+      </section>
+      <section class="panel pad sample">
+        <div class="eyebrow">Historial · Búsqueda</div>
+        <h2>Sin resultados</h2><p class="soft">Ningún gasto coincide con los filtros elegidos.</p>
+        <div><span class="btn ghost">Limpiar filtros</span></div>
+      </section>
+      <section class="panel pad sample">
+        <div class="eyebrow">Clasificación · Alta desde el borrador</div>
+        <div class="backdrop"><div class="dialog">
+          <h2>Crear subcategoría</h2><span class="soft">Categoría · Alimentación</span>
+          <div class="field"><span class="caption">Nombre</span><div class="input focused">Panadería</div></div>
+          <div class="actions"><span class="btn ghost">Cancelar</span><span class="btn primary">Crear y seleccionar</span></div>
+        </div></div>
+      </section>
+      <section class="panel pad sample">
+        <div class="eyebrow">Historial · Confirmación</div>
+        <div class="backdrop"><div class="dialog">
+          <h2>¿Eliminar este gasto?</h2><p class="soft">Se actualizarán el historial, las estadísticas y el presupuesto de Alimentación.</p>
+          <div class="bottom-rule"><h3>Compra semanal</h3><span class="small-data">23 nov 2026 · UYU 1.280,00</span></div>
+          <div class="actions"><span class="btn focused">Cancelar</span><span class="btn neg">Eliminar gasto</span></div>
+        </div></div>
+      </section>
+      <section class="panel pad sample">
+        <div class="eyebrow">Evolución anual · Detalle de punto</div>
+        <div class="dialog"><div class="spread"><h2>2026</h2><span class="tag">Año parcial</span></div>
+          <span class="soft">Todas las categorías</span><p class="figure">276.640 <span class="unit">UYU</span></p>
+          <span class="panel-link">Ver gastos del año ↗</span>
+        </div>
+      </section>
+      <section class="panel pad sample">
+        <div class="eyebrow">Resumen · Carga de un panel</div>
+        <h2>Cargando gastos…</h2><div class="skeleton"></div><div class="skeleton" style="width:48%"></div>
+        <div class="bottom-rule"><h3>Error de conexión</h3><p class="soft">No pudimos cargar los gastos recientes.</p></div>
+        <div><span class="btn">Reintentar</span></div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
