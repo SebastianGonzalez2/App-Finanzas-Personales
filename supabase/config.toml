@@ -1,0 +1,33 @@
+project_id = "cifra-development"
+
+[api]
+enabled = true
+schemas = ["api"]
+extra_search_path = []
+max_rows = 1000
+
+[db.seed]
+enabled = false
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/auth/callback"]
+enable_signup = false
+enable_anonymous_sign_ins = false
+enable_manual_linking = false
+
+[auth.email]
+enable_signup = false
+
+[auth.sms]
+enable_signup = false
+
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/private/before_user_created"

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-e2e/
+.env*
+!.env.example
+.vercel/
+playwright-report/
+test-results/
+supabase/.branches/
+supabase/.temp/
