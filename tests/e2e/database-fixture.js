@@ -10,6 +10,7 @@ const signatures = {
   create_expense: ['id', 'amount', 'currency', 'spent_on', 'category_id', 'subcategory_id', 'description'],
   update_expense: ['id', 'version', 'amount', 'currency', 'spent_on', 'category_id', 'subcategory_id', 'description'],
   delete_expense: ['id', 'version'],
+  list_expenses: ['filters', 'q', 'sort', 'direction', 'limit', 'cursor'],
 };
 
 // Chromium exercises the built app and SDK. The loopback route executes the actual migrations
@@ -27,7 +28,7 @@ export const test = base.extend({
           throw new Error('Unexpected RPC signature');
         }
         const placeholders = fields.map((_, index) => '$' + (index + 1)).join(', ');
-        const values = fields.map((key) => key === 'patch' ? JSON.stringify(args[key]) : args[key] ?? null);
+        const values = fields.map((key) => ['patch', 'filters'].includes(key) ? JSON.stringify(args[key] ?? {}) : args[key] ?? null);
         return (await db.query('select api.' + name + '(' + placeholders + ') as result', values)).rows[0].result;
       }
       await mockSupabase(page);

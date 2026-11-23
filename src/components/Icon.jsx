@@ -17,6 +17,11 @@ const paths = {
   lock: 'M5 10h14v11H5z M8 10V7a4 4 0 0 1 8 0v3',
   fold: 'M5 4h14v16H5z M8 8h8 M8 12h6',
   info: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z M12 11v6m0-11v1',
+  more: 'M4 12h1m6 0h1m6 0h1',
+  filters: 'M3 6h9m4 0h5M3 17h4m4 0h10 M12 3v6m-5 5v6',
+  search: 'M16 16l5 5 M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z',
+  trash: 'M4 7h16 M9 7V4h6v3 M6 7l1 14h10l1-14',
+  back: 'M15 5l-7 7 7 7',
 };
 
 export function Icon({ name }) {

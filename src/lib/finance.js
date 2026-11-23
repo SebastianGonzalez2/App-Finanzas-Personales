@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../app/sessionContext.js';
 
 const messages = {
@@ -19,6 +19,12 @@ const messages = {
   EXPENSE_REMOVED: [null, 'Este gasto ya fue eliminado.'],
   ID_REUSED: [null, 'Este envío ya corresponde a otro gasto.'],
   STALE_VERSION: [null, 'El gasto cambió desde que lo abriste.'],
+  INVALID_FILTERS: [null, 'Los filtros de esta consulta no son válidos.'],
+  INVALID_DATE_RANGE: [null, 'La fecha inicial debe ser anterior o igual a la final.'],
+  INVALID_QUERY: [null, 'La búsqueda admite hasta 100 caracteres.'],
+  INVALID_SORT: [null, 'El orden elegido no es válido.'],
+  INVALID_LIMIT: [null, 'El tamaño de página no es válido.'],
+  INVALID_CURSOR: [null, 'La consulta cambió. Volvé a cargar el historial.'],
 };
 
 export function useFinance() {
@@ -72,7 +78,27 @@ export function useFinance() {
       cache.removeQueries({ queryKey, exact: true });
     }
   }
-  return { owner, rpc, refresh, rememberCategory, rememberExpense, memory };
+  // Mutations made from the history refetch its loaded pages immediately.
+  function reloadExpenses() {
+    return cache.invalidateQueries({ queryKey: [owner, 'expenses'] });
+  }
+  return { owner, rpc, refresh, rememberCategory, rememberExpense, reloadExpenses, memory };
+}
+
+export const HISTORY_PAGE_SIZE = 30;
+
+// One cache entry per exact query. Each page carries the server cursor of the next one;
+// a refetch restarts from the first page and rebuilds the following cursors.
+export function useExpenseList(api, args) {
+  return useInfiniteQuery({
+    queryKey: [api.owner, 'expenses', args],
+    queryFn: ({ pageParam, signal }) =>
+      api.rpc('list_expenses', { ...args, limit: HISTORY_PAGE_SIZE, cursor: pageParam }, signal),
+    initialPageParam: null,
+    getNextPageParam: (page) => page.next_cursor ?? undefined,
+    placeholderData: keepPreviousData,
+    staleTime: 30_000, retry: false, networkMode: 'always',
+  });
 }
 
 export function useCatalog(api) {

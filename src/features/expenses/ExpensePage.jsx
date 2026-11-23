@@ -6,8 +6,9 @@ import { QueryState } from '../../components/QueryState.jsx';
 import { useCatalog, useExpense, useFinance } from '../../lib/finance.js';
 import { changeField, displayAmount, displayDate, expensePayload, newDraft, validateDraft } from './draft.js';
 import { ExpenseFields } from './ExpenseFields.jsx';
+import { isUncertain, reconcileWrite } from './reconcile.js';
 
-function ExpenseSummary({ expense }) {
+export function ExpenseSummary({ expense }) {
   return <div className="expense-summary">
     <strong>{expense.currency} {displayAmount(expense.amount)}</strong>
     <span>{displayDate(expense.spent_on)} · {expense.category_name}{expense.subcategory_name && ' / ' + expense.subcategory_name}</span>
@@ -46,8 +47,10 @@ function ExpenseForm({ api, catalog, preferences, expense }) {
   const mounted = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const origin = ['/', '/estadisticas', '/historial', '/presupuestos', '/categorias', '/cuenta'].includes(location.state?.from)
-    ? location.state.from : '/historial';
+  // The history keeps its query string, so saving or deleting returns to the same consulta.
+  const from = typeof location.state?.from === 'string' ? location.state.from : '';
+  const origin = ['/', '/estadisticas', '/presupuestos', '/categorias', '/cuenta'].includes(from) ||
+    /^\/historial(\?[^#]*)?$/.test(from) ? from : '/historial';
   const dirty = Boolean(pending) || Object.keys(initial).some((field) => initial[field] !== draft[field]);
   const blocker = useBlocker(() => !finished.current && (dirty || inFlight.current));
 
@@ -83,7 +86,7 @@ function ExpenseForm({ api, catalog, preferences, expense }) {
     finished.current = true;
     const deleted = action === 'delete';
     const text = deleted ? 'Gasto eliminado' : action === 'update' ? 'Cambios guardados' : 'Gasto guardado';
-    navigate(deleted ? '/historial' : origin, {
+    navigate(deleted && !origin.startsWith('/historial') ? '/historial' : origin, {
       replace: true, state: { notice: { owner: api.owner, text, id: deleted ? null : draft.id } },
     });
   }
@@ -92,27 +95,6 @@ function ExpenseForm({ api, catalog, preferences, expense }) {
     requestAnimationFrame(() => document.getElementById(Object.keys(next)[0])?.focus());
   }
 
-  // Only the exact frozen request can be repeated after a lost response.
-  async function reconcile(operation) {
-    const { action, args } = operation;
-    let current;
-    try {
-      current = await api.rpc('get_expense', { id: args.id });
-    } catch (error) {
-      if (error.code !== 'EXPENSE_NOT_FOUND' || error.status !== 404) throw error;
-      if (action === 'delete') return { id: args.id, deleted: true };
-      if (action === 'create') return false;
-      throw error;
-    }
-    if (action === 'create') {
-      // Ask create_expense to verify the original fingerprint if the expense has since changed.
-      return Object.entries(args).every(([field, value]) => current[field] === value) ? current : null;
-    }
-    if (current.version === args.version) return false;
-    if (action === 'update' && current.version === args.version + 1 &&
-        Object.entries(args).every(([field, value]) => field === 'version' || current[field] === value)) return current;
-    throw Object.assign(new Error('El gasto cambió desde que lo abriste.'), { code: 'STALE_VERSION', status: 409 });
-  }
   async function write(operation, checkFirst = false) {
     if (inFlight.current) return;
     inFlight.current = true;
@@ -123,7 +105,7 @@ function ExpenseForm({ api, catalog, preferences, expense }) {
     let checking = checkFirst;
     try {
       if (checkFirst) {
-        const confirmed = await reconcile(operation);
+        const confirmed = await reconcileWrite(api, operation);
         if (confirmed) { finish(operation.action, confirmed); return; }
       }
       checking = false;
@@ -138,7 +120,7 @@ function ExpenseForm({ api, catalog, preferences, expense }) {
         remember({ ...form, pending: null });
         setConflict(true);
         setMessage(error.message);
-      } else if (!error.status || error.status >= 500 || error.status === 408 || (checking && error.code !== 'EXPENSE_NOT_FOUND')) {
+      } else if (isUncertain(error) || (checking && error.code !== 'EXPENSE_NOT_FOUND')) {
         setMessage(operation.action === 'delete' ? 'No pudimos confirmar la eliminación.' : 'No pudimos confirmar el guardado.');
       } else {
         remember({ ...form, pending: null });

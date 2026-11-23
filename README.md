@@ -2,7 +2,7 @@
 
 Aplicación web personal para **registrar, organizar y analizar gastos**, pensada inicialmente para dos usuarios.
 
-> **Estado:** IMP-02 implementa categorías y registro, edición y eliminación de gastos. La primera cuenta de desarrollo ya tiene su catálogo inicial. Consultá el [informe de pruebas y las capturas](docs/imp-02/README.md).
+> **Estado:** IMP-03 agrega el historial con búsqueda, filtros, orden y paginación por cursor sobre el registro de IMP-02. Consultá el [informe de IMP-03](docs/imp-03/README.md) y el [de IMP-02](docs/imp-02/README.md).
 
 ## Desarrollo
 
