@@ -56,6 +56,24 @@ Siguen pendientes:
 - Las pruebas HTTP autenticadas. Con `CIFRA_TEST_ACCESS_TOKEN_A` se ejecuta la paginación y el rechazo de cursores alterados, y con `CIFRA_TEST_ACCESS_TOKEN_B`, el rechazo del cursor ajeno.
 - `EXPLAIN (ANALYZE, BUFFERS)` con datos representativos. La tabla alojada está vacía, así que un plan medido ahí no sería representativo. Los planes por índice se verificaron en PostgreSQL embebido.
 
+### Recorrido real con Google y la Data API alojada
+
+Se ejecutó el 23/11/2026 con la rama en `http://localhost:5173` y el proyecto `cifra-development`. La persona titular inició sesión con Google, incluida la verificación en dos pasos, en el navegador integrado. Los tokens no se leyeron ni se copiaron. Se usaron solo dos gastos de prueba rotulados «(borrar)», que se eliminaron al final.
+
+| Paso | Resultado |
+| --- | --- |
+| Historial vacío | «Todavía no registraste gastos». `list_expenses` respondió 200 con la sesión real. |
+| Crear desde «Registrar el primer gasto» | UYU 123,45 en Alimentación / Supermercado, del 20/11. Vuelve a `/historial` con «Gasto guardado» y la fila visible. |
+| Segundo gasto | USD 7,50 en Transporte, sin subcategoría, del 21/11. La lista queda ordenada por fecha descendente. |
+| Búsqueda literal | `100%` devolvió solo el gasto con «100%» en la descripción y quedó en la URL (`q=100%25`). |
+| Filtros combinados por enlace | Búsqueda, noviembre, USD, Transporte, «Sin subcategoría» y orden por importe: una fila, título «Gastos de noviembre» y 4 filtros activos. |
+| Editar desde el menú de fila | Importe 150,00 y fecha 22/11. Vuelve a la misma búsqueda con «Cambios guardados»; la fila se actualiza y pasa a ser la primera. |
+| Eliminar desde el menú de fila | El diálogo identifica importe, fecha, clasificación y descripción. Tras confirmar: «Gasto eliminado», la búsqueda se conserva y la fila desaparece. |
+| Eliminar desde la ficha | El recorrido de móvil: fila → ficha → «Eliminar gasto». Vuelve a la búsqueda con «Sin resultados». |
+| Estado final | `/historial` sin filtros muestra otra vez «Todavía no registraste gastos». No quedan datos de prueba. |
+
+En la carga de `/historial`, las peticiones a la Data API fueron `get_preferences`, `list_expenses` y `get_catalog`, todas con 200. El catálogo se pide en paralelo con la lista. A unos 970 px de ancho la fecha se partía en dos líneas, y se corrigió con `white-space: nowrap` en esa celda.
+
 ## Pruebas ejecutadas
 
 | Prueba | Resultado y alcance |
@@ -63,7 +81,7 @@ Siguen pendientes:
 | Unitarias · `npm test` | 69 aprobadas, 16 nuevas. Cubren la URL de ida y vuelta, el descarte de valores inválidos, «Sin subcategoría», los períodos con cambio de año y febrero bisiesto, los títulos, las fechas abreviadas y el título de fila sin descripción. |
 | SQL · `npm run test:db` | 25 aprobadas, 12 nuevas contando el grupo del runner, sobre todas las migraciones en PostgreSQL embebido. Cubren el historial vacío, las tres monedas, la búsqueda literal con `%`, `_`, `\` y mayúsculas, los filtros combinados e inclusivos, la clasificación archivada y la validación de filtros, orden y límite. Las cuatro combinaciones de orden se comprueban con empates de fecha e importe. 246 gastos se recorren en páginas de 7 sin repetidos ni omisiones. Se rechazan 14 cursores alterados y los cursores de otro orden, filtros o persona. Se verifican los cambios entre páginas, el aislamiento A/B, el tercero sin plaza, la sesión cerrada, `anon` sin ejecución y los planes con los índices del propietario. La auditoría de superficie de IMP-02 se amplió con el RPC y las funciones nuevas. |
 | Chromium · `npm run test:e2e` | 30 aprobadas, 10 nuevas, y las 20 previas sin cambios de comportamiento. Las nuevas cubren el alta desde el historial vacío y la búsqueda literal. Los filtros combinados persisten en la URL y tras recargar. También cubren la categoría y la subcategoría archivadas, «Sin resultados», «Limpiar filtros» y un enlace con categoría ajena. El orden se prueba en escritorio y con el selector. La paginación incluye 65 gastos y una desconexión en la segunda página con reintento. Editar fecha, importe y categoría desde el menú reubica la fila y la retira del filtro de la categoría anterior. La eliminación cubre la cancelación y una respuesta perdida reconciliada. En 375 px se abre la ficha y se elimina. Las filas ajenas permanecen invisibles. El transporte simula Auth y la Data API y ejecuta los RPC contra PostgreSQL embebido. |
-| HTTP contra desarrollo | 3 aprobadas tras aplicar la migración: las 2 públicas de IMP-02 y la denegación anónima de `list_expenses` (`42501`). Antes de aplicarla respondía 404. Las autenticadas requieren una sesión Google. |
+| HTTP contra desarrollo | 3 aprobadas tras aplicar la migración: las 2 públicas de IMP-02 y la denegación anónima de `list_expenses` (`42501`). Antes de aplicarla respondía 404. Las pruebas HTTP autenticadas por script no se ejecutaron porque requieren copiar un JWT. El recorrido autenticado se verificó en el navegador. |
 | Calidad | ESLint y build de Vite aprobados. Sin dependencias nuevas. |
 
 ## Capturas de Chromium
@@ -79,6 +97,6 @@ Siguen pendientes:
 
 ## Pendientes
 
-- Ejecutar las pruebas HTTP autenticadas y `EXPLAIN (ANALYZE, BUFFERS)` con datos de prueba representativos en `cifra-development`.
-- Hacer el recorrido real Google → Crear gasto → Historial → Editar → Eliminar con datos de prueba, que quedó pendiente de IMP-02. Requiere que una persona inicie sesión con la cuenta Google autorizada en `http://localhost:5173`. Para la prueba HTTP autenticada, el JWT se copia desde una sesión dedicada siguiendo la [guía de IMP-01](../imp-01.md).
-- Comprobar en un teléfono físico la apertura de la ficha y el selector nativo de período y orden. El control de fecha nativo muestra el formato regional del navegador.
+- `EXPLAIN (ANALYZE, BUFFERS)` con datos de prueba representativos en `cifra-development`. La tabla alojada está vacía; los planes por índice se verificaron en PostgreSQL embebido.
+- Pruebas HTTP autenticadas por script (`CIFRA_TEST_ACCESS_TOKEN_A` y `CIFRA_TEST_ACCESS_TOKEN_B`) y aislamiento entre las dos plazas reales. La segunda plaza sigue sin habilitar.
+- Comprobar en un teléfono físico la ficha y los selectores nativos de período y orden. El control de fecha nativo muestra el formato regional del navegador.

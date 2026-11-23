@@ -134,6 +134,7 @@
 .row-link::after { content: ''; position: absolute; inset: 0; }
 .row-link:focus-visible { outline: none; }
 .row-link:focus-visible::after { outline: 2px solid var(--sage); outline-offset: -3px; border-radius: 4px; }
+.expense-table td.small-data { white-space: nowrap; }
 .archived-mark { display: block; color: var(--muted); font: 11px var(--mono); }
 .money { white-space: nowrap; font-size: 14px; }
 .money small { margin-right: 6px; color: var(--muted); font-size: 11px; }
