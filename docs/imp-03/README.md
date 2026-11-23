@@ -38,14 +38,23 @@
 
 ### Estado en Supabase de desarrollo (`ljbrukrakumuatjnwxwd`)
 
-**Pendiente de aplicar.** Esta sesión no contaba con acceso administrativo al proyecto: no había conector de Supabase ni CLI autenticada, y el panel pedía iniciar sesión. Por HTTP con la clave publicable se comprobó que la Data API alojada responde **404** a `list_expenses`, de modo que la migración todavía no existe allí. Las dos pruebas públicas de IMP-02 siguen aprobando.
+**Aplicada el 23/11/2026** desde el editor SQL del panel, sin CLI ni conector disponibles.
 
-Pasos para aplicarla:
+1. **Historial previo.** `supabase_migrations.schema_migrations` contenía exactamente `20261123215123 security`, `20261123222557 restrict_api_rpc_grants` y `20261123223627 catalog_and_expenses`. El SQL almacenado coincide con los archivos del repositorio tras normalizar los saltos de línea. Solo `restrict_api_rpc_grants` difiere, por una línea en blanco final. `list_expenses` y `expenses_amount_idx` no existían. PostgreSQL 17.12.
+2. **Entorno desechable.** Antes, todas las migraciones se aplicaron desde cero en PostgreSQL embebido. Así se ejecutó `npm run test:db`.
+3. **Aplicación.** El contenido del archivo se ejecutó en una sola transacción, junto con su registro en `schema_migrations` como `20261124120000 expense_history`. Antes de ejecutarlo se comprobó el SHA-256 del texto cargado en el editor. Respuesta: «Success».
+4. **Auditoría posterior.**
+   - El historial tiene cuatro versiones y el MD5 almacenado coincide con el del archivo.
+   - Las cinco funciones nuevas son `SECURITY INVOKER`, tienen `search_path` vacío y propietario `postgres`, y solo `authenticated` las ejecuta.
+   - `anon` no ejecuta ningún RPC de `api`, que ahora tiene 10.
+   - El índice `(owner_id, amount, id)` existe.
+   - No se tocaron datos. La tabla de gastos de desarrollo tiene 0 filas.
+5. **HTTP con la clave publicable.** `list_expenses` anónimo responde `42501` y aprueban las dos pruebas públicas de IMP-02.
 
-1. Revisar el historial alojado (`supabase migration list` o `select version, name from supabase_migrations.schema_migrations order by version`). Debe terminar en `20261123223627 catalog_and_expenses`.
-2. Aplicar solo la versión nueva con `supabase db push --dry-run` y luego `supabase db push`, o ejecutar su contenido en el editor SQL. En el segundo caso, registrar la versión en `supabase_migrations.schema_migrations`. Si la herramienta asigna otra versión, renombrar el archivo local para que coincida, como en IMP-01.
-3. Ejecutar `CIFRA_RUN_HOSTED_TESTS=1 node --env-file=.env.local --test tests/integration/history.test.js`. Con `CIFRA_TEST_ACCESS_TOKEN_A` se ejecuta también la paginación autenticada, y con `CIFRA_TEST_ACCESS_TOKEN_B` el rechazo del cursor ajeno.
-4. Con datos de prueba representativos, ejecutar `EXPLAIN (ANALYZE, BUFFERS)` de las cuatro combinaciones de orden bajo `authenticated`, según ARCH-01 §11.
+Siguen pendientes:
+
+- Las pruebas HTTP autenticadas. Con `CIFRA_TEST_ACCESS_TOKEN_A` se ejecuta la paginación y el rechazo de cursores alterados, y con `CIFRA_TEST_ACCESS_TOKEN_B`, el rechazo del cursor ajeno.
+- `EXPLAIN (ANALYZE, BUFFERS)` con datos representativos. La tabla alojada está vacía, así que un plan medido ahí no sería representativo. Los planes por índice se verificaron en PostgreSQL embebido.
 
 ## Pruebas ejecutadas
 
@@ -54,7 +63,7 @@ Pasos para aplicarla:
 | Unitarias · `npm test` | 69 aprobadas, 16 nuevas. Cubren la URL de ida y vuelta, el descarte de valores inválidos, «Sin subcategoría», los períodos con cambio de año y febrero bisiesto, los títulos, las fechas abreviadas y el título de fila sin descripción. |
 | SQL · `npm run test:db` | 25 aprobadas, 12 nuevas contando el grupo del runner, sobre todas las migraciones en PostgreSQL embebido. Cubren el historial vacío, las tres monedas, la búsqueda literal con `%`, `_`, `\` y mayúsculas, los filtros combinados e inclusivos, la clasificación archivada y la validación de filtros, orden y límite. Las cuatro combinaciones de orden se comprueban con empates de fecha e importe. 246 gastos se recorren en páginas de 7 sin repetidos ni omisiones. Se rechazan 14 cursores alterados y los cursores de otro orden, filtros o persona. Se verifican los cambios entre páginas, el aislamiento A/B, el tercero sin plaza, la sesión cerrada, `anon` sin ejecución y los planes con los índices del propietario. La auditoría de superficie de IMP-02 se amplió con el RPC y las funciones nuevas. |
 | Chromium · `npm run test:e2e` | 30 aprobadas, 10 nuevas, y las 20 previas sin cambios de comportamiento. Las nuevas cubren el alta desde el historial vacío y la búsqueda literal. Los filtros combinados persisten en la URL y tras recargar. También cubren la categoría y la subcategoría archivadas, «Sin resultados», «Limpiar filtros» y un enlace con categoría ajena. El orden se prueba en escritorio y con el selector. La paginación incluye 65 gastos y una desconexión en la segunda página con reintento. Editar fecha, importe y categoría desde el menú reubica la fila y la retira del filtro de la categoría anterior. La eliminación cubre la cancelación y una respuesta perdida reconciliada. En 375 px se abre la ficha y se elimina. Las filas ajenas permanecen invisibles. El transporte simula Auth y la Data API y ejecuta los RPC contra PostgreSQL embebido. |
-| HTTP contra desarrollo | Las 2 pruebas públicas de IMP-02 aprobaron. La de `list_expenses` falló con 404 porque la migración está pendiente. Las autenticadas requieren una sesión Google. |
+| HTTP contra desarrollo | 3 aprobadas tras aplicar la migración: las 2 públicas de IMP-02 y la denegación anónima de `list_expenses` (`42501`). Antes de aplicarla respondía 404. Las autenticadas requieren una sesión Google. |
 | Calidad | ESLint y build de Vite aprobados. Sin dependencias nuevas. |
 
 ## Capturas de Chromium
@@ -70,6 +79,6 @@ Pasos para aplicarla:
 
 ## Pendientes
 
-- Aplicar la migración en `cifra-development`, verificar su historial y ejecutar las pruebas HTTP y `EXPLAIN` indicadas arriba.
+- Ejecutar las pruebas HTTP autenticadas y `EXPLAIN (ANALYZE, BUFFERS)` con datos de prueba representativos en `cifra-development`.
 - Hacer el recorrido real Google → Crear gasto → Historial → Editar → Eliminar con datos de prueba, que quedó pendiente de IMP-02. Requiere que una persona inicie sesión con la cuenta Google autorizada en `http://localhost:5173`. Para la prueba HTTP autenticada, el JWT se copia desde una sesión dedicada siguiendo la [guía de IMP-01](../imp-01.md).
 - Comprobar en un teléfono físico la apertura de la ficha y el selector nativo de período y orden. El control de fecha nativo muestra el formato regional del navegador.
