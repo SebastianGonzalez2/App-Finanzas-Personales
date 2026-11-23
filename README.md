@@ -6,6 +6,8 @@ Aplicación web personal para **registrar, organizar y analizar gastos**, pensad
 
 **Especificación detallada:** [Requisitos funcionales V1](docs/requisitos-v1.md) (requisitos numerados, criterios de aceptación y decisiones pendientes).
 
+La [arquitectura técnica propuesta para la V1](docs/arquitectura-v1.md) está disponible para aprobación.
+
 ## Versión 1 — Alcance funcional
 
 ### 1. Registro de gastos
