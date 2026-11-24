@@ -53,10 +53,12 @@ function NavigationDialog({ onClose }) {
 
 function NewExpenseLink() {
   const location = useLocation();
-  return <Link to="/gastos/nuevo" state={{ from: location.pathname }} className="btn primary"><Icon name="plus" />Nuevo gasto</Link>;
+  // Estadísticas conserva su consulta (período, filtros y ventana anual) al volver del registro.
+  const from = location.pathname === '/estadisticas' ? location.pathname + location.search : location.pathname;
+  return <Link to="/gastos/nuevo" state={{ from }} className="btn primary"><Icon name="plus" />Nuevo gasto</Link>;
 }
 
-export function AppShell({ title, subtitle, today, children }) {
+export function AppShell({ title, subtitle, actions, today, children }) {
   const [compact, setCompact] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [tablet, setTablet] = useState(() => window.matchMedia('(max-width: 860px)').matches);
@@ -127,7 +129,11 @@ export function AppShell({ title, subtitle, today, children }) {
         <main className="page" id="contenido" tabIndex={-1}>
           <header className="page-head">
             <div><h1>{title}</h1>{subtitle && <p className="page-description">{subtitle}</p>}</div>
-            {!expense && <div className="desktop-action"><NewExpenseLink /></div>}
+            {/* Only pages with header controls (Estadísticas) get the wrapper; the rest keep IMP-01's layout. */}
+            {actions ? <div className="page-actions">
+              {actions}
+              {!expense && <div className="desktop-action"><NewExpenseLink /></div>}
+            </div> : !expense && <div className="desktop-action"><NewExpenseLink /></div>}
           </header>
           {children}
         </main>

@@ -54,10 +54,20 @@ export async function databaseSetupSql() {
   ];
 }
 
-export async function createTestDatabase() {
+// Freezes the civil date of private.today() (ARCH-01 §14: congelar el reloj en
+// pruebas). CREATE OR REPLACE keeps the owner, ACL and function attributes.
+export function freezeTodaySql(today) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) throw new Error('Invalid frozen date');
+  return `create or replace function private.today()
+    returns date language sql stable parallel safe security invoker set search_path = ''
+    as $$ select date '${today}' $$;`;
+}
+
+export async function createTestDatabase({ today } = {}) {
   const db = await PGlite.create();
   try {
     for (const sql of await databaseSetupSql()) await db.exec(sql);
+    if (today) await db.exec(freezeTodaySql(today));
     return db;
   } catch (error) {
     await db.close();

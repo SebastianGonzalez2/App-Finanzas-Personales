@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Link, Navigate, Route, Routes, ScrollRestoration, useLocation } from 'react-router';
 import { AppShell } from '../components/AppShell.jsx';
 import { AccessState } from '../features/auth/AccessState.jsx';
@@ -7,8 +8,13 @@ import { AccountMenu } from '../features/settings/AccountMenu.jsx';
 import { CatalogPage } from '../features/catalog/CatalogPage.jsx';
 import { ExpensePage } from '../features/expenses/ExpensePage.jsx';
 import { HistoryPage } from '../features/history/HistoryPage.jsx';
+import { StatsSubtitle } from '../features/stats/StatsSubtitle.jsx';
+import { CurrencySelect } from '../components/CurrencySelect.jsx';
 import { account, categories, sections } from './navigation.js';
 import { useAccess } from './sessionContext.js';
+
+// Estadísticas (y Recharts, en su propio chunk) solo se descargan al abrir la sección.
+const StatsPage = lazy(() => import('../features/stats/StatsPage.jsx').then((module) => ({ default: module.StatsPage })));
 
 function PrivatePage({ title, subtitle, page }) {
   const access = useAccess();
@@ -17,7 +23,9 @@ function PrivatePage({ title, subtitle, page }) {
   if (access.status !== 'allowed') return <AccessState {...access} />;
 
   return (
-    <AppShell key={access.session.user.id} title={title} subtitle={subtitle} today={access.preferences.today}>
+    <AppShell key={access.session.user.id} title={title} today={access.preferences.today}
+      subtitle={page === 'stats' ? <StatsSubtitle today={access.preferences.today} /> : subtitle}
+      actions={page === 'stats' && <CurrencySelect current={access.preferences.currency} />}>
       {location.state?.notice?.owner === access.session.user.id && <div className="feedback" role="status">
         {location.state.notice.text}{location.state.notice.id && <Link className="notice-link"
           to={'/gastos/' + location.state.notice.id + '/editar'} state={{ from: location.pathname }}>Ver gasto</Link>}
@@ -25,6 +33,8 @@ function PrivatePage({ title, subtitle, page }) {
       {page === 'account' ? <AccountMenu session={access.session} /> : page === 'catalog' ? <CatalogPage />
         : page === 'expense' ? <ExpensePage preferences={access.preferences} />
         : page === 'history' ? <HistoryPage today={access.preferences.today} />
+        : page === 'stats' ? <Suspense fallback={<p className="query-state" role="status">Cargando estadísticas…</p>}>
+          <StatsPage preferences={access.preferences} /></Suspense>
         : <p className="page-note">Esta sección estará disponible más adelante.</p>}
     </AppShell>
   );
@@ -46,6 +56,7 @@ export function AppRoutes() {
       {sections.map(({ path, title }) => (
         <Route key={path} path={path} element={path === '/historial'
           ? <PrivatePage title={title} subtitle="Consulta y edición de gastos registrados." page="history" />
+          : path === '/estadisticas' ? <PrivatePage title={title} page="stats" />
           : <PrivatePage title={title} />} />
       ))}
       <Route path={categories.path} element={<PrivatePage title={categories.title} page="catalog" />} />

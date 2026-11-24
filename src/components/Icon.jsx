@@ -22,6 +22,8 @@ const paths = {
   search: 'M16 16l5 5 M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z',
   trash: 'M4 7h16 M9 7V4h6v3 M6 7l1 14h10l1-14',
   back: 'M15 5l-7 7 7 7',
+  forward: 'M9 5l7 7-7 7',
+  star: 'M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z',
 };
 
 export function Icon({ name }) {

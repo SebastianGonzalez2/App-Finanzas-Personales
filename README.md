@@ -2,7 +2,7 @@
 
 Aplicación web personal para **registrar, organizar y analizar gastos**, pensada inicialmente para dos usuarios.
 
-> **Estado:** IMP-03 agrega el historial con búsqueda, filtros, orden y paginación por cursor sobre el registro de IMP-02. Consultá el [informe de IMP-03](docs/imp-03/README.md) y el [de IMP-02](docs/imp-02/README.md).
+> **Estado:** IMP-04 agrega Estadísticas: seis paneles calculados en PostgreSQL para una sola moneda, la evolución anual por categoría con su propio selector de años, el selector de moneda compartido y los favoritos. Consultá el [informe de IMP-04](docs/imp-04/README.md), el [de IMP-03](docs/imp-03/README.md) y el [de IMP-02](docs/imp-02/README.md).
 
 ## Desarrollo
 
