@@ -218,15 +218,15 @@ Estado final de la cuenta: 0 gastos, 0 límites, 0 favoritos, moneda UYU. `app.e
 
 Estado al 24/11/2026, 18:40 UTC, con autorización del titular:
 
-- El correo de la segunda persona está en  (solo en la base de desarrollo, no en el repositorio).
-- **Altas abiertas temporalmente** («Allow new users to sign up»). Siguen protegidas por el hook *Before User Created*: solo admite una identidad **Google** cuyo correo esté en esa lista; cualquier otra cuenta recibe . Email y los demás proveedores están desactivados.
+- El correo de la segunda persona está en `private.bootstrap_emails` (solo en la base de desarrollo, no en el repositorio).
+- **Altas abiertas temporalmente** («Allow new users to sign up»). Siguen protegidas por el hook *Before User Created*: solo admite una identidad **Google** cuyo correo esté en esa lista; cualquier otra cuenta recibe `SIGNUP_NOT_ALLOWED`. Email y los demás proveedores están desactivados.
 - La segunda persona todavía no inició sesión: no tiene usuario ni plaza.
 
 Pasos pendientes:
 
-1. **Google Auth Platform** (Google Cloud del cliente OAuth de desarrollo) → *Audience*: si el estado de publicación es *Testing*, agregar el correo de la segunda persona en *Test users*. Con *In production* no hace falta (los permisos de Cifra son solo , correo y perfil).
-2. La segunda persona entra en  con  en este equipo (desarrollo solo acepta ese origen) y usa «Continuar con Google». Verá «Esta cuenta no tiene acceso»: es lo esperado hasta asignar la plaza. En ese momento se prueba la identidad existente sin plaza (RPC → 403).
-3. Ejecutar [](../../supabase/audit/assign-seat-2.sql) con su correo (verifica identidad Google y correo confirmado, asigna la plaza 2, siembra su catálogo y vacía la lista; probado en [](../../supabase/tests/database/seat-assignment.test.js)).
+1. **Google Auth Platform** (Google Cloud del cliente OAuth de desarrollo) → *Audience*: si el estado de publicación es *Testing*, agregar el correo de la segunda persona en *Test users*. Con *In production* no hace falta (los permisos de Cifra son solo `openid`, correo y perfil).
+2. La segunda persona entra en `http://localhost:5173` con `npm run dev` en este equipo (desarrollo solo acepta ese origen) y usa «Continuar con Google». Verá «Esta cuenta no tiene acceso»: es lo esperado hasta asignar la plaza. En ese momento se prueba la identidad existente sin plaza (RPC → 403).
+3. Ejecutar [`assign-seat-2.sql`](../../supabase/audit/assign-seat-2.sql) con su correo (verifica identidad Google y correo confirmado, asigna la plaza 2, siembra su catálogo y vacía la lista; probado en [`seat-assignment.test.js`](../../supabase/tests/database/seat-assignment.test.js)).
 4. Desactivar «Allow new users to sign up».
 5. Repetir el arnés con cada sesión y las pruebas cruzadas A/B (§6).
 
