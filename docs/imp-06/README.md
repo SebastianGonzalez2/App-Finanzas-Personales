@@ -214,6 +214,22 @@ Estado final de la cuenta: 0 gastos, 0 límites, 0 favoritos, moneda UYU. `app.e
 
 **Sesiones (§6), con la sesión real de la primera plaza:** se retuvo en memoria de una pestaña el access token vigente (sin mostrarlo ni guardarlo). Antes del cierre: lectura y escritura 200. Tras «Mi cuenta → Cerrar sesión» en otra pestaña, ese mismo JWT —criptográficamente válido, a 31 minutos de vencer— recibió **403 ACCESS_DENIED** en `get_preferences`, `set_currency` y `get_stats` (la sesión exacta dejó de existir en `auth.sessions`). A las 18:03:42 UTC, 44 s después de su vencimiento natural, recibió **401 `PGRST303 JWT expired`** en lectura y escritura. Luego se borró de la memoria. Queda pendiente la parte de ARCH-01 §14.3 que exige **una segunda sesión de la misma persona** que siga funcionando tras cerrar la primera: necesita otro inicio de sesión con Google (§10).
 
+### Alta de la plaza 2 en desarrollo (en curso)
+
+Estado al 24/11/2026, 18:40 UTC, con autorización del titular:
+
+- El correo de la segunda persona está en  (solo en la base de desarrollo, no en el repositorio).
+- **Altas abiertas temporalmente** («Allow new users to sign up»). Siguen protegidas por el hook *Before User Created*: solo admite una identidad **Google** cuyo correo esté en esa lista; cualquier otra cuenta recibe . Email y los demás proveedores están desactivados.
+- La segunda persona todavía no inició sesión: no tiene usuario ni plaza.
+
+Pasos pendientes:
+
+1. **Google Auth Platform** (Google Cloud del cliente OAuth de desarrollo) → *Audience*: si el estado de publicación es *Testing*, agregar el correo de la segunda persona en *Test users*. Con *In production* no hace falta (los permisos de Cifra son solo , correo y perfil).
+2. La segunda persona entra en  con  en este equipo (desarrollo solo acepta ese origen) y usa «Continuar con Google». Verá «Esta cuenta no tiene acceso»: es lo esperado hasta asignar la plaza. En ese momento se prueba la identidad existente sin plaza (RPC → 403).
+3. Ejecutar [](../../supabase/audit/assign-seat-2.sql) con su correo (verifica identidad Google y correo confirmado, asigna la plaza 2, siembra su catálogo y vacía la lista; probado en [](../../supabase/tests/database/seat-assignment.test.js)).
+4. Desactivar «Allow new users to sign up».
+5. Repetir el arnés con cada sesión y las pruebas cruzadas A/B (§6).
+
 ## 10. Preparación para producción
 
 ### Estado verificado
@@ -229,7 +245,7 @@ Cada paso de Supabase y Vercel lo ejecuta el titular o se ejecuta con su autoriz
 
 **A. Bloqueantes previos**
 - [x] D-01: proveedor Email deshabilitado en `cifra-development`; `npm run test:integration` confirma Google como único proveedor.
-- [ ] Habilitar la segunda plaza en desarrollo y completar el aislamiento A/B real (`CIFRA_TEST_ACCESS_TOKEN_B` o el arnés en el navegador con cada perfil).
+- [ ] Completar el alta de la plaza 2 en desarrollo (§9, pasos 1 a 4; **las altas quedaron abiertas y filtradas por el hook hasta entonces**) y el aislamiento A/B real.
 - [ ] Decidir plan de Supabase para producción: Free (pausa por inactividad, copias externas propias) o Pro (copias diarias, sin pausa). ARCH-01 §2.
 - [ ] Verificar en un teléfono físico (Android y, si es posible, iPhone): OAuth, teclado decimal, selectores nativos de fecha y período, toque en gráficos.
 
