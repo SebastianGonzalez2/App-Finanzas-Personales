@@ -6,7 +6,8 @@ test.use({ locale: 'es-UY' });
 const button = (scope, name) => scope.getByRole('button', { name, exact: true });
 const rows = (page) => page.locator('.expense-table tbody tr');
 const titles = (page) => page.locator('.expense-table tbody .row-link');
-const listCalls = (ledger) => ledger.calls.filter((call) => call.name === 'list_expenses');
+// Pages of the history (30 rows); the Resumen's short recent list (5 rows) is not part of it.
+const listCalls = (ledger) => ledger.calls.filter((call) => call.name === 'list_expenses' && call.args.limit === 30);
 
 async function catalog(ledger) {
   const { categories, subcategories } = await ledger.rpc('get_catalog');
@@ -41,7 +42,9 @@ async function seedMany(ledger, count, category_id) {
 }
 
 test('historial vacío ofrece el primer alta y el gasto nuevo aparece al volver', async ({ page, ledger }) => {
-  expect(ledger.calls).toEqual([]);
+  // Entrar abre el Resumen (IMP-05), que solo lee: ninguna escritura antes de usar el Historial.
+  const reads = ['get_stats', 'get_budgets', 'list_expenses'];
+  expect(ledger.calls.filter((call) => !reads.includes(call.name))).toEqual([]);
   await page.goto('/historial');
   await expect(page.getByRole('heading', { name: 'Todavía no registraste gastos' })).toBeVisible();
   await expect(button(page, 'Limpiar')).toBeDisabled();

@@ -30,6 +30,9 @@ const messages = {
   INVALID_YEAR: [null, 'El año elegido no es válido.'],
   INVALID_PANEL: [null, 'Ese panel no existe.'],
   INVALID_FAVORITE: [null, 'No pudimos actualizar el favorito.'],
+  INVALID_MONTHLY_LIMIT: ['monthly_limit', 'Ingresá un límite mayor que cero, con hasta 12 enteros y 2 decimales.'],
+  DUPLICATE_BUDGET: ['category_id', 'Esta categoría ya tiene un límite en esa moneda.'],
+  BUDGET_NOT_FOUND: [null, 'Este límite ya no existe.'],
 };
 
 export function useFinance() {
@@ -103,6 +106,16 @@ export function useExpenseList(api, args) {
     getNextPageParam: (page) => page.next_cursor ?? undefined,
     placeholderData: keepPreviousData,
     staleTime: 30_000, retry: false, networkMode: 'always',
+  });
+}
+
+// Gastos recientes del Resumen: una sola página corta de list_expenses, sin descargar el historial.
+// La clave comparte el prefijo [uuid, 'expenses'] para que toda mutación de gastos la invalide.
+export function useRecentExpenses(api, args, enabled = true) {
+  return useQuery({
+    queryKey: [api.owner, 'expenses', args],
+    queryFn: ({ signal }) => api.rpc('list_expenses', args, signal),
+    enabled, staleTime: 30_000, retry: false, networkMode: 'always',
   });
 }
 

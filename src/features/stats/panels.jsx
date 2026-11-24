@@ -36,7 +36,7 @@ export function StatsPanel({ panel, favorite, tools, busy, children }) {
 }
 
 // Carga inicial con altura reservada, error recuperable y «Actualizando» al releer la misma clave.
-export function PanelBody({ query, height = 160, onClear, children }) {
+export function PanelBody({ query, height = 160, onClear, loading = 'Cargando estadísticas…', children }) {
   if (query.isError) {
     const invalid = query.error.status === 404 || query.error.status === 422;
     return (
@@ -50,7 +50,7 @@ export function PanelBody({ query, height = 160, onClear, children }) {
     );
   }
   if (!query.data) {
-    return <div className="panel-skeleton" style={{ minHeight: height }} role="status"><span className="sr-only">Cargando estadísticas…</span></div>;
+    return <div className="panel-skeleton" style={{ minHeight: height }} role="status"><span className="sr-only">{loading}</span></div>;
   }
   return <div className={query.isFetching ? 'panel-data updating' : 'panel-data'}>
     {query.isFetching && <span className="sr-only" role="status">Actualizando</span>}
@@ -78,7 +78,7 @@ export function ChartTable({ caption, headers, rows, numeric = [] }) {
   );
 }
 
-function HistoryLink({ filters, back, children, label }) {
+export function HistoryLink({ filters, back, children, label }) {
   return <Link className="history-link" to={historyHref(filters, back)} aria-label={label}>{children}</Link>;
 }
 
@@ -187,7 +187,7 @@ export function MonthlyContent({ api, data, args, today, back }) {
   );
 }
 
-function CategoryRow({ name, archived, total, share, count: amount, currency, children }) {
+export function CategoryRow({ name, archived, total, share, count: amount, currency, children }) {
   return <>
     <span className="cat-name">{name}{archived && <small className="archived-mark">Archivada</small>}<small className="muted-text"> · {count(amount)}</small></span>
     <span className="cat-amount"><span className="money">{money(total)}</span><small className="muted-text"> · {percentage(share)}</small>

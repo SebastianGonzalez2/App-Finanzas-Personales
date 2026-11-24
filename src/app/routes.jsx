@@ -5,9 +5,12 @@ import { AccessState } from '../features/auth/AccessState.jsx';
 import { CallbackPage } from '../features/auth/CallbackPage.jsx';
 import { LoginPage } from '../features/auth/LoginPage.jsx';
 import { AccountMenu } from '../features/settings/AccountMenu.jsx';
+import { BudgetsPage } from '../features/budgets/BudgetsPage.jsx';
+import { monthTitle } from '../features/budgets/budgets.js';
 import { CatalogPage } from '../features/catalog/CatalogPage.jsx';
 import { ExpensePage } from '../features/expenses/ExpensePage.jsx';
 import { HistoryPage } from '../features/history/HistoryPage.jsx';
+import { OverviewPage } from '../features/overview/OverviewPage.jsx';
 import { StatsSubtitle } from '../features/stats/StatsSubtitle.jsx';
 import { CurrencySelect } from '../components/CurrencySelect.jsx';
 import { account, categories, sections } from './navigation.js';
@@ -16,16 +19,23 @@ import { useAccess } from './sessionContext.js';
 // Estadísticas (y Recharts, en su propio chunk) solo se descargan al abrir la sección.
 const StatsPage = lazy(() => import('../features/stats/StatsPage.jsx').then((module) => ({ default: module.StatsPage })));
 
+// Pantallas con la moneda de consulta compartida (RF-021) en la cabecera.
+const currencyPages = new Set(['overview', 'stats', 'budgets']);
+
 function PrivatePage({ title, subtitle, page }) {
   const access = useAccess();
   const location = useLocation();
   if (access.status === 'signedOut') return <Navigate to="/login" replace />;
   if (access.status !== 'allowed') return <AccessState {...access} />;
 
+  const { today, currency } = access.preferences;
+  const heading = page === 'stats' ? <StatsSubtitle today={today} />
+    : page === 'overview' ? monthTitle(today)
+    : page === 'budgets' ? 'Límites mensuales por categoría · ' + monthTitle(today)
+    : subtitle;
   return (
-    <AppShell key={access.session.user.id} title={title} today={access.preferences.today}
-      subtitle={page === 'stats' ? <StatsSubtitle today={access.preferences.today} /> : subtitle}
-      actions={page === 'stats' && <CurrencySelect current={access.preferences.currency} />}>
+    <AppShell key={access.session.user.id} title={title} today={today} subtitle={heading}
+      actions={currencyPages.has(page) && <CurrencySelect current={currency} />}>
       {location.state?.notice?.owner === access.session.user.id && <div className="feedback" role="status">
         {location.state.notice.text}{location.state.notice.id && <Link className="notice-link"
           to={'/gastos/' + location.state.notice.id + '/editar'} state={{ from: location.pathname }}>Ver gasto</Link>}
@@ -33,6 +43,8 @@ function PrivatePage({ title, subtitle, page }) {
       {page === 'account' ? <AccountMenu session={access.session} /> : page === 'catalog' ? <CatalogPage />
         : page === 'expense' ? <ExpensePage preferences={access.preferences} />
         : page === 'history' ? <HistoryPage today={access.preferences.today} />
+        : page === 'overview' ? <OverviewPage preferences={access.preferences} />
+        : page === 'budgets' ? <BudgetsPage preferences={access.preferences} />
         : page === 'stats' ? <Suspense fallback={<p className="query-state" role="status">Cargando estadísticas…</p>}>
           <StatsPage preferences={access.preferences} /></Suspense>
         : <p className="page-note">Esta sección estará disponible más adelante.</p>}
@@ -57,6 +69,8 @@ export function AppRoutes() {
         <Route key={path} path={path} element={path === '/historial'
           ? <PrivatePage title={title} subtitle="Consulta y edición de gastos registrados." page="history" />
           : path === '/estadisticas' ? <PrivatePage title={title} page="stats" />
+          : path === '/' ? <PrivatePage title={title} page="overview" />
+          : path === '/presupuestos' ? <PrivatePage title={title} page="budgets" />
           : <PrivatePage title={title} />} />
       ))}
       <Route path={categories.path} element={<PrivatePage title={categories.title} page="catalog" />} />
