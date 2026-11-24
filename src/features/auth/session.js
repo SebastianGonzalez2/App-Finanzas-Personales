@@ -44,6 +44,13 @@ export function accessStatus(status) {
   return 'failed';
 }
 
+export function isTransientAuthError(error) {
+  if (!error) return false;
+  if (error.name === 'AuthRetryableFetchError') return true;
+  if (typeof error.status === 'number') return error.status === 0 || error.status >= 500;
+  return error instanceof TypeError;
+}
+
 // ARCH-01 §9: «today» se vuelve a pedir al servidor al cambiar el día civil de Montevideo si la
 // aplicación sigue abierta. Milisegundos hasta la próxima medianoche de esa zona, más un margen
 // para no consultar antes de tiempo; el servidor sigue siendo la fuente de la fecha.

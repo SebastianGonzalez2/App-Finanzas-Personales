@@ -25,7 +25,8 @@ describe('vercel.json', () => {
   });
 
   it('los archivos estáticos no se reescriben: un asset ausente da 404 en lugar de HTML', () => {
-    for (const path of ['/assets/index-abc123.js', '/assets/no-existe.js', '/cifra.svg', '/index.html']) {
+    for (const path of ['/assets/index-abc123.js', '/assets/no-existe.js', '/cifra.svg', '/manifest.webmanifest',
+      '/icon-192.png', '/icon-512.png', '/index.html']) {
       expect(rewritten(path), path).toBe(false);
     }
   });
@@ -42,7 +43,22 @@ describe('vercel.json', () => {
 
   it('solo los assets con hash se guardan un año; el HTML se revalida en cada visita', () => {
     expect(headersFor('/assets/index-abc123.js')['Cache-Control']).toBe('public, max-age=31536000, immutable');
-    for (const path of ['/', '/index.html', '/historial', '/cifra.svg']) expect(headersFor(path)['Cache-Control'], path).toBeUndefined();
+    for (const path of ['/', '/index.html', '/historial', '/cifra.svg', '/manifest.webmanifest']) {
+      expect(headersFor(path)['Cache-Control'], path).toBeUndefined();
+    }
+  });
+
+  it('el manifiesto PWA declara start_url, scope e id estables en la raíz', () => {
+    const manifest = JSON.parse(readFileSync(new URL('../../public/manifest.webmanifest', import.meta.url), 'utf8'));
+    expect(manifest).toMatchObject({
+      id: '/',
+      name: 'Cifra',
+      short_name: 'Cifra',
+      start_url: '/',
+      scope: '/',
+      display: 'standalone',
+    });
+    expect(manifest.icons.map(({ sizes }) => sizes)).toEqual(expect.arrayContaining(['192x192', '512x512']));
   });
 
   it('todo lo publicado bajo /assets lleva hash en el nombre', () => {
