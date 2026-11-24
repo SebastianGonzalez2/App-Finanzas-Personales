@@ -1,0 +1,76 @@
+/*
+ * Estrella de «Mis favoritos»: port a CSS propio de la animación del botón «Favorite» (btn-30)
+ * de Amicro (src/components/AnimatedButton.tsx, caso `color-morph`, commit fa5f8ff de
+ * github.com/Subhan-code/Amicro--Micro-transitions-).
+ *
+ * El original cruza dos estrellas con <AnimatePresence mode="popLayout" initial={false}> de Motion:
+ * la que sale va a scale 0.5 y opacity 0, la que entra parte de scale 0.5 y opacity 0 y llega a 1,
+ * ambas con transition={{ type: "spring", stiffness: 600, damping: 28 }}. Aquí se conserva ese
+ * cruce y el resorte se expresa con linear(), igual que hace Motion al acelerar con WAAPI: un punto
+ * cada 10 ms de la solución analítica del resorte (masa 1, velocidad 0; amortiguamiento 0,5715,
+ * sobrepaso del 11,2 % a los 156 ms) durante los 451 ms que tarda en quedar en reposo según los
+ * umbrales de Motion. tests/unit/favorite-star.test.js recalcula la curva y la compara con esta.
+ *
+ * Cambios respecto al original: sin el texto «Favorite»; se dispara al marcar o desmarcar (no al
+ * pasar el puntero) y solo tras un clic en el botón; estrella de Cifra (Icon `star`, 17 px) en
+ * var(--muted) en reposo y rellena de amarillo (#facc15, el yellow-400 del original) al estar
+ * marcada; se mantiene el contenedor `.square.fav` de Cifra, sin el escalado del botón ni su fondo;
+ * sin animación con prefers-reduced-motion.
+ *
+ * MIT License
+ *
+ * Copyright (c) 2026 SYED  SUBHAN UDDIN
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+.fav {
+  --fav-star-on: #facc15;
+  --fav-spring: linear(0, 0.0286, 0.1029, 0.2077, 0.3295, 0.4574, 0.583, 0.7, 0.8042, 0.893, 0.9656, 1.0219,
+    1.0629, 1.0903, 1.1059, 1.1119, 1.1103, 1.103, 1.092, 1.0787, 1.0644, 1.0502, 1.0368, 1.0247, 1.0143,
+    1.0057, 0.999, 0.9939, 0.9905, 0.9884, 0.9875, 0.9875, 0.9882, 0.9893, 0.9908, 0.9924, 0.994, 0.9955,
+    0.9969, 0.9981, 0.9991, 0.9999, 1.0006, 1.001, 1);
+}
+.fav-star { position: relative; display: block; width: 17px; height: 17px; flex: none; }
+.fav-star-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: 50% 50%;
+}
+.fav-star-on { color: var(--fav-star-on); }
+.fav-star-on .ico path { fill: currentColor; }
+
+/* Reposo: solo se ve la estrella del estado actual (initial={false}: nada se anima al montar). */
+.fav-star-on,
+.fav[aria-pressed="true"] .fav-star-off { opacity: 0; transform: scale(.5); }
+.fav[aria-pressed="true"] .fav-star-on { opacity: 1; transform: none; }
+
+/* Tras un clic: la que sale y la que entra recorren el mismo resorte a la vez. */
+.fav[data-animated] .fav-star-layer {
+  transition-property: opacity, transform;
+  transition-duration: 451ms;
+  transition-timing-function: var(--fav-spring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fav[data-animated] .fav-star-layer { transition: none; }
+}

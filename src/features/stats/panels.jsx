@@ -6,18 +6,28 @@ import { categoryFilters, childFilters, historyHref, periodFilters } from './lin
 import { breakdownArgs, dayShort, isOpen, isPartial, monthLong, monthShort } from './query.js';
 import { useStats } from './stats.js';
 import { describeStats } from './summary.js';
+import './FavoriteStar.css';
 
 export const MonthlyChart = lazy(() => import('./charts.jsx').then((module) => ({ default: module.MonthlyChart })));
 
 const rangeDays = ({ from, to }) => `${dayShort(from)} – ${dayShort(to)}`;
 const mobile = () => window.matchMedia('(max-width: 620px)').matches;
 
+// Animación de la estrella adaptada del botón «Favorite» de Amicro (MIT); ver FavoriteStar.css.
 export function FavoriteButton({ title, pressed, pending, onToggle }) {
+  // Solo anima después de un clic en este botón: al cargar la pantalla, o si los favoritos cambian
+  // por otra vía, la estrella muestra su estado sin animación.
+  const [animated, setAnimated] = useState(false);
   return (
     <button type="button" className="square fav" aria-pressed={pressed} disabled={pending}
+      data-animated={animated || undefined}
       aria-label={pressed ? `Quitar «${title}» de Mis favoritos` : `Agregar «${title}» a Mis favoritos`}
-      title={pressed ? 'Quitar de Mis favoritos' : 'Agregar a Mis favoritos'} onClick={onToggle}>
-      <Icon name="star" />
+      title={pressed ? 'Quitar de Mis favoritos' : 'Agregar a Mis favoritos'}
+      onClick={() => { setAnimated(true); onToggle(); }}>
+      <span className="fav-star" aria-hidden="true">
+        <span className="fav-star-layer fav-star-off"><Icon name="star" /></span>
+        <span className="fav-star-layer fav-star-on"><Icon name="star" /></span>
+      </span>
     </button>
   );
 }

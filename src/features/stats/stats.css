@@ -39,8 +39,7 @@
 .fav { color: var(--muted); border-color: transparent; background: transparent; }
 .fav:hover { border-color: var(--border); }
 .fav .ico { width: 17px; height: 17px; }
-.fav[aria-pressed="true"] { color: var(--text); }
-.fav[aria-pressed="true"] .ico path { fill: currentColor; }
+/* Estados de la estrella (neutra / amarilla) y su animación: FavoriteStar.css. */
 
 .panel-skeleton {
   border-radius: 8px;
