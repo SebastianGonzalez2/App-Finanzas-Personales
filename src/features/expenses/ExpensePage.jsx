@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useBlocker, useLocation, useNavigate, useParams } from 'react-router';
+import { useToast } from '../../app/toastContext.js';
 import { Dialog } from '../../components/Dialog.jsx';
 import { Icon } from '../../components/Icon.jsx';
 import { QueryState } from '../../components/QueryState.jsx';
@@ -47,6 +48,7 @@ function ExpenseForm({ api, catalog, preferences, expense }) {
   const mounted = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const toast = useToast();
   // The history keeps its query string, so saving or deleting returns to the same consulta.
   const from = typeof location.state?.from === 'string' ? location.state.from : '';
   const origin = ['/', '/presupuestos', '/categorias', '/cuenta'].includes(from) ||
@@ -86,9 +88,11 @@ function ExpenseForm({ api, catalog, preferences, expense }) {
     finished.current = true;
     const deleted = action === 'delete';
     const text = deleted ? 'Gasto eliminado' : action === 'update' ? 'Cambios guardados' : 'Gasto guardado';
-    navigate(deleted && !origin.startsWith('/historial') ? '/historial' : origin, {
-      replace: true, state: { notice: { owner: api.owner, text, id: deleted ? null : draft.id } },
-    });
+    toast.success(
+      text,
+      deleted ? undefined : { action: { label: 'Ver gasto', to: '/gastos/' + draft.id + '/editar' } },
+    );
+    navigate(deleted && !origin.startsWith('/historial') ? '/historial' : origin, { replace: true });
   }
   function showFieldErrors(next) {
     setErrors(next);

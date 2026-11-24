@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { useToast } from '../../app/toastContext.js';
 import { Icon } from '../../components/Icon.jsx';
 import { QueryState } from '../../components/QueryState.jsx';
 import { useCatalog, useExpense } from '../../lib/finance.js';
@@ -11,6 +12,7 @@ export function ExpenseDetail({ api, id, back }) {
   const expense = useExpense(api, id);
   const catalog = useCatalog(api);
   const navigate = useNavigate();
+  const toast = useToast();
   const [confirm, setConfirm] = useState(false);
   const backLink = <Link className="btn ghost" to={back}><Icon name="back" />Volver al historial</Link>;
   if (expense.isError || !expense.data) return <div className="history-detail-wrap">
@@ -44,7 +46,10 @@ export function ExpenseDetail({ api, id, back }) {
         </Link>
       </div>
       {confirm && <DeleteExpenseDialog api={api} expense={row} onClose={() => setConfirm(false)}
-        onDeleted={() => navigate(back, { replace: true, state: { notice: { owner: api.owner, text: 'Gasto eliminado' } } })} />}
+        onDeleted={() => {
+          toast.success('Gasto eliminado');
+          navigate(back, { replace: true });
+        }} />}
     </section>
   );
 }

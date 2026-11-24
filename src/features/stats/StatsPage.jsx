@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router';
+import { useToast } from '../../app/toastContext.js';
 import { useCatalog, useFinance } from '../../lib/finance.js';
 import { usePreferenceActions } from '../settings/preferences.js';
 import { AnnualPanelBody, AnnualTools } from './AnnualPanel.jsx';
@@ -35,8 +36,8 @@ export function StatsPage({ preferences }) {
   // Download the chart chunk alongside the first get_stats call instead of after it.
   useEffect(() => { void import('./charts.jsx'); }, []);
   const { favorite } = usePreferenceActions();
+  const toast = useToast();
   const [pendingFavorites, setPendingFavorites] = useState(() => new Set());
-  const [favoriteError, setFavoriteError] = useState('');
 
   const visible = query.view === 'favoritos' ? PANELS.filter((panel) => favorites.includes(panel.id)) : PANELS;
   const args = useMemo(() => statsArgs(query, currency), [query, currency]);
@@ -51,10 +52,9 @@ export function StatsPage({ preferences }) {
 
   function toggleFavorite(panel) {
     const enabled = !favorites.includes(panel.id);
-    setFavoriteError('');
     setPendingFavorites((current) => new Set(current).add(panel.id));
     favorite.mutate({ panel: panel.id, enabled }, {
-      onError: () => setFavoriteError(`No pudimos actualizar «${panel.title}» en Mis favoritos.`),
+      onError: () => toast.error(`No pudimos actualizar «${panel.title}» en Mis favoritos.`),
       onSettled: () => setPendingFavorites((current) => {
         const next = new Set(current);
         next.delete(panel.id);
@@ -82,7 +82,6 @@ export function StatsPage({ preferences }) {
       <StatsFilters query={query} today={today} catalog={catalog.data} onChange={update} />
       <div className="select-line">
         <ViewTabs view={query.view} count={favorites.length} onChange={(view) => update({ view })} />
-        {favoriteError && <p className="field-error" role="alert">{favoriteError}</p>}
       </div>
       {visible.length === 0 ? (
         <div className="panel pad stats-empty" role="status">

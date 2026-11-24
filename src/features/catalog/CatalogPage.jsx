@@ -15,7 +15,6 @@ export function CatalogPage() {
   const [archived, setArchived] = useState(false);
   const [expanded, setExpanded] = useState(null);
   const [editor, setEditor] = useState(null);
-  const [notice, setNotice] = useState('');
   if (!query.data) return <QueryState query={query} loading="Cargando categorías…" />;
   const { categories, subcategories } = query.data;
   const groups = categories.map((parent) => {
@@ -32,7 +31,6 @@ export function CatalogPage() {
         </div>
         <button type="button" className="btn ghost" onClick={() => setEditor({})}><Icon name="plus" />Crear categoría</button>
       </div>
-      {notice && <p className="feedback" role="status">{notice}</p>}
       {query.isRefetchError && <QueryState query={query} />}
       {groups.length === 0 ? <p className="query-state">{archived ? 'No tenés categorías archivadas.' : 'No tenés categorías activas.'}</p>
         : <ul className="category-tree">{groups.map(({ parent, children }) => (
@@ -59,8 +57,7 @@ export function CatalogPage() {
           </li>
         ))}</ul>}
       {editor && <CatalogEditor {...editor} api={api} catalog={query.data} side onClose={() => setEditor(null)}
-        onSaved={(entry) => {
-          setNotice('Se guardaron los cambios en ' + entry.name + '.');
+        onSaved={() => {
           setEditor(null);
         }} />}
     </section>

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
+import { useToast } from '../../app/toastContext.js';
 import { Icon } from '../../components/Icon.jsx';
 import { useCatalog, useExpenseList, useFinance } from '../../lib/finance.js';
 import { DeleteExpenseDialog } from './DeleteExpenseDialog.jsx';
@@ -36,8 +37,7 @@ function Empty({ filtered, onClear }) {
 
 function HistoryList({ api, today }) {
   const [params, setParams] = useSearchParams();
-  const location = useLocation();
-  const navigate = useNavigate();
+  const toast = useToast();
   const search = params.toString();
   const query = useMemo(() => readQuery(new URLSearchParams(search)), [search]);
   const args = useMemo(() => listArgs(query), [query]);
@@ -123,9 +123,7 @@ function HistoryList({ api, today }) {
       {removing && <DeleteExpenseDialog api={api} expense={removing} onClose={() => setRemoving(null)}
         onDeleted={() => {
           setRemoving(null);
-          navigate({ pathname: location.pathname, search: location.search }, {
-            replace: true, state: { notice: { owner: api.owner, text: 'Gasto eliminado' } },
-          });
+          toast.success('Gasto eliminado');
         }} />}
     </>
   );

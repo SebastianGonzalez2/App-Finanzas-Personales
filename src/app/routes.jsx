@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
-import { Link, Navigate, Route, Routes, ScrollRestoration, useLocation } from 'react-router';
+import { Navigate, Route, Routes, ScrollRestoration } from 'react-router';
 import { AppShell } from '../components/AppShell.jsx';
+import { ToastViewport } from '../components/ToastViewport.jsx';
 import { AccessState } from '../features/auth/AccessState.jsx';
 import { CallbackPage } from '../features/auth/CallbackPage.jsx';
 import { LoginPage } from '../features/auth/LoginPage.jsx';
@@ -24,7 +25,6 @@ const currencyPages = new Set(['overview', 'stats', 'budgets']);
 
 function PrivatePage({ title, subtitle, page }) {
   const access = useAccess();
-  const location = useLocation();
   if (access.status === 'signedOut') return <Navigate to="/login" replace />;
   if (access.status !== 'allowed') return <AccessState {...access} />;
 
@@ -36,10 +36,6 @@ function PrivatePage({ title, subtitle, page }) {
   return (
     <AppShell key={access.session.user.id} title={title} today={today} subtitle={heading}
       actions={currencyPages.has(page) && <CurrencySelect current={currency} />}>
-      {location.state?.notice?.owner === access.session.user.id && <div className="feedback" role="status">
-        {location.state.notice.text}{location.state.notice.id && <Link className="notice-link"
-          to={'/gastos/' + location.state.notice.id + '/editar'} state={{ from: location.pathname }}>Ver gasto</Link>}
-      </div>}
       {page === 'account' ? <AccountMenu session={access.session} /> : page === 'catalog' ? <CatalogPage />
         : page === 'expense' ? <ExpensePage preferences={access.preferences} />
         : page === 'history' ? <HistoryPage today={access.preferences.today} />
@@ -62,6 +58,7 @@ export function AppRoutes() {
   return (
     <>
     <ScrollRestoration getKey={scrollKey} />
+    <ToastViewport />
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<CallbackPage />} />
