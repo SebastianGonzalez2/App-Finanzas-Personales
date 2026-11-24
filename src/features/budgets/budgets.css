@@ -223,5 +223,5 @@
   .hero-value[data-size="xl"] { font-size: 36px; }
   .hero-value[data-size="xxl"] { font-size: 28px; }
   .highlight .figure[data-size], .budget-feature .figure[data-size] { font-size: 26px; }
-  .highlight .figure[data-size="xxl"], .budget-feature .figure[data-size="xxl"] { font-size: 21px; }
+  .highlight .figure[data-size="xxl"], .budget-feature .figure[data-size="xxl"] { font-size: 18px; }
 }

@@ -150,11 +150,14 @@ for (const amount of ['1234567.89', '12345678.90', '999999999999.99']) {
     await page.setViewportSize({ width: 360, height: 780 });
     const whole = (locator) => locator.evaluate((node) => {
       const panel = node.closest('.panel').getBoundingClientRect();
-      const rects = [...node.getClientRects()];
+      const range = document.createRange();
+      range.selectNodeContents([...node.childNodes].find((child) => child.nodeType === Node.TEXT_NODE && child.textContent.trim()) ?? node);
+      const rects = [...range.getClientRects()].filter((rect) => rect.width > 0);
       return { lines: rects.length, inside: rects.every((rect) => rect.left >= panel.left && rect.right <= panel.right) };
     });
     await page.goto('/');
     await expect(whole(page.locator('.hero-value .history-link'))).resolves.toEqual({ lines: 1, inside: true });
+    await expect(whole(page.locator('.budget-feature .figure'))).resolves.toEqual({ lines: 1, inside: true });
     await page.goto('/estadisticas');
     for (const link of await page.locator('.metrics .history-link').all()) {
       await expect(whole(link)).resolves.toEqual({ lines: 1, inside: true });
