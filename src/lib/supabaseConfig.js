@@ -15,3 +15,16 @@ export function validateSupabaseConfig(rawUrl, key) {
     return null;
   }
 }
+
+// Proyecto Supabase de desarrollo y pruebas (cifra-development). Producción usa otro proyecto.
+export const DEVELOPMENT_PROJECT_REF = 'ljbrukrakumuatjnwxwd';
+
+// Comprobación del build en Vercel (VERCEL_ENV = production | preview | development).
+export function deploymentProblem(vercelEnv, config) {
+  if (!vercelEnv) return null;
+  if (!config) return 'Faltan VITE_SUPABASE_URL o VITE_SUPABASE_PUBLISHABLE_KEY válidas para este entorno de Vercel.';
+  if (vercelEnv === 'production' && new URL(config.url).hostname.startsWith(DEVELOPMENT_PROJECT_REF + '.')) {
+    return 'Producción no puede usar el proyecto Supabase de desarrollo.';
+  }
+  return null;
+}
