@@ -321,7 +321,7 @@ Corrida final del 24/11/2026 sobre `claude/IMP-06`:
 | --- | --- | --- |
 | ESLint | Aprobado | Aprobado |
 | Unitarias · `npm test` | 88 | **102 aprobadas** (+14: renovación diaria, despliegue, formato exacto) |
-| SQL · `npm run test:db` | 55 | **58 aprobadas** (+3: coherencia, zona horaria, volumen) |
+| SQL · `npm run test:db` | 55 | **60 aprobadas** (+5: coherencia, zona horaria, volumen y dos del script de la plaza 2) |
 | Build · `npm run build` | Aprobado | Aprobado |
 | E2E · `npm run test:e2e` | 60 (Chromium) | **90 aprobadas, 1 omitida** (Chromium: 60 previas + 3 de sesión + 1 de rendimiento + 13 de auditoría visual, teclado, importes y acceso; WebKit: las mismas 13 de auditoría. La omitida es la medición con CDP en WebKit, que no la admite) |
 | Responsive | — | Acceso y 14 combinaciones (7 anchos × 2 motores) sin desbordes, áreas táctiles ≥ 44 px, sin errores de consola; foco visible con Tab en 6 pantallas a 375 y 1440 px |
