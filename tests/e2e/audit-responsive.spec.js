@@ -205,3 +205,19 @@ for (const width of [375, 1440]) {
     expect(missing).toEqual([]);
   });
 }
+
+// Pantalla de acceso (sin sesión) en los mismos anchos y motores.
+test('login sin sesión: sin desbordes y acción principal de 44 px en todos los anchos', async ({ browser }) => {
+  const { mockSupabase } = await import('./access-fixture.js');
+  for (const width of WIDTHS) {
+    const page = await browser.newPage({ viewport: { width, height: HEIGHT[width] }, locale: 'es-UY' });
+    await mockSupabase(page);
+    await page.goto('/login');
+    const button = page.getByRole('button', { name: 'Continuar con Google' });
+    await expect(button).toBeVisible();
+    expect(await page.evaluate(overflow), `${width}px`).toMatchObject({ page: 0 });
+    const box = await button.boundingBox();
+    expect(box.height, `${width}px alto del botón`).toBeGreaterThanOrEqual(44);
+    await page.close();
+  }
+});
