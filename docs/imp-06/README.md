@@ -2,7 +2,7 @@
 
 Última etapa de implementación de la V1. No agrega funcionalidades, no cambia la arquitectura aprobada ([ARCH-01](../arquitectura-v1.md)) ni el diseño de [UI-01](../design/ui-01/README.md). Se auditó la aplicación de forma independiente de las pruebas previas, se corrigieron los defectos reproducibles y se preparó el lanzamiento en Vercel sin tocar producción.
 
-**Veredicto: NO-GO condicionado** para publicar hoy. El código está listo: no hay defectos abiertos en la aplicación. Faltan tres condiciones operativas, todas de configuración o con intervención del titular (§10). Cuando se cumplan, el veredicto pasa a **GO**.
+**Veredicto: NO-GO condicionado** para publicar hoy. No quedan defectos abiertos: el único P1 (D-01) se corrigió en la configuración de desarrollo con autorización del titular. Faltan condiciones operativas que requieren al titular (§10): aislamiento con las dos plazas reales, teléfono físico y la creación y verificación de Supabase y Vercel de producción. Cuando se cumplan, el veredicto pasa a **GO**.
 
 ## 1. Estado inicial
 
@@ -33,7 +33,7 @@ Pendientes heredados de IMP-01 a IMP-05: pruebas HTTP autenticadas, aislamiento 
 
 | ID | Gravedad | Área | Defecto | Estado |
 | --- | --- | --- | --- | --- |
-| D-01 | **P1** | Seguridad · configuración alojada | En `cifra-development` el proveedor **Email** de Supabase Auth está habilitado (`external.email = true`, `mailer_autoconfirm = true`). Con las altas cerradas no se crean cuentas, pero una cuenta existente podría entrar por enlace mágico o recuperación por correo sin pasar por Google. Contradice RF-001, D-05 e [IMP-01](../imp-01.md) §1. No se envió ningún correo para explotarlo. | **Abierto · requiere autorización** para cambiar la configuración de Auth (§10). Regresión: `private-access.test.js` exige que Google sea el único proveedor y hoy **falla**. |
+| D-01 | **P1** | Seguridad · configuración alojada | En `cifra-development` el proveedor **Email** de Supabase Auth está habilitado (`external.email = true`, `mailer_autoconfirm = true`). Con las altas cerradas no se crean cuentas, pero una cuenta existente podría entrar por enlace mágico o recuperación por correo sin pasar por Google. Contradice RF-001, D-05 e [IMP-01](../imp-01.md) §1. No se envió ningún correo para explotarlo. | **Corregido** el 24/11/2026 con autorización del titular: Authentication → Sign In / Providers → Email → «Enable email provider» desactivado. `/auth/v1/settings` expone solo `google`. Regresión: `private-access.test.js` exige proveedor único (falló antes del cambio, pasa después). |
 | D-02 | P2 | Sesión | Cada renovación del token de la misma persona (≈ cada hora, o al volver a la pestaña) reemplazaba toda la aplicación por «Verificando tu sesión…», vaciaba la caché y volvía a montar la pantalla: se perdían el foco del formulario, el scroll y las páginas ya cargadas del Historial, y se repetían todas las lecturas. | Corregido. 3 pruebas E2E con reloj controlado. |
 | D-03 | P2 | Accesibilidad móvil | Áreas táctiles por debajo de los 44 × 44 px que exige UI-01 en celular: menú «⋯» de cada límite (36 px), orden del Historial (36 px), «Ver datos» (32 px), enlaces de panel del Resumen (19 px) e importes de Indicadores (31 px). Igual en Chromium y WebKit. | Corregido solo en el área de acierto (sin cambios visibles). Auditoría automática en 4 anchos y 2 motores. |
 | D-04 | P2 | Presentación de importes | A 360 px, un total del mes desde **UYU 1.000.000,00** se partía en dos líneas a mitad del número en el Resumen (también desde 10.000.000 en Indicadores); un exceso de presupuesto muy grande salía del arco. | Corregido: los importes largos reducen su tamaño por longitud; el arco comprime el porcentaje. Regresión en Chromium y WebKit. |
@@ -88,13 +88,13 @@ Además: `today()` cambia exactamente a las 03:00 UTC (medianoche en Montevideo)
 | Funciones | 17 RPC en `api`, todas `SECURITY INVOKER`, ejecutables solo por `authenticated`. Única `SECURITY DEFINER`: `private.allowed()` (propietario `postgres`, `STABLE`, sin argumentos, sin `EXECUTE` para `anon` ni `service_role`). Todas con `search_path` vacío |
 | Esquemas | `app` y `private` sin `USAGE` para `anon`; `public` sin tablas ni funciones; ver D-08 para `graphql_public` |
 | Identidades | 1 usuario de Auth, 1 identidad (Google), 1 plaza con identidad Google, lista de admisión vacía |
-| Auth público | Altas cerradas; anónimos deshabilitados; **Email habilitado (D-01)** |
+| Auth público | Altas cerradas; anónimos deshabilitados; Google como único proveedor (Email desactivado al corregir D-01) |
 
 ### HTTP autenticado con la sesión real de la primera plaza (17/17 aprobadas)
 
 Arnés [`hosted-session.audit.js`](../../tests/integration/hosted-session.audit.js), ejecutado en la página de `npm run dev` con la sesión de Google ya iniciada. Cubre: preferencias y moneda (con restauración), catálogo de 13 categorías, ejemplos RF-017/018/025, coherencia entre vistas, presupuesto completo (duplicado 409, subcategoría 404, exceso, retiro dos veces 404), edición con versión obsoleta 409, idempotencia (`replayed`, `ID_REUSED`, `EXPENSE_REMOVED` tras borrar), 8 validaciones 422, identificadores inexistentes 404 en 6 RPC, manipulación de parámetros (`owner_id` extra rechazado por PostgREST, cursor alterado 422, filtro desconocido 422, página de 1.000 rechazada), esquemas `app`, `private`, `auth` y `public` cerrados, GraphQL cerrado, JWT con firma alterada o ausente 401. Al final quedaron 0 gastos rotulados.
 
-HTTP públicas: 7/7 (RPC sin sesión 401/42501, tablas fuera de PostgREST, altas cerradas). La aserción nueva de proveedor único falla por D-01.
+HTTP públicas: 7/7 (RPC sin sesión 401/42501, tablas fuera de PostgREST, altas cerradas y Google como único proveedor). La aserción de proveedor único falló antes de corregir D-01 y pasa después.
 
 ### Repositorio, bundle y dependencias
 
@@ -228,7 +228,7 @@ Estado final de la cuenta: 0 gastos, 0 límites, 0 favoritos, moneda UYU. `app.e
 Cada paso de Supabase y Vercel lo ejecuta el titular o se ejecuta con su autorización explícita. **Nada de esto se hizo en IMP-06.**
 
 **A. Bloqueantes previos**
-- [ ] D-01: deshabilitar el proveedor Email en `cifra-development` y volver a correr `npm run test:integration` (proveedor único = Google).
+- [x] D-01: proveedor Email deshabilitado en `cifra-development`; `npm run test:integration` confirma Google como único proveedor.
 - [ ] Habilitar la segunda plaza en desarrollo y completar el aislamiento A/B real (`CIFRA_TEST_ACCESS_TOKEN_B` o el arnés en el navegador con cada perfil).
 - [ ] Decidir plan de Supabase para producción: Free (pausa por inactividad, copias externas propias) o Pro (copias diarias, sin pausa). ARCH-01 §2.
 - [ ] Verificar en un teléfono físico (Android y, si es posible, iPhone): OAuth, teclado decimal, selectores nativos de fecha y período, toque en gráficos.
@@ -268,7 +268,7 @@ PASS = ejecutado con evidencia. FAIL = ejecutado y no cumple. BLOCKED = no ejecu
 
 | RF | Criterio | Evidencia | Estado |
 | --- | --- | --- | --- |
-| RF-001 | Solo Google; tercero sin acceso | Alojado: altas cerradas, 1 identidad Google; **Email habilitado (D-01)**. Tercero sin plaza: embebido + E2E | **FAIL** (configuración) · tercero real BLOCKED |
+| RF-001 | Solo Google; tercero sin acceso | Alojado: altas cerradas, 1 identidad Google, Google como único proveedor (tras corregir D-01). Tercero sin plaza: embebido + E2E | **PASS** · tercero real BLOCKED |
 | RF-002 | Sesión válida continúa; ausente, inválida, vencida o cerrada sin datos | Alojado: sesión real, JWT alterado y ausente 401; renovación E2E (D-02). Ver §9 | **PASS** (alojado: cierre → 403 con JWT aún vigente; vencido → 401) · segunda sesión simultánea BLOCKED |
 | RF-003 | A no accede a B; externo 403 | Embebido (4 suites) + E2E; alojado: IDs inexistentes 404, `owner_id` rechazado, esquemas cerrados | PASS embebido · **BLOCKED** con dos plazas reales |
 | RF-004 | Crear gasto actualiza historial, estadísticas y presupuestos | Alojado (UI y HTTP), E2E, coherencia | PASS |
@@ -295,7 +295,7 @@ PASS = ejecutado con evidencia. FAIL = ejecutado y no cumple. BLOCKED = no ejecu
 | RF-025 | Seguimiento, exceso y cambio de mes | Alojado; coherencia; embebido (cambio de mes y año) | PASS |
 | RF-026 | Modificar y retirar | Alojado (UI y HTTP); embebido | PASS |
 | RF-027 | Resumen coincide con Estadísticas | Alojado (1.234,50 en ambas); coherencia; E2E | PASS |
-| Calidad | Privacidad · exactitud · integridad · experiencia · rendimiento · conectividad | §5 a §8; red interrumpida (E2E IMP-02/03) | PASS, salvo D-01 y teléfono físico NOT RUN |
+| Calidad | Privacidad · exactitud · integridad · experiencia · rendimiento · conectividad | §5 a §8; red interrumpida (E2E IMP-02/03) | PASS · teléfono físico NOT RUN |
 
 ## 12. Resultados de las pruebas finales
 
@@ -309,7 +309,7 @@ Corrida final del 24/11/2026 sobre `claude/IMP-06`:
 | Build · `npm run build` | Aprobado | Aprobado |
 | E2E · `npm run test:e2e` | 60 (Chromium) | **90 aprobadas, 1 omitida** (Chromium: 60 previas + 3 de sesión + 1 de rendimiento + 13 de auditoría visual, teclado, importes y acceso; WebKit: las mismas 13 de auditoría. La omitida es la medición con CDP en WebKit, que no la admite) |
 | Responsive | — | Acceso y 14 combinaciones (7 anchos × 2 motores) sin desbordes, áreas táctiles ≥ 44 px, sin errores de consola; foco visible con Tab en 6 pantallas a 375 y 1440 px |
-| HTTP públicas · `cifra-development` | 7/7 | **7 aprobadas, 1 falla esperada (D-01)** |
+| HTTP públicas · `cifra-development` | 7/7 | **7/7** con la aserción nueva de proveedor único (falló antes de corregir D-01) |
 | HTTP autenticadas con sesión real | NOT RUN | **17/17 aprobadas** (arnés en el navegador) + cierre de sesión (403) y JWT vencido (401) |
 | Auditoría SQL alojada (solo lectura) | NOT RUN | Sin hallazgos salvo D-08 (§6) |
 | Rendimiento móvil emulado (aislado, 3 corridas de 5 cargas) | — | Mediana FCP 1,41–1,45 s · LCP 1,53–1,61 s · Resumen 1,57–1,75 s · 205–207 KiB. Dentro de la suite completa, con 4 procesos en paralelo, LCP 1,84 s |
@@ -322,7 +322,6 @@ Corrida final del 24/11/2026 sobre `claude/IMP-06`:
 - **Dos plazas reales y tercera identidad:** BLOCKED hasta la intervención del titular; el aislamiento está probado en PostgreSQL embebido con las migraciones reales.
 - **Producción:** no existe todavía (Supabase ni Vercel). No se creó, no se aplicaron migraciones ni se desplegó.
 - **Volumen alojado:** la tabla alojada está vacía; el volumen se midió en PostgreSQL embebido de un hilo (cota pesimista).
-- **Proveedor Email (D-01):** no se cambió la configuración de Auth sin autorización.
 
 ## 14. Cómo reproducir
 
