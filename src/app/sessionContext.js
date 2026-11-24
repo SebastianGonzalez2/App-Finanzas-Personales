@@ -9,7 +9,7 @@ export function useSession() {
 }
 
 export function useAccess(enabled = true) {
-  const { client, snapshot, logout, checkSession } = useSession();
+  const { client, snapshot, logout, checkSession, recoverSession } = useSession();
   const owner = snapshot.session?.user.id;
   const query = useQuery({
     queryKey: ['session-preferences', snapshot.revision, owner],
@@ -31,6 +31,7 @@ export function useAccess(enabled = true) {
   if (!client) return { status: 'unconfigured' };
   if (logout) return { status: logout };
   if (!enabled || !snapshot.ready) return { status: 'checking' };
+  if (snapshot.recoveryError) return { status: 'failed', retry: recoverSession };
   if (!snapshot.session) return { status: 'signedOut' };
   if (query.isError) return { status: accessStatus(query.error.status), retry: query.refetch };
   if (!query.isSuccess) return { status: 'checking' };

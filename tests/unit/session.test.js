@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { accessStatus, exchangeSession, readCallback, signInWithGoogle, untilNextCivilDay } from '../../src/features/auth/session.js';
+import { accessStatus, exchangeSession, isTransientAuthError, readCallback, signInWithGoogle, untilNextCivilDay } from '../../src/features/auth/session.js';
 import { validateSupabaseConfig } from '../../src/lib/supabaseConfig.js';
 
 describe('configuración del cliente', () => {
@@ -58,6 +58,20 @@ describe('flujo de sesión', () => {
 
   it('distingue una sesión caducada de una plaza denegada y una falla de red', () => {
     expect([401, 403, 0, 500].map(accessStatus)).toEqual(['sessionExpired', 'denied', 'failed', 'failed']);
+  });
+
+  it('distingue errores transitorios de red de rechazos definitivos de Auth', () => {
+    expect(isTransientAuthError({ name: 'AuthRetryableFetchError', status: 0 })).toBe(true);
+    expect(isTransientAuthError({ name: 'AuthRetryableFetchError', status: 503 })).toBe(true);
+    expect(isTransientAuthError({ status: 0 })).toBe(true);
+    expect(isTransientAuthError({ status: 502 })).toBe(true);
+    expect(isTransientAuthError(new TypeError('Failed to fetch'))).toBe(true);
+
+    expect(isTransientAuthError(null)).toBe(false);
+    expect(isTransientAuthError(undefined)).toBe(false);
+    expect(isTransientAuthError({ name: 'AuthApiError', status: 400, code: 'refresh_token_not_found' })).toBe(false);
+    expect(isTransientAuthError({ name: 'AuthApiError', status: 401, code: 'session_expired' })).toBe(false);
+    expect(isTransientAuthError({ name: 'AuthSessionMissingError', status: 400 })).toBe(false);
   });
 });
 
