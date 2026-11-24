@@ -364,3 +364,78 @@ test('mantener presionado y soltar sobre una barra o un punto los selecciona', a
   await expect(monthly.locator('.chart-detail')).toContainText('noviembre de 2026');
   await expect(monthly.locator('.chart-detail')).toContainText('UYU 300,30');
 });
+
+// Estrella de «Mis favoritos» (animación del botón «Favorite» de Amicro): estado sin animación al
+// cargar, resorte al marcar y al desmarcar, y cambio instantáneo con prefers-reduced-motion.
+for (const [name, device] of [
+  ['escritorio', { viewport: { width: 1440, height: 960 } }],
+  ['celular', { viewport: { width: 375, height: 812 }, hasTouch: true, isMobile: true }],
+]) {
+  test.describe(`estrella de favoritos en ${name}`, () => {
+    test.use(device);
+    test('anima solo al marcar o desmarcar y respeta prefers-reduced-motion', async ({ page, ledger }) => {
+      await ledger.rpc('set_favorite', { panel: 'metrics', enabled: true });
+      await page.goto('/estadisticas');
+      const press = (locator) => (device.hasTouch ? locator.tap() : locator.click());
+      const star = (action, title) => page.getByRole('button', {
+        name: action === 'Quitar' ? `Quitar «${title}» de Mis favoritos` : `Agregar «${title}» a Mis favoritos`,
+      });
+      const layers = (button) => button.evaluate((element) => [...element.querySelectorAll('.fav-star-layer')].map((layer) => {
+        const style = getComputedStyle(layer);
+        return {
+          opacity: style.opacity, transform: style.transform, running: layer.getAnimations().length,
+          timing: style.transitionTimingFunction, duration: style.transitionDuration,
+          fill: getComputedStyle(layer.querySelector('path')).fill,
+        };
+      }));
+      const off = { opacity: '1', transform: 'none', fill: 'none' };
+      const hidden = { opacity: '0', transform: 'matrix(0.5, 0, 0, 0.5, 0, 0)' };
+      const yellow = { opacity: '1', transform: 'none', fill: 'rgb(250, 204, 21)' };
+      const runs = () => page.evaluate(() => window.favoriteRuns.splice(0).sort());
+      await page.evaluate(() => {
+        window.favoriteRuns = [];
+        document.addEventListener('transitionrun', (event) => {
+          if (event.target.classList?.contains('fav-star-layer')) window.favoriteRuns.push(`${event.target.classList[1]} ${event.propertyName}`);
+        });
+      });
+
+      // Al cargar, cada estrella ya está en su estado y no hay animaciones.
+      const metrics = star('Quitar', 'Indicadores del período');
+      const annual = star('Agregar', 'Evolución anual por categoría');
+      await expect(metrics).toHaveAttribute('aria-pressed', 'true');
+      expect(await layers(metrics)).toMatchObject([{ ...hidden, running: 0 }, { ...yellow, running: 0 }]);
+      expect(await layers(annual)).toMatchObject([{ ...off, running: 0 }, { ...hidden, running: 0 }]);
+      expect(await page.locator('.fav .fav-star-layer').evaluateAll((all) => all.some((layer) => layer.getAnimations().length))).toBe(false);
+      expect(await runs()).toEqual([]);
+      await expect(page.locator('.fav').first()).not.toContainText(/\S/);
+
+      // Marcar: la estrella neutra sale y la amarilla entra con el resorte (451 ms).
+      await press(annual);
+      const marked = star('Quitar', 'Evolución anual por categoría');
+      await expect(marked).toHaveAttribute('aria-pressed', 'true');
+      await expect.poll(runs).toEqual(['fav-star-off opacity', 'fav-star-off transform', 'fav-star-on opacity', 'fav-star-on transform']);
+      const [timing] = await layers(marked);
+      expect(timing.timing).toMatch(/^linear\(0( 0%)?, 0\.0286[ ,].*1\.1119[ ,]/);
+      expect(timing.duration).toMatch(/^0\.451s(, 0\.451s)?$/);
+      await expect.poll(() => layers(marked)).toMatchObject([{ ...hidden, running: 0 }, { ...yellow, running: 0 }]);
+      expect((await ledger.rpc('get_preferences')).favorites).toEqual(['metrics', 'annual']);
+
+      // Desmarcar: la transición inversa recupera la estrella neutra.
+      await press(metrics);
+      const unmarked = star('Agregar', 'Indicadores del período');
+      await expect(unmarked).toHaveAttribute('aria-pressed', 'false');
+      await expect.poll(runs).toEqual(['fav-star-off opacity', 'fav-star-off transform', 'fav-star-on opacity', 'fav-star-on transform']);
+      await expect.poll(() => layers(unmarked)).toMatchObject([{ ...off, running: 0 }, { ...hidden, running: 0 }]);
+      expect((await ledger.rpc('get_preferences')).favorites).toEqual(['annual']);
+
+      // Con prefers-reduced-motion el cambio de estado es inmediato.
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await press(marked);
+      const reduced = star('Agregar', 'Evolución anual por categoría');
+      await expect(reduced).toHaveAttribute('aria-pressed', 'false');
+      expect(await layers(reduced)).toMatchObject([{ ...off, running: 0 }, { ...hidden, running: 0 }]);
+      expect(await runs()).toEqual([]);
+      expect((await ledger.rpc('get_preferences')).favorites).toEqual([]);
+    });
+  });
+}
