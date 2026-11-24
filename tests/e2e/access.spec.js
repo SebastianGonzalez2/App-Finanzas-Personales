@@ -108,7 +108,7 @@ for (const [width, height] of [[1440, 960], [834, 1112], [375, 812]]) {
       await expect(page.getByRole('link', { name: 'Resumen' })).toHaveAttribute('aria-current', 'page');
     }
 
-    await page.getByRole('link', { name: 'Nuevo gasto' }).click();
+    await page.getByRole('link', { name: 'Registrar gasto', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Nuevo gasto' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     expect(errors).toEqual([]);

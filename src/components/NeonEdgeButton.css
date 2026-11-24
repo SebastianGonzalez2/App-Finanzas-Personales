@@ -1,0 +1,98 @@
+/*
+ * Neon Edge Button (EasyUI, MIT, © 2026 Suraj Maurya; licencia completa en NeonEdgeButton.jsx).
+ * Traducción 1:1 de las clases de Tailwind v4 del original. Valores por defecto de Tailwind v4:
+ * transiciones de 150ms con cubic-bezier(0.4, 0, 0.2, 1) y `hover:` limitado a @media (hover: hover).
+ */
+
+/* group relative inline-flex min-h-11 items-center justify-center overflow-hidden rounded-[10px]
+   p-[1px] text-sm font-medium text-[#FAFAFA→#FFFFFF] transition-all cursor-pointer */
+.neon-edge-button {
+  position: relative;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 0;
+  border-radius: 10px;
+  padding: 1px;
+  background-color: transparent;
+  font-family: "Inter Variable", "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  color: #ffffff;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* glow && shadow-[0_0_24px_-10px_rgba(255,255,255,0.4)] */
+.neon-edge-button--glow {
+  box-shadow: 0 0 24px -10px rgba(255, 255, 255, 0.4);
+}
+
+/* active:scale-[0.98] (Tailwind v4 usa la propiedad `scale`) */
+.neon-edge-button:active {
+  scale: 0.98;
+}
+
+/* pointer-events-none absolute -inset-[200%] overflow-hidden */
+.neon-edge-button__beam-track {
+  pointer-events: none;
+  position: absolute;
+  inset: -200%;
+  overflow: hidden;
+}
+
+/* easyui-neon-beam absolute inset-0 block + estilo en línea del original */
+.easyui-neon-beam {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 280deg, rgba(255, 255, 255, 0.85) 340deg, transparent 360deg);
+}
+
+/* relative z-10 inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-[9px]
+   bg-[#050505→#000000] px-5 py-2.5 transition-colors */
+.neon-edge-button__surface {
+  position: relative;
+  z-index: 10;
+  display: inline-flex;
+  min-height: 42px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 9px;
+  background-color: #000000;
+  padding: 10px 20px;
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* group-hover:bg-[#0B0B0B] */
+@media (hover: hover) {
+  .neon-edge-button:hover .neon-edge-button__surface {
+    background-color: #0b0b0b;
+  }
+}
+
+/* select-none */
+.neon-edge-button__label {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@keyframes easyui-neon-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .easyui-neon-beam { animation: none !important; opacity: 0.4 !important; }
+}

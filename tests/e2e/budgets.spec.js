@@ -198,8 +198,8 @@ test('el consumo sigue a los gastos: alta, edición de importe, fecha, categorí
   const food = row(page, 'Alimentación');
   await expect(food.locator('td').nth(0)).toHaveText('5.000,00');
 
-  // Alta desde «Nuevo gasto» en Presupuestos: al volver, 5.000 + 1.000,50 = 6.000,50 (40 %).
-  await page.getByRole('link', { name: 'Nuevo gasto' }).first().click();
+  // Alta desde «Registrar gasto» en Presupuestos: al volver, 5.000 + 1.000,50 = 6.000,50 (40 %).
+  await page.getByRole('link', { name: 'Registrar gasto', exact: true }).first().click();
   await page.getByLabel('Importe del gasto').fill('1000,50');
   await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Alimentación' });
   await page.getByLabel('Subcategoría · opcional').selectOption({ label: 'Delivery' });

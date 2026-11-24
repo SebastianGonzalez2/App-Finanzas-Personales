@@ -86,7 +86,7 @@ test('carga en frío del Resumen y navegación entre pantallas en celular', asyn
   await step('Estadísticas · Últimos 12 meses', () => page.getByLabel(/^Período/).selectOption('12m'),
     () => page.locator('[data-panel="monthly"] .recharts-bar-rectangle').nth(11));
   await step('Estadísticas → Resumen', () => nav('Resumen'), () => page.locator('section[aria-labelledby="overview-month"] .hero-value'));
-  await step('Resumen → Nuevo gasto', () => page.getByRole('link', { name: 'Nuevo gasto' }).click(), () => page.getByLabel('Importe del gasto'));
+  await step('Resumen → Nuevo gasto', () => page.getByRole('link', { name: 'Registrar gasto', exact: true }).click(), () => page.getByLabel('Importe del gasto'));
 
   const summary = {
     frio: { runs: cold, mediana: Object.fromEntries(['hero', 'complete', 'fcp', 'lcp', 'kib'].map((key) => [key, median(cold.map((run) => run[key]))])) },
