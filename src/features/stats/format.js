@@ -52,3 +52,10 @@ export function cents(text) {
   const value = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0').slice(0, 2));
   return negative ? -value : value;
 }
+
+// Tamaño de un importe destacado según su longitud (IMP-06): desde 1.000.000,00 el número
+// se achica en vez de partirse en dos líneas. Devuelve el valor de data-size o undefined.
+export function figureSize(text) {
+  const length = text.length;
+  return length >= 17 ? 'xxl' : length >= 14 ? 'xl' : length >= 11 ? 'l' : undefined;
+}

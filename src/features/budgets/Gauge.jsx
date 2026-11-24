@@ -19,7 +19,8 @@ export function Gauge({ percent, over }) {
         const stroke = index >= lit ? '#424546' : over && index >= TICKS - 5 ? 'var(--rose)' : '#deded5';
         return <path key={index} d={`M${x1.toFixed(2)} ${y1.toFixed(2)}L${x2.toFixed(2)} ${y2.toFixed(2)}`} stroke={stroke} strokeWidth="2.7" />;
       })}
-      <text x="100" y="94" textAnchor="middle">{label}</text>
+      {/* Un exceso muy grande («12.500%») se comprime para no salir del arco (IMP-06). */}
+      <text x="100" y="94" textAnchor="middle" {...(label.length > 8 && { textLength: 140, lengthAdjust: 'spacingAndGlyphs' })}>{label}</text>
     </svg>
   );
 }

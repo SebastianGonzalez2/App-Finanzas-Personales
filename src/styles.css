@@ -233,7 +233,9 @@ body:has(.sheet[open]) { overflow: hidden; }
     border-bottom: 1px solid var(--border);
     padding: 0 16px;
   }
-  .mobile-head .square { width: 44px; height: 44px; }
+  /* UI-01: en celular, al menos 44 × 44 px para iconos, menús de fila y enlaces de panel (IMP-06). */
+  .square { width: 44px; height: 44px; }
+  .panel-link { padding-block: 13px; margin-block: -13px; }
   .mobile-head .brand { font-size: 21px; gap: 6px; }
   .mobile-head .mark { width: 26px; height: 26px; }
   .page { padding: 24px 16px; }

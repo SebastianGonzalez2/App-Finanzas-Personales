@@ -219,6 +219,8 @@
   .stats-panel > .panel-title { margin-bottom: 12px; }
   .fav, .year-nav .square { min-width: 44px; min-height: 44px; }
   .view-tabs button { min-height: 44px; }
+  .chart-details summary { min-height: 44px; }
+  .metrics .history-link { padding-block: 7px; }
   .metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .metrics > div { min-width: 0; }
   .figure { font-size: 26px; overflow-wrap: anywhere; }
@@ -244,4 +246,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   .panel-data { transition: none; }
+}
+
+/* IMP-06 · Indicadores largos en celular: dos columnas de ~150 px. */
+@media (max-width: 620px) {
+  .metrics .figure[data-size="l"] { font-size: 21px; }
+  .metrics .figure[data-size="xl"] { font-size: 18px; }
+  .metrics .figure[data-size="xxl"] { font-size: 15px; }
 }

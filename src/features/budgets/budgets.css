@@ -212,3 +212,16 @@
   .budget-empty { padding: 16px; }
   .budget-list .panel-title .btn { padding-inline: 12px; }
 }
+
+/* IMP-06 · Importes largos: se achican por longitud en lugar de partirse a mitad del número. */
+.hero-value[data-size="xl"] { font-size: clamp(38px, 3.8vw, 60px); }
+.hero-value[data-size="xxl"] { font-size: clamp(30px, 3vw, 46px); }
+.highlight .figure[data-size="xl"], .budget-feature .figure[data-size="xl"] { font-size: 32px; }
+.highlight .figure[data-size="xxl"], .budget-feature .figure[data-size="xxl"] { font-size: 26px; }
+@media (width <= 620px) {
+  .hero-value[data-size="l"] { font-size: 44px; }
+  .hero-value[data-size="xl"] { font-size: 36px; }
+  .hero-value[data-size="xxl"] { font-size: 28px; }
+  .highlight .figure[data-size], .budget-feature .figure[data-size] { font-size: 26px; }
+  .highlight .figure[data-size="xxl"], .budget-feature .figure[data-size="xxl"] { font-size: 21px; }
+}

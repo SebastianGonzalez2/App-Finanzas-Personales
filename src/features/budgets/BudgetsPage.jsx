@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { Icon } from '../../components/Icon.jsx';
 import { useCatalog, useFinance } from '../../lib/finance.js';
-import { money, percentage } from '../stats/format.js';
+import { figureSize, money, percentage } from '../stats/format.js';
 import { PanelBody } from '../stats/panels.jsx';
 import { BudgetFormDialog, BudgetMenu, RetireBudgetDialog } from './BudgetDialogs.jsx';
 import { barWidth, budgetMargin, budgetState, countsLine, useBudgets } from './budgets.js';
@@ -27,7 +27,7 @@ export function BudgetHighlight({ item, title = 'Mayor uso del límite' }) {
         <Gauge percent={item.percent} over={margin.over} />
         <div>
           <div className="eyebrow">{item.category_name}</div>
-          <p className="figure">{money(margin.amount)} <span className="unit">{item.currency}</span></p>
+          <p className="figure" data-size={figureSize(money(margin.amount))}>{money(margin.amount)} <span className="unit">{item.currency}</span></p>
           <p className="hero-note">{margin.over ? 'de exceso este mes' : state.key === 'reached' ? 'restantes: el consumo igualó el límite' : 'disponibles este mes'}</p>
         </div>
       </div>

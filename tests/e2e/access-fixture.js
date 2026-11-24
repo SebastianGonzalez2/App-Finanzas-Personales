@@ -63,6 +63,11 @@ export async function mockSupabase(page, { user = ownerA, signupDenied = false, 
       const redirect = new URL(url.searchParams.get('redirect_to'));
       expect(redirect.pathname).toBe('/auth/callback');
       redirect.search = signupDenied ? '?error_code=signup_disabled' : '?code=fixture-code';
+      // WebKit no admite redirecciones en route.fulfill: el doble responde con una página que navega.
+      if (page.context().browser().browserType().name() === 'webkit') {
+        return route.fulfill({ status: 200, contentType: 'text/html',
+          body: `<script>location.replace(${JSON.stringify(redirect.href)})</script>` });
+      }
       return route.fulfill({ status: 302, headers: { location: redirect.href } });
     }
 
