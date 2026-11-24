@@ -2,7 +2,7 @@
 
 Aplicación web personal para **registrar, organizar y analizar gastos**, pensada inicialmente para dos usuarios.
 
-> **Estado:** IMP-05 completa las dos pantallas restantes: **Presupuestos** (límites mensuales por categoría y moneda, con consumo derivado de los gastos del mes) y **Resumen** (gasto del mes, seis meses, principales categorías, presupuestos y gastos recientes, coherente con Estadísticas). Consultá el [informe de IMP-05](docs/imp-05/README.md), el [de IMP-04](docs/imp-04/README.md), el [de IMP-03](docs/imp-03/README.md) y el [de IMP-02](docs/imp-02/README.md).
+> **Estado:** la V1 está implementada y auditada. IMP-06 verificó funcionalidad, exactitud financiera, seguridad, rendimiento y diseño adaptable, corrigió los defectos encontrados y dejó el [checklist de lanzamiento](docs/imp-06/README.md#checklist-de-lanzamiento). Producción todavía no existe: su publicación depende de las condiciones del [informe de IMP-06](docs/imp-06/README.md). Informes anteriores: [IMP-05](docs/imp-05/README.md), [IMP-04](docs/imp-04/README.md), [IMP-03](docs/imp-03/README.md) y [IMP-02](docs/imp-02/README.md).
 
 ## Desarrollo
 
@@ -15,6 +15,8 @@ npm run lint
 npm test
 npm run test:db
 npm run build
+npx playwright install chromium webkit
+npm run test:e2e
 ```
 
 La aplicación local se abre en `http://localhost:5173`. El build y las pruebas unitarias y de PostgreSQL embebido también se pueden ejecutar con las variables de Supabase vacías.
