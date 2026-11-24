@@ -19,6 +19,10 @@ const signatures = {
   set_favorite: ['panel', 'enabled'],
   get_stats: ['filters', 'reference', 'month_offset'],
   get_annual: ['currency', 'end_year', 'category_id', 'subcategory_id'],
+  get_budgets: ['currency'],
+  create_budget: ['category_id', 'currency', 'monthly_limit'],
+  update_budget: ['category_id', 'currency', 'monthly_limit'],
+  delete_budget: ['category_id', 'currency'],
 };
 const jsonArgs = ['patch', 'filters', 'reference'];
 

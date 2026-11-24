@@ -19,6 +19,27 @@ function mockSession(user, generation = 1) {
   };
 }
 
+// get_stats without expenses: every month of the range is empty (count 0, total NULL).
+function emptyStats({ filters, reference = null }) {
+  const months = [];
+  let [year, month] = filters.from.split('-').map(Number);
+  const [lastYear, lastMonth] = filters.to.split('-').map(Number);
+  while (year * 12 + month <= lastYear * 12 + lastMonth) {
+    const key = `${year}-${String(month).padStart(2, '0')}`;
+    const end = new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+    months.push({ month: key, from: key + '-01' < filters.from ? filters.from : key + '-01',
+      to: end > filters.to ? filters.to : end, count: 0, total: null });
+    [year, month] = month === 12 ? [year + 1, 1] : [year, month + 1];
+  }
+  const metric = { count: 0, total: null };
+  return {
+    filters: { ...filters, category_id: null, subcategory_id: null, unclassified_child: false },
+    reference, comparable: reference ? false : null,
+    indicator: { current: metric, reference: reference ? metric : null, delta: null, percent: null },
+    months, month_next_offset: null, categories: [], children: [], category_comparisons: [],
+  };
+}
+
 export async function mockSupabase(page, { user = ownerA, signupDenied = false, revokeFirstToken = false, offlineLogout = false } = {}) {
   const calls = { exchanges: 0, refreshes: 0, logouts: 0, preferences: 0 };
   const session = mockSession(user);
@@ -71,6 +92,12 @@ export async function mockSupabase(page, { user = ownerA, signupDenied = false, 
     }
 
     if (url.pathname === '/rest/v1/rpc/get_catalog') return reply(200, { categories: [], subcategories: [] });
+    // Resumen (IMP-05) de una cuenta sin gastos ni límites.
+    if (url.pathname === '/rest/v1/rpc/get_stats') return reply(200, emptyStats(request.postDataJSON()));
+    if (url.pathname === '/rest/v1/rpc/get_budgets') {
+      return reply(200, { month: preferences.today.slice(0, 7), currency: request.postDataJSON().currency, items: [] });
+    }
+    if (url.pathname === '/rest/v1/rpc/list_expenses') return reply(200, { items: [], next_cursor: null });
 
     if (url.pathname === '/auth/v1/logout') {
       calls.logouts += 1;

@@ -173,3 +173,29 @@ export function expectedAnnual(rows, names, { currency, endYear, categoryId = nu
     points,
   };
 }
+
+// Expected api.get_budgets response (IMP-05). budgets: [{category_id, currency, monthly_limit}].
+// Consumption: expenses of the budget's parent category (with or without child) in its
+// currency during the civil month of today. Remaining may be negative. Sorted by the
+// rounded percentage (descending), then lower-case name and id.
+export function expectedBudgets(rows, budgets, names, currency, today) {
+  const { month, from, to } = monthBounds(monthIndex(today));
+  const items = budgets.filter((budget) => budget.currency === currency).map((budget) => {
+    const used = sum(rows.filter((row) => row.currency === currency && row.category_id === budget.category_id
+      && row.spent_on >= from && row.spent_on <= to));
+    const limit = toCents(budget.monthly_limit);
+    return {
+      category_id: budget.category_id, category_name: names.get(budget.category_id), currency,
+      monthly_limit: fromCents(limit), spent: fromCents(used), remaining: fromCents(limit - used),
+      percent: percent(used, limit),
+    };
+  });
+  items.sort((left, right) => {
+    const a = toCents(left.percent);
+    const b = toCents(right.percent);
+    if (a !== b) return a > b ? -1 : 1;
+    const nameOrder = left.category_name.toLowerCase().localeCompare(right.category_name.toLowerCase(), 'und');
+    return nameOrder || (left.category_id < right.category_id ? -1 : 1);
+  });
+  return { month, currency, items };
+}

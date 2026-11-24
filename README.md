@@ -2,7 +2,7 @@
 
 Aplicación web personal para **registrar, organizar y analizar gastos**, pensada inicialmente para dos usuarios.
 
-> **Estado:** IMP-04 agrega Estadísticas: seis paneles calculados en PostgreSQL para una sola moneda, la evolución anual por categoría con su propio selector de años, el selector de moneda compartido y los favoritos. Consultá el [informe de IMP-04](docs/imp-04/README.md), el [de IMP-03](docs/imp-03/README.md) y el [de IMP-02](docs/imp-02/README.md).
+> **Estado:** IMP-05 completa las dos pantallas restantes: **Presupuestos** (límites mensuales por categoría y moneda, con consumo derivado de los gastos del mes) y **Resumen** (gasto del mes, seis meses, principales categorías, presupuestos y gastos recientes, coherente con Estadísticas). Consultá el [informe de IMP-05](docs/imp-05/README.md), el [de IMP-04](docs/imp-04/README.md), el [de IMP-03](docs/imp-03/README.md) y el [de IMP-02](docs/imp-02/README.md).
 
 ## Desarrollo
 

@@ -5,6 +5,7 @@ import './styles.css';
 import './features/finance.css';
 import './features/history/history.css';
 import './features/stats/stats.css';
+import './features/budgets/budgets.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode><App /></StrictMode>,

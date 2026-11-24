@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { asUser, createTestDatabase, sessions, users } from './fixture.js';
-import { expectedAnnual, expectedStats } from './oracle.js';
+import { expectedAnnual, expectedBudgets, expectedStats } from './oracle.js';
 
 // ARCH-01 §2: cuatro personas × diez gastos por día × diez años ≈ 146.000 gastos,
 // es decir unos 36.500 por persona. Se generan para B en PostgreSQL embebido (WASM,
@@ -14,7 +14,7 @@ function median(values) {
   return sorted[Math.floor(sorted.length / 2)];
 }
 
-test('IMP-04 · rendimiento y exactitud con diez años de gastos de una persona', async (t) => {
+test('IMP-04/05 · rendimiento y exactitud con diez años de gastos de una persona', async (t) => {
   const db = await createTestDatabase({ today: TODAY });
   t.after(() => db.close());
   await asUser(db, users.b, sessions.b);
@@ -74,6 +74,13 @@ test('IMP-04 · rendimiento y exactitud con diez años de gastos de una persona'
     timings.push(await timed('get_annual · ' + label, 'select api.get_annual($1, $2, $3) as result', [currency, endYear, categoryId],
       (result) => assert.deepEqual(result, expectedAnnual(rows, names, { currency, endYear: endYear ?? 2026, categoryId }, TODAY), label)));
   }
+  // IMP-05 · get_budgets con los 13 límites de una moneda sobre el mismo volumen.
+  const budgets = catalog.categories.map((category, index) => ({ category_id: category.id, currency: 'UYU', monthly_limit: `${(index + 1) * 1000}.00` }));
+  for (const budget of budgets) {
+    await db.query('select api.create_budget($1, $2, $3)', [budget.category_id, budget.currency, budget.monthly_limit]);
+  }
+  timings.push(await timed('get_budgets · 13 límites UYU', 'select api.get_budgets($1) as result', ['UYU'],
+    (result) => assert.deepEqual(result, expectedBudgets(rows, budgets, names, 'UYU', TODAY))));
   // Cota amplia para detectar regresiones graves (p. ej. agregaciones por fila o N+1), no una meta de latencia.
   assert.ok(Math.max(...timings) < 3000, 'agregación demasiado lenta');
 
@@ -81,6 +88,16 @@ test('IMP-04 · rendimiento y exactitud con diez años de gastos de una persona'
     const { rows: plan } = await db.query(`explain (analyze, costs off) select count(*), sum(e.amount) from app.expenses e
       where e.owner_id = $1 and e.currency = 'UYU' and e.spent_on between '2026-11-01' and '2026-11-30'`, [users.b]);
     const text = plan.map((line) => line['QUERY PLAN']).join('\n');
+    t.diagnostic(text);
+    assert.match(text, /expenses_currency_date_idx|expenses_category_currency_date_idx/);
+  });
+
+  await t.test('get_budgets lee solo el mes actual por índice bajo RLS', async () => {
+    const { rows: plan } = await db.query(`explain (analyze, costs off) select private.budget_items('UYU')`);
+    t.diagnostic(plan.map((line) => line['QUERY PLAN']).join('\n'));
+    const { rows: inner } = await db.query(`explain (analyze, costs off) select e.category_id, sum(e.amount) from app.expenses e
+      where e.owner_id = $1 and e.currency = 'UYU' and e.spent_on between '2026-11-01' and '2026-11-30' group by e.category_id`, [users.b]);
+    const text = inner.map((line) => line['QUERY PLAN']).join('\n');
     t.diagnostic(text);
     assert.match(text, /expenses_currency_date_idx|expenses_category_currency_date_idx/);
   });
