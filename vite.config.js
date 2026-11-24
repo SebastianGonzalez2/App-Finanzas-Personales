@@ -1,10 +1,14 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
-import { validateSupabaseConfig } from './src/lib/supabaseConfig.js';
+import { deploymentProblem, validateSupabaseConfig } from './src/lib/supabaseConfig.js';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
   const config = validateSupabaseConfig(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_PUBLISHABLE_KEY);
+  // IMP-06: en Vercel un build sin Supabase válido, o de Producción apuntando al proyecto de
+  // desarrollo, falla y deja publicada la versión anterior en lugar de una aplicación inutilizable.
+  const deployProblem = deploymentProblem(process.env.VERCEL_ENV, config);
+  if (deployProblem) throw new Error(deployProblem);
   // Use the origin from this build, so a preview never falls back to production.
   const policy = [
     "default-src 'self'",

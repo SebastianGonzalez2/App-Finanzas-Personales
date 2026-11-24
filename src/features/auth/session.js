@@ -43,3 +43,15 @@ export function accessStatus(status) {
   if (status === 403) return 'denied';
   return 'failed';
 }
+
+// ARCH-01 §9: «today» se vuelve a pedir al servidor al cambiar el día civil de Montevideo si la
+// aplicación sigue abierta. Milisegundos hasta la próxima medianoche de esa zona, más un margen
+// para no consultar antes de tiempo; el servidor sigue siendo la fuente de la fecha.
+const civilClock = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'America/Montevideo', hourCycle: 'h23', hour: '2-digit', minute: '2-digit', second: '2-digit',
+});
+export function untilNextCivilDay(now = Date.now()) {
+  const parts = Object.fromEntries(civilClock.formatToParts(now).map(({ type, value }) => [type, Number(value)]));
+  const elapsed = ((parts.hour * 60 + parts.minute) * 60 + parts.second) * 1000 + (now % 1000);
+  return 86_400_000 - elapsed + 5_000;
+}

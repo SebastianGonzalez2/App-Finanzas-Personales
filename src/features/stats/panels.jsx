@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from 'react';
 import { Link } from 'react-router';
 import { Icon } from '../../components/Icon.jsx';
-import { chartNumber, count, expensesCount, money, percentage, signedMoney } from './format.js';
+import { chartNumber, count, expensesCount, figureSize, money, percentage, signedMoney } from './format.js';
 import { categoryFilters, childFilters, historyHref, periodFilters } from './links.js';
 import { breakdownArgs, dayShort, isOpen, isPartial, monthLong, monthShort } from './query.js';
 import { useStats } from './stats.js';
@@ -101,7 +101,7 @@ export function MetricsContent({ data, today, back }) {
     <dl className="metrics">
       <div>
         <dt className="eyebrow">Total gastado</dt>
-        <dd className="figure">{amount(current, filters, 'Total gastado')} {current.count > 0 && <span className="unit">{currency}</span>}</dd>
+        <dd className="figure" data-size={current.count ? figureSize(money(current.total)) : undefined}>{amount(current, filters, 'Total gastado')} {current.count > 0 && <span className="unit">{currency}</span>}</dd>
       </div>
       <div>
         <dt className="eyebrow">Cantidad</dt>
@@ -110,12 +110,12 @@ export function MetricsContent({ data, today, back }) {
       {data.reference && <>
         <div>
           <dt className="eyebrow">Referencia</dt>
-          <dd className="figure">{amount(reference, data.reference, 'Total de referencia')} {reference.count > 0 && <span className="unit">{currency}</span>}</dd>
+          <dd className="figure" data-size={reference.count ? figureSize(money(reference.total)) : undefined}>{amount(reference, data.reference, 'Total de referencia')} {reference.count > 0 && <span className="unit">{currency}</span>}</dd>
           <dd className="metric-note">{expensesCount(reference.count)}</dd>
         </div>
         <div>
           <dt className="eyebrow">Diferencia</dt>
-          <dd className="figure">{delta === null ? <span className="muted-figure">No disponible</span> : <>{signedMoney(delta)} <span className="unit">{currency}</span></>}</dd>
+          <dd className="figure" data-size={delta === null ? undefined : figureSize(signedMoney(delta))}>{delta === null ? <span className="muted-figure">No disponible</span> : <>{signedMoney(delta)} <span className="unit">{currency}</span></>}</dd>
         </div>
         <div>
           <dt className="eyebrow">Variación</dt>

@@ -24,7 +24,7 @@ export function usePreferenceActions() {
   const api = useFinance();
   const { snapshot } = useSession();
   const cache = useQueryClient();
-  const queryKey = ['session-preferences', snapshot.revision];
+  const queryKey = ['session-preferences', snapshot.revision, snapshot.session.user.id];
   async function confirm(update) {
     // A get_preferences started before the write could otherwise restore the old value.
     await cache.cancelQueries({ queryKey, exact: true });

@@ -5,7 +5,7 @@ import { useFinance, useRecentExpenses } from '../../lib/finance.js';
 import { budgetMargin, budgetState, countsLine } from '../budgets/budgets.js';
 import { Gauge } from '../budgets/Gauge.jsx';
 import { rowDate, rowTitle, writeQuery } from '../history/query.js';
-import { chartNumber, count, expensesCount, money, percentage, signedMoney } from '../stats/format.js';
+import { chartNumber, count, expensesCount, figureSize, money, percentage, signedMoney } from '../stats/format.js';
 import { categoryFilters, historyHref, periodFilters } from '../stats/links.js';
 import { CategoryRow, ChartTable, HistoryLink, PanelBody } from '../stats/panels.jsx';
 import { isPartial, monthLong, monthShort, readStatsQuery, statsArgs } from '../stats/query.js';
@@ -41,7 +41,9 @@ function PanelLink({ to, children, state }) {
 
 // Etiqueta corta sobre cada barra («1,2k», «32k»); el valor exacto está en la tabla y en el nombre accesible.
 const short = new Intl.NumberFormat('es-UY', { maximumFractionDigits: 1 });
-const compact = (value) => value >= 1e6 ? short.format(value / 1e6) + 'M' : value >= 1e3 ? short.format(value / 1e3) + 'k' : short.format(value);
+// «MM» (miles de millones) igual que los ejes de Estadísticas: evita rótulos como «1.000.000M».
+export const compact = (value) => value >= 1e9 ? short.format(value / 1e9) + 'MM' : value >= 1e6 ? short.format(value / 1e6) + 'M'
+  : value >= 1e3 ? short.format(value / 1e3) + 'k' : short.format(value);
 
 const monthName = (iso, today) => {
   const text = monthLong(iso.slice(0, 7));
@@ -80,7 +82,7 @@ function HeroContent({ data, today }) {
   }
   return <>
     {current.count > 0 ? <div>
-      <p className="hero-value">
+      <p className="hero-value" data-size={figureSize(money(current.total))}>
         <HistoryLink filters={filters} label={`Gasto del mes: ${currency} ${money(current.total)}. Ver ${expensesCount(current.count)} en el Historial`}>{money(current.total)}</HistoryLink>
         {' '}<span className="unit">{currency}</span>
       </p>
@@ -193,7 +195,7 @@ function BudgetFeature({ item, items }) {
       <div>
         <span className={'tag ' + state.tone}>{state.label}</span>
         <h3>{item.category_name}</h3>
-        <p className="figure">{money(margin.amount)} <span className="unit">{item.currency}</span></p>
+        <p className="figure" data-size={figureSize(money(margin.amount))}>{money(margin.amount)} <span className="unit">{item.currency}</span></p>
         <p className="hero-note">{margin.over ? 'por encima del límite mensual' : `disponibles de ${money(item.monthly_limit)}`}</p>
       </div>
     </div>

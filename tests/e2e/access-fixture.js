@@ -7,12 +7,12 @@ export const ownerB = { id: '00000000-0000-4000-a000-000000000002', email: 'b@ex
 export const outsider = { id: '00000000-0000-4000-a000-000000000003', email: 'externa@example.test' };
 const denied = { code: 'PT403', message: 'ACCESS_DENIED' };
 
-function mockSession(user, generation = 1) {
+function mockSession(user, generation = 1, lifetime = 3600) {
   const encode = (data) => Buffer.from(JSON.stringify(data)).toString('base64url');
-  const exp = Math.floor(Date.now() / 1000) + 3600;
+  const exp = Math.floor(Date.now() / 1000) + lifetime;
   return {
     access_token: `${encode({ alg: 'HS256' })}.${encode({ sub: user.id, exp, generation })}.fixture`,
-    expires_in: 3600,
+    expires_in: lifetime,
     refresh_token: `test-refresh-${generation}`,
     token_type: 'bearer',
     user: { ...user, aud: 'authenticated', role: 'authenticated', app_metadata: { provider: 'google' } },
@@ -40,9 +40,10 @@ function emptyStats({ filters, reference = null }) {
   };
 }
 
-export async function mockSupabase(page, { user = ownerA, signupDenied = false, revokeFirstToken = false, offlineLogout = false } = {}) {
+// expiresIn acorta la vida del primer token para que el SDK lo renueve durante la prueba (IMP-06).
+export async function mockSupabase(page, { user = ownerA, signupDenied = false, revokeFirstToken = false, offlineLogout = false, expiresIn = 3600 } = {}) {
   const calls = { exchanges: 0, refreshes: 0, logouts: 0, preferences: 0 };
-  const session = mockSession(user);
+  const session = mockSession(user, 1, expiresIn);
   const refreshed = mockSession(user, 2);
   const cors = {
     'access-control-allow-origin': '*',
@@ -63,6 +64,11 @@ export async function mockSupabase(page, { user = ownerA, signupDenied = false, 
       const redirect = new URL(url.searchParams.get('redirect_to'));
       expect(redirect.pathname).toBe('/auth/callback');
       redirect.search = signupDenied ? '?error_code=signup_disabled' : '?code=fixture-code';
+      // WebKit no admite redirecciones en route.fulfill: el doble responde con una página que navega.
+      if (page.context().browser().browserType().name() === 'webkit') {
+        return route.fulfill({ status: 200, contentType: 'text/html',
+          body: `<script>location.replace(${JSON.stringify(redirect.href)})</script>` });
+      }
       return route.fulfill({ status: 302, headers: { location: redirect.href } });
     }
 

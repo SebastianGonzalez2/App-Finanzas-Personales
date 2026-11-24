@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { accessStatus, exchangeSession, readCallback, signInWithGoogle } from '../../src/features/auth/session.js';
+import { accessStatus, exchangeSession, readCallback, signInWithGoogle, untilNextCivilDay } from '../../src/features/auth/session.js';
 import { validateSupabaseConfig } from '../../src/lib/supabaseConfig.js';
 
 describe('configuración del cliente', () => {
@@ -58,5 +58,14 @@ describe('flujo de sesión', () => {
 
   it('distingue una sesión caducada de una plaza denegada y una falla de red', () => {
     expect([401, 403, 0, 500].map(accessStatus)).toEqual(['sessionExpired', 'denied', 'failed', 'failed']);
+  });
+});
+
+describe('untilNextCivilDay (IMP-06)', () => {
+  // Montevideo está en UTC−3 todo el año: la medianoche civil son las 03:00 UTC.
+  it('cuenta hasta la medianoche de Montevideo, no la de UTC ni la del equipo', () => {
+    expect(untilNextCivilDay(Date.parse('2026-11-30T02:59:00Z'))).toBe(60_000 + 5_000);
+    expect(untilNextCivilDay(Date.parse('2026-11-30T03:00:00Z'))).toBe(86_400_000 + 5_000);
+    expect(untilNextCivilDay(Date.parse('2026-12-01T01:30:00.250Z'))).toBe(90 * 60_000 - 250 + 5_000);
   });
 });

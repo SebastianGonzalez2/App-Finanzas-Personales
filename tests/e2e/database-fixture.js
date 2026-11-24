@@ -29,7 +29,9 @@ const jsonArgs = ['patch', 'filters', 'reference'];
 // Chromium exercises the built app and SDK. The loopback route executes the actual migrations
 // as authenticated in a disposable database. Hosted HTTP checks cover PostgREST separately.
 export const test = base.extend({
-  ledger: async ({ page }, use) => {
+  // Opciones del doble de Auth (por ejemplo, un token de vida corta para probar la renovación).
+  access: [{}, { option: true }],
+  ledger: async ({ page, access }, use) => {
     const db = await createTestDatabase({ today: TODAY });
     try {
       await asUser(db, users.a, sessions.a);
@@ -53,7 +55,9 @@ export const test = base.extend({
           ? (key === 'reference' && args[key] == null ? null : JSON.stringify(args[key] ?? {})) : args[key] ?? null);
         return (await db.query('select api.' + name + '(' + placeholders + ') as result', values)).rows[0].result;
       }
-      await mockSupabase(page);
+      // access.clock instala un reloj controlable antes de abrir la aplicación.
+      if (access.clock) await page.clock.install();
+      const auth = await mockSupabase(page, access);
       await page.route('**/rest/v1/rpc/*', async (route) => {
         const name = new URL(route.request().url()).pathname.split('/').pop();
         if (!Object.hasOwn(signatures, name) || route.request().method() === 'OPTIONS') return route.fallback();
@@ -82,7 +86,7 @@ export const test = base.extend({
       });
       await page.goto('/login');
       await enter(page);
-      await use({ rpc, calls, faults, hold, db });
+      await use({ rpc, calls, faults, hold, db, auth });
     } finally {
       await db.close();
     }

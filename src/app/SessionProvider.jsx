@@ -43,11 +43,13 @@ export function SessionProvider({ client, children }) {
     const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
       const previous = current.current;
       const tokenChanged = previous.session?.access_token !== session?.access_token;
+      // Financial data is cached per UUID: a renewed token of the same person keeps it, while
+      // signing out or switching accounts discards every cached query and draft.
       if (previous.session?.user.id !== session?.user.id) {
         refreshAttempted.current = false;
         memory.current = sessionMemory();
+        queryClient.clear();
       }
-      if (tokenChanged) queryClient.clear();
 
       const next = { ready: true, session, revision: previous.revision + Number(tokenChanged) };
       current.current = next;

@@ -95,6 +95,10 @@ test('altas cerradas en Auth alojado', { skip: disabled }, async () => {
   assert.equal(settings.disable_signup, true);
   assert.equal(settings.external.google, true);
   assert.equal(settings.external.anonymous_users, false);
+  // IMP-06: Google es el único proveedor (RF-001, D-05). Con Email habilitado, una cuenta ya
+  // existente podría entrar por enlace mágico o recuperación por correo sin pasar por Google.
+  const enabled = Object.entries(settings.external).filter(([, on]) => on === true).map(([name]) => name);
+  assert.deepEqual(enabled, ['google'], 'proveedores habilitados: ' + enabled.join(', '));
   await expectResponse(await request('/auth/v1/signup', {
     body: { email: `cifra-imp01-${randomUUID()}@example.com`, password: randomUUID() },
   }), 422, 'signup_disabled');
