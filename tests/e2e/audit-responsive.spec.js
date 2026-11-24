@@ -169,3 +169,36 @@ for (const amount of ['1234567.89', '12345678.90', '999999999999.99']) {
     expect(gauge).toBe(true);
   });
 }
+
+// Teclado: cada parada del Tab tiene un indicador de foco visible (UI-01: contorno salvia de
+// 2 px) y el recorrido no queda atrapado fuera de un diálogo.
+for (const width of [375, 1440]) {
+  test(`${width} px: recorrido con Tab y foco visible en cada pantalla`, async ({ page, ledger }) => {
+    await seed(ledger);
+    await page.setViewportSize({ width, height: HEIGHT[width] });
+    const missing = [];
+    for (const path of ['/', '/estadisticas', '/historial', '/presupuestos', '/categorias', '/gastos/nuevo']) {
+      await page.goto(path);
+      await page.waitForLoadState('networkidle');
+      await page.locator('body').click({ position: { x: 1, y: 1 } });
+      const seen = new Set();
+      for (let step = 0; step < 40; step += 1) {
+        await page.keyboard.press('Tab');
+        const info = await page.evaluate(() => {
+          const element = document.activeElement;
+          if (!element || element === document.body) return null;
+          const style = getComputedStyle(element);
+          const parent = element.parentElement && getComputedStyle(element.parentElement);
+          const ring = (s) => s && ((s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) >= 2) || s.boxShadow !== 'none');
+          const label = element.getAttribute('aria-label') || element.textContent.trim().slice(0, 30) || element.id || element.tagName;
+          return { key: element.tagName + label, label, visible: ring(style) || ring(parent) || ring(getComputedStyle(element, '::after')) };
+        });
+        if (!info || seen.has(info.key)) break;
+        seen.add(info.key);
+        if (!info.visible) missing.push(`${path}: ${info.label}`);
+      }
+      expect(seen.size, path + ': paradas de Tab').toBeGreaterThan(3);
+    }
+    expect(missing).toEqual([]);
+  });
+}
