@@ -108,8 +108,9 @@ HTTP públicas: 7/7 (RPC sin sesión 401/42501, tablas fuera de PostgREST, altas
 | --- | --- |
 | Aislamiento A/B con las dos plazas reales (lectura, edición y borrado cruzados, conteo de filas de B antes y después) | **BLOCKED**: la segunda plaza no está habilitada. Cubierto en PostgreSQL embebido (IMP-02 a IMP-05 y esta auditoría) |
 | Identidad Google autenticada sin plaza → 403 | **BLOCKED**: requiere una tercera cuenta. Cubierto en PostgreSQL embebido y E2E |
-| Cierre de sesión: el JWT anterior queda sin acceso y otra sesión sigue funcionando | Ver §9 |
-| JWT vencido naturalmente | Ver §9 |
+| Cierre de sesión: el JWT anterior queda sin acceso | **PASS** con la sesión real (403 en lectura, escritura y agregados; §9) |
+| Otra sesión de la misma persona sigue funcionando tras cerrar la primera | **BLOCKED**: requiere un segundo inicio de sesión con Google |
+| JWT vencido naturalmente | **PASS** (401 `PGRST303` en lectura y escritura; §9) |
 
 ## 7. Rendimiento
 
@@ -211,7 +212,7 @@ Las capturas usan datos de estrés a propósito (un gasto de 999.999.999.999,99)
 
 Estado final de la cuenta: 0 gastos, 0 límites, 0 favoritos, moneda UYU. `app.expense_keys` conserva las reservas de los envíos (solo identificador y huella SHA-256, sin importe ni descripción), por diseño de RF-009.
 
-**Sesiones (§6):** <!-- SESIONES -->
+**Sesiones (§6), con la sesión real de la primera plaza:** se retuvo en memoria de una pestaña el access token vigente (sin mostrarlo ni guardarlo). Antes del cierre: lectura y escritura 200. Tras «Mi cuenta → Cerrar sesión» en otra pestaña, ese mismo JWT —criptográficamente válido, a 31 minutos de vencer— recibió **403 ACCESS_DENIED** en `get_preferences`, `set_currency` y `get_stats` (la sesión exacta dejó de existir en `auth.sessions`). A las 18:03:42 UTC, 44 s después de su vencimiento natural, recibió **401 `PGRST303 JWT expired`** en lectura y escritura. Luego se borró de la memoria. Queda pendiente la parte de ARCH-01 §14.3 que exige **una segunda sesión de la misma persona** que siga funcionando tras cerrar la primera: necesita otro inicio de sesión con Google (§10).
 
 ## 10. Preparación para producción
 
@@ -268,7 +269,7 @@ PASS = ejecutado con evidencia. FAIL = ejecutado y no cumple. BLOCKED = no ejecu
 | RF | Criterio | Evidencia | Estado |
 | --- | --- | --- | --- |
 | RF-001 | Solo Google; tercero sin acceso | Alojado: altas cerradas, 1 identidad Google; **Email habilitado (D-01)**. Tercero sin plaza: embebido + E2E | **FAIL** (configuración) · tercero real BLOCKED |
-| RF-002 | Sesión válida continúa; ausente, inválida, vencida o cerrada sin datos | Alojado: sesión real, JWT alterado y ausente 401; renovación E2E (D-02). Ver §9 | PASS · <!-- RF002 --> |
+| RF-002 | Sesión válida continúa; ausente, inválida, vencida o cerrada sin datos | Alojado: sesión real, JWT alterado y ausente 401; renovación E2E (D-02). Ver §9 | **PASS** (alojado: cierre → 403 con JWT aún vigente; vencido → 401) · segunda sesión simultánea BLOCKED |
 | RF-003 | A no accede a B; externo 403 | Embebido (4 suites) + E2E; alojado: IDs inexistentes 404, `owner_id` rechazado, esquemas cerrados | PASS embebido · **BLOCKED** con dos plazas reales |
 | RF-004 | Crear gasto actualiza historial, estadísticas y presupuestos | Alojado (UI y HTTP), E2E, coherencia | PASS |
 | RF-005 | Validación | Alojado 8 × 422; embebido; E2E | PASS |
@@ -306,10 +307,10 @@ Corrida final del 24/11/2026 sobre `claude/IMP-06`:
 | Unitarias · `npm test` | 88 | **102 aprobadas** (+14: renovación diaria, despliegue, formato exacto) |
 | SQL · `npm run test:db` | 55 | **58 aprobadas** (+3: coherencia, zona horaria, volumen) |
 | Build · `npm run build` | Aprobado | Aprobado |
-| E2E · `npm run test:e2e` | 60 (Chromium) | **88 aprobadas, 1 omitida** (Chromium: 60 previas + 3 de sesión + 1 de rendimiento + 20 de auditoría visual, teclado e importes; WebKit: auditoría visual, teclado e importes. La omitida es la medición con CDP en WebKit, que no la admite) |
-| Responsive | — | 14 combinaciones (7 anchos × 2 motores) sin desbordes, áreas táctiles ≥ 44 px, sin errores de consola; foco visible con Tab en 6 pantallas a 375 y 1440 px |
+| E2E · `npm run test:e2e` | 60 (Chromium) | **90 aprobadas, 1 omitida** (Chromium: 60 previas + 3 de sesión + 1 de rendimiento + 13 de auditoría visual, teclado, importes y acceso; WebKit: las mismas 13 de auditoría. La omitida es la medición con CDP en WebKit, que no la admite) |
+| Responsive | — | Acceso y 14 combinaciones (7 anchos × 2 motores) sin desbordes, áreas táctiles ≥ 44 px, sin errores de consola; foco visible con Tab en 6 pantallas a 375 y 1440 px |
 | HTTP públicas · `cifra-development` | 7/7 | **7 aprobadas, 1 falla esperada (D-01)** |
-| HTTP autenticadas con sesión real | NOT RUN | **17/17 aprobadas** (arnés en el navegador) |
+| HTTP autenticadas con sesión real | NOT RUN | **17/17 aprobadas** (arnés en el navegador) + cierre de sesión (403) y JWT vencido (401) |
 | Auditoría SQL alojada (solo lectura) | NOT RUN | Sin hallazgos salvo D-08 (§6) |
 | Rendimiento móvil emulado (aislado, 3 corridas de 5 cargas) | — | Mediana FCP 1,41–1,45 s · LCP 1,53–1,61 s · Resumen 1,57–1,75 s · 205–207 KiB. Dentro de la suite completa, con 4 procesos en paralelo, LCP 1,84 s |
 | `npm audit` | 0 | 0 |
