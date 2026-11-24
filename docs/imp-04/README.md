@@ -23,7 +23,7 @@
 
 ### Interacción y accesibilidad
 
-- Puntero y toque muestran el tooltip; el destino de un clic o toque es el propio elemento (columna completa del mes o círculo de 28 px alrededor del punto), no el índice activo de Recharts, que se mueve al recibir foco. El puntero no enfoca el SVG.
+- Puntero y toque muestran el tooltip. Soltar el puntero o el dedo sobre el propio elemento (columna completa del mes o círculo de 28 px alrededor del punto) lo selecciona. Se usa `pointerup` y no `click`: Recharts dibuja el punto resaltado encima entre `mousedown` y `mouseup`, y entonces el navegador no emite `click` sobre el punto. Un gesto de desplazamiento cancela el `pointerup`. La selección no depende del índice activo de Recharts, que se mueve al recibir foco, y el puntero no enfoca el SVG.
 - Con teclado, la capa accesible de Recharts recorre meses o años con las flechas y Enter o Espacio abre el detalle. Escape lo cierra.
 - Toda la información de cada gráfico está en su tabla HTML, con enlaces al Historial cuyo nombre accesible contiene el texto visible.
 
@@ -71,7 +71,7 @@
 | Unitarias · `npm test` | **82 aprobadas, 13 nuevas.** Preajustes y referencias con cambio de año, bisiestos y año 1; URL de ida y vuelta y descarte de valores inválidos; independencia de la ventana anual; argumentos exactos de las RPC; formato de importes, signos y porcentajes sin `Number`; traducción de cada agregado a los filtros de `list_expenses`; validación de `volver` contra rutas externas; plantillas del resumen con empates, falta de base, tendencia sostenida, hueco y período vacío. |
 | SQL · `npm run test:db` | **41 aprobadas, 16 nuevas**, sobre todas las migraciones en PostgreSQL embebido con la fecha congelada en 23/11/2026. Ver el informe de exactitud. La auditoría de superficie de IMP-02 se amplió con las RPC y funciones nuevas. |
 | Rendimiento SQL | 36.500 gastos de una persona en diez años (ARCH-01 §2): cada respuesta coincide con el modelo independiente y el período acotado usa el índice bajo RLS. Ver mediciones. |
-| Chromium · `npm run test:e2e` | **40 aprobadas, 10 nuevas**, y las 30 previas sin cambios. Valores exactos de los seis paneles, desglose, comparación y resumen; selector de moneda con respuesta tardía descartada, persistencia al navegar y tras cerrar e iniciar sesión; ventana anual con navegación de bloques, cambio de período, moneda y categoría, teclado y coincidencia con el Historial; cada agregado contrastado con la suma de las filas del Historial; edición desde el Historial reflejada al volver; eliminación del único gasto de un año; favoritos persistentes; capturas y ausencia de desbordamiento horizontal a 1440, 834 y 375 px; toque en barras y puntos con `hasTouch`. El transporte simula Auth y la Data API y ejecuta las RPC contra PostgreSQL embebido. |
+| Chromium · `npm run test:e2e` | **41 aprobadas, 11 nuevas**, y las 30 previas sin cambios. Valores exactos de los seis paneles, desglose, comparación y resumen; selector de moneda con respuesta tardía descartada, persistencia al navegar y tras cerrar e iniciar sesión; ventana anual con navegación de bloques, cambio de período, moneda y categoría, teclado y coincidencia con el Historial; cada agregado contrastado con la suma de las filas del Historial; edición desde el Historial reflejada al volver; eliminación del único gasto de un año; favoritos persistentes; capturas y ausencia de desbordamiento horizontal a 1440, 834 y 375 px; toque en barras y puntos con `hasTouch`; presionar, esperar y soltar sobre una barra o un punto. El transporte simula Auth y la Data API y ejecuta las RPC contra PostgreSQL embebido. |
 | HTTP contra desarrollo | **6 aprobadas** (las públicas de IMP-01 a IMP-04, una nueva). 8 omitidas porque requieren JWT de sesiones de prueba, entre ellas la autenticada nueva de IMP-04. |
 | Calidad | ESLint y build de Vite aprobados. |
 
@@ -122,9 +122,32 @@ Las pruebas no comparan PostgreSQL consigo mismo. [`oracle.js`](../../supabase/t
 | Desglose por subcategoría | [Escritorio](capturas/desglose-1440.png) | [Tablet](capturas/desglose-834.png) | [Móvil](capturas/desglose-375.png) |
 | Historial abierto desde un agregado | [Escritorio](capturas/historial-desde-estadisticas-1440.png) | [Tablet](capturas/historial-desde-estadisticas-834.png) | [Móvil](capturas/historial-desde-estadisticas-375.png) |
 
+## Recorrido real con Google y la Data API alojada
+
+Se ejecutó el 24/11/2026 con la rama en `http://localhost:5173` (servidor de desarrollo propio, tras detener con autorización del titular los procesos de una sesión anterior que ocupaban los puertos 5173 y 4173) contra `cifra-development`. La sesión Google de la primera plaza seguía vigente en el navegador integrado; los tokens no se leyeron ni se copiaron. Se usaron cuatro gastos rotulados «(borrar) IMP-04», que se eliminaron al final.
+
+| Paso | Resultado |
+| --- | --- |
+| Estado inicial | UYU, sin favoritos, sin gastos, fecha civil 24/11/2026. Paneles vacíos con «Sin registros» y «No disponible». |
+| Alta desde el formulario | a) UYU 123,45 · 20/11/2026 · Alimentación / Supermercado. b) UYU 76,55 · 15/10/2026 · Transporte. c) USD 10,00 · 21/11/2026 · Alimentación. d) UYU 150,00 · 01/06/2025 · Alimentación. |
+| Mes actual en UYU | Total 123,45 y 1 gasto; referencia octubre 76,55; diferencia +46,90; «No comparable · Período en curso». Alimentación 100 %. Resumen: «Todo el gasto registrado corresponde a Alimentación… El total aumentó UYU 46,90…». |
+| Evolución anual | 2022–2024 «Sin registros»; 2025 = 150,00 «Sin base»; 2026 parcial = 123,45 + 76,55 = 200,00; dos puntos, 2025 aislado. |
+| Año actual frente a 2025 | Alimentación 123,45 frente a 150,00 = −26,55 sin porcentaje; resumen «61,73 %» (123,45 / 200 = 61,725 → 61,73) y «aumentó UYU 50,00». |
+| Moneda | USD: 10,00 y 1 gasto, ningún panel con UYU. Se conservó al navegar y al recargar la página (viene de `get_preferences` alojado). Se volvió a UYU. |
+| Favoritos | «Evolución anual» marcada: «Mis favoritos · 1» con solo ese panel tras recargar, con el período en la URL. Se desmarcó al final. |
+| Ventana anual | 2017–2021 se conservó al cambiar el período general a «Año actual» (subtítulo de 2026), con «Sin registros en UYU entre 2017 y 2021». |
+| Historial | El total de 2026 abrió `/historial?desde=2026-01-01&hasta=2026-12-31&moneda=UYU&volver=…` con los dos gastos UYU: 123,45 + 76,55 = 200,00, igual que el indicador. «Volver a Estadísticas» restauró `periodo=anio`. |
+| Borrado | Al borrar los gastos de 2026, el año quedó «Sin registros» con referencia 150,00 y diferencia y variación «No disponible», sin −100 %. Tras borrar el último gasto, el Historial muestra «Todavía no registraste gastos» y la línea anual, «Sin registros en UYU entre 2022 y 2026». |
+| Estado final | UYU, sin favoritos y sin gastos, como al empezar. |
+
+Defectos encontrados y corregidos durante el recorrido:
+
+- **Primer clic sobre un punto perdido.** Al llegar con el puntero y presionar enseguida, Recharts dibujaba el punto resaltado encima antes de soltar; el registro de eventos mostró `pointerdown` y `pointerup` sobre el punto y ningún `click`. La selección pasó a `pointerup` y el primer clic sobre el punto 2025 y sobre la barra de noviembre abrió su detalle. Playwright deja pasar un cuadro entre mover y presionar, así que su prueba no reproduce esa carrera; la comprobación es manual.
+- **Rótulo de Comparación.** Una categoría con referencia pero sin gastos actuales decía «Sin base»; ahora dice «No disponible» y «Sin base» queda para la referencia vacía.
+
 ## Pendientes
 
-- **Recorrido autenticado con Google contra la Data API alojada.** No se ejecutó: el puerto 5173 (el único callback permitido en Auth de desarrollo) estaba ocupado por un servidor Vite de una sesión anterior que no se detuvo, y no se modificó la configuración de Auth. Las RPC se verificaron en el PostgreSQL alojado bajo `authenticated` con la sesión vigente de la plaza, y por HTTP sin sesión. Con `CIFRA_TEST_ACCESS_TOKEN_A` se ejecuta también la prueba HTTP autenticada de IMP-04.
+- **Prueba HTTP autenticada por script.** Con `CIFRA_TEST_ACCESS_TOKEN_A` se ejecuta la de IMP-04; no se copió ningún JWT. La segunda plaza sigue sin habilitar, así que el aislamiento entre las dos plazas reales se verificó solo en PostgreSQL embebido.
 - **Planes y latencia con volumen representativo en el proyecto alojado.** La tabla alojada está vacía y no se insertaron gastos sintéticos; el volumen se midió en PostgreSQL embebido.
 - **Teléfono físico.** Toque, foco y fluidez se comprobaron en Chromium con viewport de 375 px, `hasTouch` y CPU ralentizada.
 - **Resumen y Presupuestos** (IMP-05) deben reutilizar `CurrencySelect`, `usePreferenceActions` y `get_stats` para el mes actual.

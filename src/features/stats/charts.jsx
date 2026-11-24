@@ -4,12 +4,17 @@ import { compactAxis } from './format.js';
 
 // Recharts se carga solo al abrir Estadísticas (React.lazy). Number se usa únicamente
 // para la coordenada; tooltip, detalle y tabla muestran el decimal exacto del servidor.
-// Interacción: puntero y toque muestran el tooltip; el clic o toque sobre la columna
-// de un mes o el área de un punto lo selecciona (el destino es el propio elemento, no el
-// índice activo, que Recharts mueve al recibir foco). Con teclado, la capa accesible
-// recorre los datos con las flechas y Enter o Espacio selecciona el elemento activo.
+// Interacción: puntero y toque muestran el tooltip; soltar el puntero o el dedo sobre la
+// columna de un mes o el área de un punto lo selecciona. Se usa pointerup y no click:
+// Recharts dibuja el punto resaltado encima entre mousedown y mouseup, y entonces el click
+// va al contenedor común; pointerup siempre llega al elemento que está bajo el puntero, y
+// un gesto de desplazamiento lo cancela. El destino es el propio elemento, no el índice
+// activo, que Recharts mueve al recibir foco. Con teclado, la capa accesible recorre los
+// datos con las flechas y Enter o Espacio selecciona el elemento activo.
 
 const GRID = '#2b2d2e';
+// Primary button or any touch/pen contact.
+const select = (onSelect, key) => (event) => { if (event.button === 0 && key !== undefined) onSelect(key); };
 const AXIS = '#353739';
 
 // Keeps the active tooltip label in a ref before paint, so Enter reads what is on screen.
@@ -43,7 +48,7 @@ function Tip({ active, payload, label, rows, render }) {
 }
 
 // Barras de celdas discretas (UI-01): un patrón por barra, alineado con su borde y la base.
-function SegmentBar({ x, y, width, height, index, payload, patternId, highlighted }) {
+function SegmentBar({ x, y, width, height, index, payload, patternId, highlighted, onSelect }) {
   if (!(height > 0) || !(width > 0)) return null;
   const id = `${patternId}-${index}`;
   const bottom = y + height;
@@ -54,7 +59,7 @@ function SegmentBar({ x, y, width, height, index, payload, patternId, highlighte
           <rect x="0" y="1" width="3" height="3" fill={payload.key === highlighted ? '#e6e5dc' : '#989e9d'} />
         </pattern>
       </defs>
-      <rect x={x} y={y} width={width} height={height} fill={`url(#${id})`} />
+      <rect x={x} y={y} width={width} height={height} fill={`url(#${id})`} onPointerUp={select(onSelect, payload.key)} />
     </g>
   );
 }
@@ -74,10 +79,9 @@ export function MonthlyChart({ rows, highlighted, label, render, onSelect }) {
         <Tooltip cursor={{ fill: '#ffffff0a' }} filterNull={false} isAnimationActive={false}
           content={<Tip rows={rows} render={render} />} />
         <Bar dataKey="value" maxBarSize={24} minPointSize={3} isAnimationActive={false}
-          onClick={(item) => item?.payload && onSelect(item.payload.key)}
           background={(props) => <rect key={'hit' + props.index} className="chart-hit" x={props.x - 4} y={props.y} width={props.width + 8}
-            height={props.height} fill="transparent" onClick={() => rows[props.index] && onSelect(rows[props.index].key)} />}
-          shape={(props) => <SegmentBar {...props} patternId={patternId} highlighted={highlighted} />} />
+            height={props.height} fill="transparent" onPointerUp={select(onSelect, rows[props.index]?.key)} />}
+          shape={(props) => <SegmentBar {...props} patternId={patternId} highlighted={highlighted} onSelect={onSelect} />} />
         <ActiveReporter target={active} />
       </BarChart>
     </ChartFrame>
@@ -88,7 +92,7 @@ function YearDot({ cx, cy, payload, selected, onSelect }) {
   if (payload?.value == null || cx == null || cy == null || Number.isNaN(cy)) return null;
   const chosen = payload.key === selected;
   return (
-    <g className="year-dot" onClick={onSelect && (() => onSelect(payload.key))}>
+    <g className="year-dot" onPointerUp={onSelect && select(onSelect, payload.key)}>
       <circle cx={cx} cy={cy} r="14" fill="transparent" />
       <circle cx={cx} cy={cy} r="7" fill="#171819" />
       <circle cx={cx} cy={cy} r="4.5" fill={chosen ? '#f4f2eb' : '#232625'} stroke="#ededdf" strokeWidth="2"

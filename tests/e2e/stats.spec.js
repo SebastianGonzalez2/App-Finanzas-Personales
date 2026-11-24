@@ -45,6 +45,9 @@ async function seed(ledger) {
 
 // Suma exacta, en centésimos, de los importes de una moneda que muestra el Historial.
 async function historySum(page, currency) {
+  // The history keeps the previous query's rows (dimmed) while the new one loads.
+  await expect(page.locator('section.history-panel-list')).toHaveAttribute('aria-busy', 'false');
+  await expect(page.locator('.history-body.updating')).toHaveCount(0);
   const pager = page.getByRole('button', { name: 'Cargar más gastos' });
   while (await pager.isVisible()) await pager.click();
   const texts = await page.locator('.expense-table tbody td.money').allInnerTexts();
@@ -98,6 +101,7 @@ test('indicadores, categorías, desglose, comparación y resumen con valores exa
   await expect(comparison.locator('tbody tr').nth(1)).toContainText('Transporte0,30Sin registros');
   await expect(comparison.locator('tbody tr').nth(1)).toContainText('Sin base');
   await expect(comparison.locator('tbody tr').nth(2)).toContainText('ViviendaSin registros99,99');
+  await expect(comparison.locator('tbody tr').nth(2).locator('td').last()).toHaveText('No disponible');
 
   const summary = panel(page, 'summary');
   await expect(summary.locator('.summary-headline')).toHaveText('Alimentación concentró el 99,90% del gasto registrado.');
@@ -333,4 +337,30 @@ test.describe('toque en móvil', () => {
     await panel(page, 'annual').locator('.chart-detail').getByRole('link').tap();
     expect(await historySum(page, 'UYU')).toEqual({ count: 2, total: '500,00' });
   });
+});
+
+test('mantener presionado y soltar sobre una barra o un punto los selecciona', async ({ page, ledger }) => {
+  await seed(ledger);
+  await page.goto('/estadisticas?periodo=3m');
+  // La selección usa pointerup. En Chromium real, Recharts puede dibujar el punto resaltado
+  // encima entre mousedown y mouseup y el navegador no emite click (verificado a mano con
+  // registro de eventos). Playwright deja pasar un cuadro entre mover y presionar, así que
+  // esta prueba no reproduce esa carrera: comprueba que presionar, esperar y soltar selecciona.
+  const press = async (locator) => {
+    await locator.scrollIntoViewIfNeeded();
+    const box = await locator.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(150);
+    await page.mouse.up();
+  };
+  const annual = panel(page, 'annual');
+  await expect(annual.locator('.year-dot')).toHaveCount(4);
+  await press(annual.locator('.year-dot').nth(1));
+  await expect(annual.locator('.chart-detail')).toContainText('2024');
+  await expect(annual.locator('.chart-detail')).toContainText('UYU 1.000,00 · 2 gastos');
+  const monthly = panel(page, 'monthly');
+  await press(monthly.locator('.segment-bar').nth(1));
+  await expect(monthly.locator('.chart-detail')).toContainText('noviembre de 2026');
+  await expect(monthly.locator('.chart-detail')).toContainText('UYU 300,30');
 });

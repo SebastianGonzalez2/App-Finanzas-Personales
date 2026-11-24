@@ -273,8 +273,9 @@ export function ComparisonContent({ data, today, back }) {
     ? <HistoryLink filters={{ ...periodFilters(data.filters, range), category_id: row.id }} back={back}
       label={`${row.name}, ${side}: ${currency} ${money(metric.total)}. Ver ${expensesCount(metric.count)}`}>{money(metric.total)}</HistoryLink>
     : <span className="muted-text">Sin registros</span>;
+  // Sin base: la referencia no tiene gastos. No disponible: el período actual no tiene gastos.
   const variation = (row) => row.percent !== null ? percentage(row.percent, { sign: true })
-    : row.current.count && row.reference.count ? 'No comparable' : 'Sin base';
+    : row.reference.count === 0 ? 'Sin base' : row.current.count === 0 ? 'No disponible' : 'No comparable';
   return <>
     <p className="period-line compare-periods">
       <span><b>Actual</b> · {rangeDays(data.filters)}{isPartial(data.filters, today) && ' · parcial'}</span>
