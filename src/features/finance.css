@@ -117,22 +117,6 @@ body:has(.form-dialog[open]) { overflow: hidden; }
 .history-detail dd small { color: var(--muted); font: 12px var(--mono); }
 .history-amount { margin: 8px 0 0; font-size: clamp(32px, 5vw, 48px); letter-spacing: -.05em; overflow-wrap: anywhere; }
 .history-amount span { color: var(--secondary); font: 14px var(--mono); letter-spacing: normal; }
-.feedback {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  width: fit-content;
-  max-width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--panel);
-  color: var(--sage);
-  margin: 0 0 16px;
-  padding: 10px 16px;
-  overflow-wrap: anywhere;
-}
-.notice-link { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 .catalog { max-width: 780px; }
 .catalog-toolbar { margin-bottom: 16px; flex-wrap: wrap; }
 .category-tree, .category-children ul { list-style: none; padding: 0; margin: 0; }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import { useToast } from '../../app/toastContext.js';
 import { Icon } from '../../components/Icon.jsx';
 import { useCatalog, useFinance } from '../../lib/finance.js';
 import { figureSize, money, percentage } from '../stats/format.js';
@@ -109,12 +110,12 @@ export function BudgetsPage({ preferences }) {
   const api = useFinance();
   const location = useLocation();
   const navigate = useNavigate();
+  const toast = useToast();
   const { currency } = preferences;
   const budgets = useBudgets(api, currency);
   const catalog = useCatalog(api);
   const [dialog, setDialog] = useState(() => (location.state?.create ? { kind: 'form', budget: null } : null));
   const [menu, setMenu] = useState(null);
-  const [notice, setNotice] = useState('');
   const compact = useCompact();
 
   // «Crear presupuesto» desde el Resumen abre el formulario una sola vez (no al volver atrás).
@@ -124,18 +125,17 @@ export function BudgetsPage({ preferences }) {
 
   const toggle = useCallback((id) => setMenu(id), []);
   const archived = (id) => Boolean(catalog.data?.categories.find((row) => row.id === id)?.archived);
-  const openForm = (budget = null) => { setNotice(''); setDialog({ kind: 'form', budget }); };
+  const openForm = (budget = null) => { setDialog({ kind: 'form', budget }); };
   const rowMenu = (item) => <BudgetMenu budget={item} open={menu === item.category_id} onToggle={toggle}
-    onEdit={(budget) => openForm(budget)} onRetire={(budget) => { setNotice(''); setDialog({ kind: 'retire', budget }); }} />;
+    onEdit={(budget) => openForm(budget)} onRetire={(budget) => { setDialog({ kind: 'retire', budget }); }} />;
   const close = () => setDialog(null);
-  const done = (text) => { setDialog(null); setNotice(text); };
+  const done = (text) => { setDialog(null); toast.success(text); };
 
   const data = budgets.data;
   const items = data?.items ?? [];
   const create = <button type="button" className="btn" onClick={() => openForm()}><Icon name="plus" />Crear límite</button>;
   return (
     <>
-      {notice && <div className="feedback" role="status">{notice}</div>}
       <div className={'budget-page' + (data && items.length ? '' : ' single')}>
         {data && items.length > 0 && <BudgetHighlight item={items[0]} />}
         <section className="panel table-panel budget-list" aria-labelledby="budget-list-title" aria-busy={budgets.isFetching}>
@@ -171,7 +171,7 @@ export function BudgetsPage({ preferences }) {
 
 function CatalogWait({ query, onClose }) {
   return (
-    <div className="feedback budget-wait" role={query.isError ? 'alert' : 'status'}>
+    <div className="budget-wait" role={query.isError ? 'alert' : 'status'}>
       {query.isError ? 'No pudimos cargar las categorías.' : 'Cargando categorías…'}
       {query.isError && <button type="button" className="btn ghost" onClick={() => query.refetch()}>Reintentar</button>}
       <button type="button" className="btn ghost" onClick={onClose}>Cancelar</button>

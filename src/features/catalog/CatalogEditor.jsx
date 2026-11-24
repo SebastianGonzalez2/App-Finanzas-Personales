@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
+import { catalogToastMessage, useToast } from '../../app/toastContext.js';
 import { Dialog } from '../../components/Dialog.jsx';
 import { normalizeName } from '../expenses/draft.js';
 
 export function CatalogEditor({ api, catalog, item, parent, onClose, onSaved, side = false }) {
+  const toast = useToast();
   const [name, setName] = useState(item?.name ?? '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -25,6 +27,7 @@ export function CatalogEditor({ api, catalog, item, parent, onClose, onSaved, si
         ? await api.rpc('update_category', { kind, id: target.id, patch })
         : await api.rpc('create_category', { name: patch.name, category_id: parent?.id ?? null });
       api.rememberCategory(entry);
+      toast.success(catalogToastMessage(kind, target, patch));
       onSaved(entry);
     } catch (failure) {
       setError(failure.message);
