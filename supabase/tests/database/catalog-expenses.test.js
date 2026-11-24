@@ -226,8 +226,8 @@ test('IMP-02 · contratos, integridad y aislamiento en PostgreSQL', async (t) =>
         has_function_privilege('authenticated', oid, 'execute') as member
       from pg_proc where pronamespace='api'::regnamespace order by proname`);
     assert.deepEqual(procedures.map((p) => p.proname), [
-      'create_category', 'create_expense', 'delete_expense', 'get_catalog', 'get_expense',
-      'get_preferences', 'list_expenses', 'set_currency', 'update_category', 'update_expense',
+      'create_category', 'create_expense', 'delete_expense', 'get_annual', 'get_catalog', 'get_expense',
+      'get_preferences', 'get_stats', 'list_expenses', 'set_currency', 'set_favorite', 'update_category', 'update_expense',
     ]);
     assert.ok(procedures.every((p) => !p.prosecdef && !p.anon && !p.service && p.member));
     const guarded = await rows(`
@@ -236,8 +236,9 @@ test('IMP-02 · contratos, integridad y aislamiento en PostgreSQL', async (t) =>
         has_function_privilege('service_role', oid, 'execute') as service,
         has_function_privilege('authenticated', oid, 'execute') as member
       from pg_proc where pronamespace='private'::regnamespace and proname not in ('allowed','before_user_created')`);
-    const callerHelpers = ['decode_cursor', 'encode_cursor', 'expense_fields', 'expense_json', 'filter_date', 'filter_uuid', 'lock_expense', 'normalize_name',
-      'require_access', 'require_classification', 'whitespace_chars'];
+    const callerHelpers = ['comparison_json', 'decode_cursor', 'encode_cursor', 'equivalent_periods', 'expense_fields', 'expense_json',
+      'filter_date', 'filter_uuid', 'lock_expense', 'normalize_name', 'panel_order', 'require_access', 'require_classification',
+      'stats_filters', 'stats_reference', 'today', 'whitespace_chars'];
     assert.deepEqual(guarded.filter((fn) => fn.member).map((fn) => fn.proname).sort(), callerHelpers);
     for (const fn of guarded) {
       assert.ok(!fn.prosecdef && !fn.anon && !fn.service, fn.proname);

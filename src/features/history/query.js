@@ -15,6 +15,14 @@ const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 
 
 export const emptyFilters = { from: '', to: '', currency: '', category: '', subcategory: '' };
 
+// Enlace de vuelta a la consulta de Estadísticas que abrió este historial (IMP-04).
+// Solo se acepta una ruta interna de /estadisticas; cualquier otro valor se descarta.
+export const RETURN_PARAM = 'volver';
+export function readBack(params) {
+  const value = params.get(RETURN_PARAM) ?? '';
+  return value.length <= 1000 && /^\/estadisticas(\?[^#\s\\]*)?$/.test(value) ? value : '';
+}
+
 export function readQuery(params) {
   const get = (name) => params.get(name) ?? '';
   const from = validDate(get('desde')) ? get('desde') : '';

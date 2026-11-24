@@ -25,6 +25,11 @@ const messages = {
   INVALID_SORT: [null, 'El orden elegido no es válido.'],
   INVALID_LIMIT: [null, 'El tamaño de página no es válido.'],
   INVALID_CURSOR: [null, 'La consulta cambió. Volvé a cargar el historial.'],
+  INVALID_REFERENCE: [null, 'El período de referencia no es válido.'],
+  INVALID_OFFSET: [null, 'El bloque de meses pedido no existe en este período.'],
+  INVALID_YEAR: [null, 'El año elegido no es válido.'],
+  INVALID_PANEL: [null, 'Ese panel no existe.'],
+  INVALID_FAVORITE: [null, 'No pudimos actualizar el favorito.'],
 };
 
 export function useFinance() {

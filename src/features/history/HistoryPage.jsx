@@ -6,7 +6,7 @@ import { DeleteExpenseDialog } from './DeleteExpenseDialog.jsx';
 import { ExpenseDetail } from './ExpenseDetail.jsx';
 import { ExpenseTable } from './ExpenseTable.jsx';
 import { HistoryFilters } from './HistoryFilters.jsx';
-import { emptyFilters, isFiltered, listArgs, listTitle, readQuery, sorts, writeQuery } from './query.js';
+import { emptyFilters, isFiltered, listArgs, listTitle, readBack, readQuery, RETURN_PARAM, sorts, writeQuery } from './query.js';
 
 function Skeleton() {
   return (
@@ -47,8 +47,9 @@ function HistoryList({ api, today }) {
   const [removing, setRemoving] = useState(null);
   const filtered = isFiltered(query);
 
+  const back = readBack(new URLSearchParams(search));
   const update = useCallback((patch) => {
-    setParams((current) => writeQuery({ ...readQuery(current), ...patch }), { replace: true });
+    setParams((current) => writeQuery({ ...readQuery(current), ...patch }, { [RETURN_PARAM]: readBack(current) }), { replace: true });
   }, [setParams]);
   const clear = useCallback(() => update({ ...emptyFilters, q: '' }), [update]);
   const sortBy = useCallback((sort, direction) => update({ sort, direction }), [update]);
@@ -91,6 +92,7 @@ function HistoryList({ api, today }) {
 
   return (
     <>
+      {back && <Link className="btn ghost history-back" to={back}><Icon name="back" />Volver a Estadísticas</Link>}
       <HistoryFilters query={query} today={today} catalog={catalog.data} onChange={update} onClear={clear} />
       <section className="panel table-panel history-panel-list" aria-labelledby="history-title" aria-busy={list.isFetching}>
         <div className="panel-title">
