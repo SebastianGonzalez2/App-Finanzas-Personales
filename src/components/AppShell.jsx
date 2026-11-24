@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router';
 import { account, categories, sections } from '../app/navigation.js';
 import { Brand } from './Brand.jsx';
 import { Icon } from './Icon.jsx';
+import { NeonEdgeButton } from './NeonEdgeButton.jsx';
 
 function NavItem({ item, onNavigate }) {
   return (
@@ -55,7 +56,7 @@ function NewExpenseLink() {
   const location = useLocation();
   // Estadísticas conserva su consulta (período, filtros y ventana anual) al volver del registro.
   const from = location.pathname === '/estadisticas' ? location.pathname + location.search : location.pathname;
-  return <Link to="/gastos/nuevo" state={{ from }} className="btn primary"><Icon name="plus" />Nuevo gasto</Link>;
+  return <NeonEdgeButton as={Link} to="/gastos/nuevo" state={{ from }}>Registrar gasto</NeonEdgeButton>;
 }
 
 export function AppShell({ title, subtitle, actions, today, children }) {

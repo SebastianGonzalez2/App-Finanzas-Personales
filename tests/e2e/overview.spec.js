@@ -256,8 +256,8 @@ for (const [width, height, name] of [[1440, 960, '1440'], [834, 1112, '834'], [3
     await expect(panel(page, 'overview-budgets').locator('.gauge')).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(0);
-    // Con el menú cerrado, «Nuevo gasto» está a un toque.
-    await expect(page.getByRole('link', { name: 'Nuevo gasto' }).filter({ visible: true })).toHaveCount(1);
+    // Con el menú cerrado, «Registrar gasto» está a un toque.
+    await expect(page.getByRole('link', { name: 'Registrar gasto', exact: true }).filter({ visible: true })).toHaveCount(1);
     await mkdir('docs/imp-05/capturas', { recursive: true });
     await page.screenshot({ path: `docs/imp-05/capturas/resumen-${name}.png`, fullPage: true });
   });
@@ -274,7 +274,7 @@ test.describe('toque en móvil', () => {
     await expect(page).toHaveURL(/moneda=USD/);
     await expect(page.locator('.expense-table tbody tr')).toHaveCount(1);
     await page.goBack();
-    await page.getByRole('link', { name: 'Nuevo gasto' }).tap();
+    await page.getByRole('link', { name: 'Registrar gasto', exact: true }).tap();
     await expect(page.getByRole('heading', { name: 'Nuevo gasto', level: 1 })).toBeVisible();
   });
 });
