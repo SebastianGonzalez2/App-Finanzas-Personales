@@ -246,13 +246,6 @@ function RecentPanel({ query, filters, today }) {
   );
 }
 
-const QUICK = [
-  { to: NEW_EXPENSE.pathname, state: NEW_EXPENSE.state, icon: 'plus', title: 'Registrar gasto', note: 'Importe, fecha y categoría' },
-  { to: '/historial', icon: 'historial', title: 'Historial', note: 'Buscar, editar y eliminar' },
-  { to: '/estadisticas', icon: 'estadisticas', title: 'Estadísticas', note: 'Períodos y categorías' },
-  { to: '/presupuestos', icon: 'presupuestos', title: 'Presupuestos', note: 'Límites mensuales' },
-];
-
 // / · Resumen (RF-027). Cuatro lecturas en paralelo, cada bloque con su carga y su error.
 export function OverviewPage({ preferences }) {
   const api = useFinance();
@@ -273,14 +266,6 @@ export function OverviewPage({ preferences }) {
         <BudgetsPanel query={budgets} />
       </div>
       <RecentPanel query={recent} filters={args.recent.filters} today={today} />
-      <nav className="quick-actions" aria-label="Accesos rápidos">
-        {QUICK.map((item) => (
-          <Link key={item.to} className="quick-action" to={item.to} state={item.state}>
-            <span className="tile" aria-hidden="true"><Icon name={item.icon} /></span>
-            <span><strong>{item.title}</strong><small>{item.note}</small></span>
-          </Link>
-        ))}
-      </nav>
     </div>
   );
 }

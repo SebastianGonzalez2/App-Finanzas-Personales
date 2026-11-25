@@ -27,7 +27,8 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-body { margin: 0; background: var(--background); color: var(--text); }
+body { margin: 0; background: #07080a; color: var(--text); }
+#root { position: relative; isolation: isolate; min-height: 100vh; }
 button { font: inherit; color: inherit; }
 button:not(:disabled) { cursor: pointer; }
 button:disabled { opacity: .65; }
@@ -89,7 +90,7 @@ h2 { font-size: 19px; }
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: var(--sidebar);
+  background: transparent;
 }
 .login-art {
   position: relative;
@@ -116,7 +117,7 @@ h2 { font-size: 19px; }
   transition: grid-template-columns 140ms ease;
 }
 .shell.compact { --rail-width: 72px; }
-.rail { border-right: 1px solid var(--border); background: var(--sidebar); }
+.rail { border-right: 1px solid var(--border); background: rgba(9, 10, 13, 0.88); }
 .rail-inner { display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; }
 .rail-head, .topbar {
   height: 72px;
@@ -229,7 +230,7 @@ body:has(.sheet[open]) { overflow: hidden; }
     height: 64px;
     align-items: center;
     justify-content: space-between;
-    background: #101112f8;
+    background: rgba(7, 8, 10, 0.92);
     border-bottom: 1px solid var(--border);
     padding: 0 16px;
   }

@@ -1,0 +1,110 @@
+/*
+ * AppBackground — fondo decorativo estático de columnas verticales oscuras.
+ * Todas las variables de ajuste visual están centralizadas en `.app-bg` para
+ * facilitar el tuneo sin tocar las reglas de cada capa.
+ */
+
+.app-bg {
+  /* ── Color base ─────────────────────────────────────────────────────────── */
+  --app-bg-base: #07080a;
+
+  /* ── Columnas verticales (ancho responsive + tonos alternados + bisel) ──── */
+  --app-bg-col-width: clamp(68px, 8.333vw, 132px);
+  --app-bg-col-cycle: calc(var(--app-bg-col-width) * 4);
+  --app-bg-tone-black: rgba(7, 8, 10, 0.72);
+  --app-bg-tone-gray: rgba(20, 22, 26, 0.42);
+  --app-bg-tone-blue: rgba(13, 18, 29, 0.44);
+  --app-bg-tone-slate: rgba(16, 18, 22, 0.36);
+  --app-bg-flute-shadow: rgba(0, 0, 0, 0.30);
+  --app-bg-flute-mid: rgba(255, 255, 255, 0.012);
+  --app-bg-flute-highlight: rgba(220, 230, 245, 0.036);
+  --app-bg-columns-opacity: 1;
+
+  /* ── Líneas divisorias verticales ───────────────────────────────────────── */
+  --app-bg-line-highlight: rgba(215, 226, 242, 0.042);
+  --app-bg-line-shadow: rgba(0, 0, 0, 0.36);
+  --app-bg-lines-opacity: 0.9;
+
+  /* ── Iluminación central y vignette / fade radial ───────────────────────── */
+  --app-bg-center-glow: rgba(140, 162, 196, 0.055);
+  --app-bg-vignette-mid: rgba(4, 5, 7, 0.50);
+  --app-bg-vignette-edge: rgba(3, 4, 5, 0.90);
+  --app-bg-vignette-opacity: 1;
+
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+  background-color: var(--app-bg-base);
+  contain: layout paint style;
+}
+
+.app-bg--contained {
+  position: absolute;
+}
+
+.app-bg__layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Capa 1: bandas anchas alternadas (negro, gris oscuro, azul oscuro) + relieve suave por columna. */
+.app-bg__columns {
+  opacity: var(--app-bg-columns-opacity);
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      var(--app-bg-flute-shadow) 0,
+      transparent calc(var(--app-bg-col-width) * 0.18),
+      var(--app-bg-flute-mid) calc(var(--app-bg-col-width) * 0.62),
+      var(--app-bg-flute-highlight) calc(var(--app-bg-col-width) - 1px),
+      transparent var(--app-bg-col-width)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--app-bg-tone-black) 0 var(--app-bg-col-width),
+      var(--app-bg-tone-gray) var(--app-bg-col-width) calc(var(--app-bg-col-width) * 2),
+      var(--app-bg-tone-blue) calc(var(--app-bg-col-width) * 2) calc(var(--app-bg-col-width) * 3),
+      var(--app-bg-tone-slate) calc(var(--app-bg-col-width) * 3) var(--app-bg-col-cycle)
+    );
+}
+
+/* Capa 2: líneas finas de 1 px alineadas exactamente al borde de cada columna. */
+.app-bg__lines {
+  opacity: var(--app-bg-lines-opacity);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--app-bg-line-highlight) 0 1px,
+    var(--app-bg-line-shadow) 1px 2px,
+    transparent 2px var(--app-bg-col-width)
+  );
+}
+
+/* Capa 3: foco suave al centro y vignette radial que oscurece los bordes. */
+.app-bg__vignette {
+  opacity: var(--app-bg-vignette-opacity);
+  background-image:
+    radial-gradient(
+      ellipse 64% 58% at 54% 44%,
+      var(--app-bg-center-glow) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 80% 76% at 50% 48%,
+      transparent 28%,
+      var(--app-bg-vignette-mid) 72%,
+      var(--app-bg-vignette-edge) 100%
+    );
+}
+
+@media (width <= 620px) {
+  .app-bg {
+    --app-bg-col-width: 72px;
+    --app-bg-vignette-mid: rgba(4, 5, 8, 0.44);
+    --app-bg-vignette-edge: rgba(3, 4, 6, 0.84);
+  }
+}

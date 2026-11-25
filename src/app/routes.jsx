@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, ScrollRestoration } from 'react-router';
+import { AppBackground } from '../components/AppBackground.jsx';
 import { AppShell } from '../components/AppShell.jsx';
 import { ToastViewport } from '../components/ToastViewport.jsx';
 import { AccessState } from '../features/auth/AccessState.jsx';
@@ -57,6 +58,7 @@ function scrollKey(location) {
 export function AppRoutes() {
   return (
     <>
+    <AppBackground />
     <ScrollRestoration getKey={scrollKey} />
     <ToastViewport />
     <Routes>
