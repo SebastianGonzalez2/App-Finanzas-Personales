@@ -30,7 +30,8 @@ export async function exchangeSession(client, code) {
   try {
     const { data, error } = await client.auth.exchangeCodeForSession(code);
     if (!error && data.session) return 'complete';
-    return !error || (error.status >= 400 && error.status < 500) || error.code === 'pkce_verifier_not_found'
+    return !error || (error.status >= 400 && error.status < 500) ||
+      error.code === 'pkce_code_verifier_not_found' || error.code === 'pkce_verifier_not_found'
       ? 'expired'
       : 'exchangeFailed';
   } catch {

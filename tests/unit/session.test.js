@@ -49,6 +49,7 @@ describe('flujo de sesión', () => {
   it.each([
     [{ data: { session: {} }, error: null }, 'complete'],
     [{ data: { session: null }, error: { status: 400 } }, 'expired'],
+    [{ data: { session: null }, error: { code: 'pkce_code_verifier_not_found' } }, 'expired'],
     [{ data: { session: null }, error: { status: 503 } }, 'exchangeFailed'],
   ])('interpreta el resultado del intercambio', async (response, result) => {
     const exchange = vi.fn().mockResolvedValue(response);

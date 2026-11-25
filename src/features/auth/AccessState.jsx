@@ -1,9 +1,14 @@
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useSession } from '../../app/sessionContext.js';
 import { AccessLayout } from './AccessLayout.jsx';
 
 export function AccessState({ status, retry }) {
   const { snapshot, signOut } = useSession();
+  const navigate = useNavigate();
+
+  async function signOutToLogin() {
+    if (await signOut()) navigate('/login', { replace: true });
+  }
 
   switch (status) {
     case 'checking':
@@ -14,7 +19,7 @@ export function AccessState({ status, retry }) {
       return (
         <AccessLayout title="Cierre remoto pendiente" role="alert" icon="info">
           <p>Revisá tu conexión para confirmar el cierre de sesión.</p>
-          <button className="btn primary" onClick={signOut} disabled={!snapshot.ready}>Reintentar cierre</button>
+          <button className="btn primary" onClick={signOutToLogin} disabled={!snapshot.ready}>Reintentar cierre</button>
         </AccessLayout>
       );
     case 'denied':
@@ -22,7 +27,7 @@ export function AccessState({ status, retry }) {
         <AccessLayout title="Esta cuenta no tiene acceso" role="alert" icon="info">
           <p>Si estás completando el alta, el acceso queda pendiente de habilitación.</p>
           {snapshot.session ? (
-            <button className="btn primary" onClick={signOut}>Salir y elegir otra cuenta</button>
+            <button className="btn primary" onClick={signOutToLogin}>Salir y elegir otra cuenta</button>
           ) : (
             <Link className="btn primary" to="/login" replace>Elegir otra cuenta</Link>
           )}
@@ -41,7 +46,7 @@ export function AccessState({ status, retry }) {
           role="alert" icon="info"
         >
           {snapshot.session ? (
-            <button className="btn primary" onClick={signOut}>Volver a ingresar</button>
+            <button className="btn primary" onClick={signOutToLogin}>Volver a ingresar</button>
           ) : (
             <Link className="btn primary" to="/login" replace>Volver a ingresar</Link>
           )}

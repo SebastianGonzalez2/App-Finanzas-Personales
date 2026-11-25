@@ -146,13 +146,33 @@ export function createAuthStorage({
     });
   }
 
+  // Mobile browsers (especially WebKit/iOS Safari and frozen Android tabs) can close a cached
+  // IDB connection while suspended without firing onclose. Reopen once before falling back.
+  async function withDatabase(operation) {
+    const reused = dbPromise !== null;
+    let db = await openDatabase();
+    if (!db) return { ok: false, value: null };
+
+    try {
+      return { ok: true, value: await operation(db) };
+    } catch {
+      dbPromise = null;
+      if (!reused) return { ok: false, value: null };
+      db = await openDatabase();
+      if (!db) return { ok: false, value: null };
+      try {
+        return { ok: true, value: await operation(db) };
+      } catch {
+        dbPromise = null;
+        return { ok: false, value: null };
+      }
+    }
+  }
+
   return {
     async getItem(key) {
       const legacy = readFallback(localStorage, key);
-      const db = await openDatabase();
-      if (!db) return legacy;
-
-      try {
+      const result = await withDatabase(async (db) => {
         const stored = await runTransaction(db, 'readonly', (store, done) => {
           const request = store.get(key);
           request.onsuccess = () => done(typeof request.result === 'string' ? request.result : null);
@@ -178,42 +198,27 @@ export function createAuthStorage({
           return migrated;
         }
         return null;
-      } catch {
-        dbPromise = null;
-        return legacy;
-      }
+      });
+      return result.ok ? result.value : legacy;
     },
 
     async setItem(key, value) {
-      const db = await openDatabase();
-      if (!db) {
-        writeFallback(localStorage, key, value);
-        return;
-      }
-
-      try {
+      const result = await withDatabase(async (db) => {
         await runTransaction(db, 'readwrite', (store) => {
           store.put(value, key);
         });
         removeFallback(localStorage, key);
         ensurePersistence();
-      } catch {
-        dbPromise = null;
-        writeFallback(localStorage, key, value);
-      }
+      });
+      if (!result.ok) writeFallback(localStorage, key, value);
     },
 
     async removeItem(key) {
-      const db = await openDatabase();
-      if (db) {
-        try {
-          await runTransaction(db, 'readwrite', (store) => {
-            store.delete(key);
-          });
-        } catch {
-          dbPromise = null;
-        }
-      }
+      await withDatabase(async (db) => {
+        await runTransaction(db, 'readwrite', (store) => {
+          store.delete(key);
+        });
+      });
       removeFallback(localStorage, key);
     },
   };
