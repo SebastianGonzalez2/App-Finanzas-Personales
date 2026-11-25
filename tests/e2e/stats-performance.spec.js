@@ -1,5 +1,6 @@
 import { asUser, sessions, users } from '../../supabase/tests/database/fixture.js';
 import { expect, test } from './database-fixture.js';
+import { chooseOption } from './controls.js';
 
 // Medición orientativa (ARCH-01 §12): Chromium con viewport de 375 px y CPU ralentizada 4×.
 // La Data API se sirve desde PostgreSQL embebido en la misma máquina, así que los tiempos
@@ -36,7 +37,7 @@ test('tiempos de carga y de cambio de moneda en Estadísticas con diez años de 
   results.cambioMoneda = Date.now() - switched;
 
   const period = Date.now();
-  await page.locator('.stats-filters select').first().selectOption('anio');
+  await chooseOption(page.locator('.stats-filters .spring-select__trigger').first(), 'anio');
   await expect(page.locator('.page-description')).toHaveText('Del 1 de enero al 31 de diciembre de 2026');
   await expect(page.locator('section[data-panel="metrics"] dd.figure').first()).toContainText('EUR');
   results.cambioPeriodo = Date.now() - period;

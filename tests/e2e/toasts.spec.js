@@ -1,4 +1,5 @@
 import { expect, test } from './database-fixture.js';
+import { chooseOption } from './controls.js';
 
 test.use({ locale: 'es-UY' });
 
@@ -12,7 +13,7 @@ test('toasts globales en gastos: centrado sobre área principal, sin desplazar c
   // Registrar gasto y confirmar que el toast aparece centrado sobre el área principal (no sobre la barra lateral).
   await page.getByRole('link', { name: 'Registrar gasto' }).first().click();
   await page.getByLabel('Importe del gasto').fill('450,00');
-  await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Alimentación' });
+  await chooseOption(page.getByLabel('Categoría', { exact: true }), { label: 'Alimentación' });
   await page.getByLabel('Descripción · opcional').fill('Almuerzo');
   await button(page, 'Guardar gasto').click();
 
@@ -185,7 +186,7 @@ test('adaptación en celular y respeto a prefers-reduced-motion', async ({ page,
 
   await button(page, 'Crear límite').first().click();
   const dialog = page.getByRole('dialog', { name: 'Crear límite' });
-  await dialog.getByLabel('Categoría').selectOption({ label: 'Alimentación' });
+  await chooseOption(dialog.getByLabel('Categoría'), { label: 'Alimentación' });
   await dialog.getByLabel('Límite mensual').fill('12000');
   await button(dialog, 'Crear límite').click();
 

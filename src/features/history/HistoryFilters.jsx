@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { IsoDatePicker } from '../../components/DatePicker.jsx';
 import { Icon } from '../../components/Icon.jsx';
+import { SpringSelect } from '../../components/SpringSelect.jsx';
 import { currencies, validDate } from '../expenses/draft.js';
 import { activeFilters, emptyFilters, isFiltered, NO_CHILD, periodOf, periods, rangeLabel } from './query.js';
 
@@ -23,17 +25,16 @@ function SearchBox({ value, onSearch }) {
   );
 }
 
-function FilterPanel({ id, query, catalog, onApply, onClose }) {
+function FilterPanel({ id, query, today, catalog, onApply, onClose }) {
   const [draft, setDraft] = useState(() => ({
     from: query.from, to: query.to, currency: query.currency, category: query.category, subcategory: query.subcategory,
   }));
   const [error, setError] = useState('');
   const first = useRef(null);
-  useEffect(() => { first.current.focus(); }, []);
+  useEffect(() => { first.current?.focus(); }, []);
   const parent = catalog?.categories.find((row) => row.id === draft.category);
   const children = catalog?.subcategories.filter((row) => row.category_id === draft.category) ?? [];
-  const set = (field) => (event) => {
-    const value = event.target.value;
+  const set = (field) => (value) => {
     setError('');
     setDraft((current) => field === 'category' ? { ...current, category: value, subcategory: '' } : { ...current, [field]: value });
   };
@@ -50,41 +51,82 @@ function FilterPanel({ id, query, catalog, onApply, onClose }) {
     onApply(draft);
   }
   const archived = (row, parentRow) => row.archived || parentRow?.archived ? ' · Archivada' : '';
+  const currencyOptions = [
+    { value: '', label: 'Todas las monedas' },
+    ...currencies.map((code) => ({ value: code, label: code })),
+  ];
+  const categoryOptions = [
+    { value: '', label: 'Todas las categorías' },
+    ...(catalog?.categories ?? []).map((row) => ({ value: row.id, label: row.name + archived(row) })),
+  ];
+  const subcategoryOptions = [
+    { value: '', label: parent ? 'Todas las subcategorías' : 'Elegí primero una categoría' },
+    ...(parent ? [{ value: NO_CHILD, label: 'Sin subcategoría' }] : []),
+    ...children.map((row) => ({ value: row.id, label: row.name + archived(row, parent) })),
+  ];
   return (
     <form id={id} className="history-panel" aria-label="Filtros del historial" onSubmit={apply} noValidate
       onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onClose(); } }}>
       <div className="history-panel-grid">
         <div className="field">
           <label htmlFor="history-from">Desde</label>
-          <input ref={first} id="history-from" type="date" min="0001-01-01" max="9999-12-31" value={draft.from}
-            onChange={set('from')} aria-invalid={Boolean(error)} aria-describedby={error ? 'history-filter-error' : undefined} />
+          <IsoDatePicker
+            ref={first}
+            id="history-from"
+            min="0001-01-01"
+            max="9999-12-31"
+            today={today}
+            clearable
+            placeholder="Sin límite"
+            value={draft.from}
+            onChange={set('from')}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'history-filter-error' : undefined}
+          />
         </div>
         <div className="field">
           <label htmlFor="history-to">Hasta</label>
-          <input id="history-to" type="date" min="0001-01-01" max="9999-12-31" value={draft.to}
-            onChange={set('to')} aria-invalid={Boolean(error)} aria-describedby={error ? 'history-filter-error' : undefined} />
+          <IsoDatePicker
+            id="history-to"
+            min="0001-01-01"
+            max="9999-12-31"
+            today={today}
+            clearable
+            placeholder="Sin límite"
+            value={draft.to}
+            onChange={set('to')}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'history-filter-error' : undefined}
+          />
         </div>
         <div className="field">
           <label htmlFor="history-currency">Moneda</label>
-          <select id="history-currency" value={draft.currency} onChange={set('currency')}>
-            <option value="">Todas las monedas</option>
-            {currencies.map((code) => <option key={code} value={code}>{code}</option>)}
-          </select>
+          <SpringSelect
+            id="history-currency"
+            value={draft.currency}
+            options={currencyOptions}
+            onChange={set('currency')}
+          />
         </div>
         <div className="field">
           <label htmlFor="history-category">Categoría</label>
-          <select id="history-category" value={draft.category} onChange={set('category')} disabled={!catalog}>
-            <option value="">Todas las categorías</option>
-            {catalog?.categories.map((row) => <option key={row.id} value={row.id}>{row.name}{archived(row)}</option>)}
-          </select>
+          <SpringSelect
+            id="history-category"
+            value={draft.category}
+            disabled={!catalog}
+            options={categoryOptions}
+            onChange={set('category')}
+          />
         </div>
         <div className="field field-wide">
           <label htmlFor="history-subcategory">Subcategoría</label>
-          <select id="history-subcategory" value={draft.subcategory} onChange={set('subcategory')} disabled={!parent}>
-            <option value="">{parent ? 'Todas las subcategorías' : 'Elegí primero una categoría'}</option>
-            {parent && <option value={NO_CHILD}>Sin subcategoría</option>}
-            {children.map((row) => <option key={row.id} value={row.id}>{row.name}{archived(row, parent)}</option>)}
-          </select>
+          <SpringSelect
+            id="history-subcategory"
+            value={draft.subcategory}
+            disabled={!parent}
+            options={subcategoryOptions}
+            onChange={set('subcategory')}
+          />
         </div>
       </div>
       {error && <p id="history-filter-error" className="field-error" role="alert">{error}</p>}
@@ -108,30 +150,36 @@ export function HistoryFilters({ query, today, catalog, onChange, onClear }) {
     setOpen(false);
     toggle.current?.focus();
   }
-  function choosePeriod(event) {
-    const value = event.target.value;
+  function choosePeriod(value) {
     if (value === 'personalizado') { setOpen(true); return; }
     const chosen = options.find((option) => option.value === value);
     onChange({ from: chosen.from, to: chosen.to });
   }
+  const periodLabel = period ? period.label : rangeLabel(query);
+  const periodOptions = [
+    ...options.map((option) => ({ value: option.value, label: option.label })),
+    { value: 'personalizado', label: period ? 'Rango personalizado…' : rangeLabel(query) },
+  ];
   return (
     <div className="history-toolbar">
       <SearchBox value={query.q} onSearch={(q) => onChange({ q })} />
-      <label className="btn history-period">
-        <Icon name="date" />
-        <span className="sr-only">Período</span>
-        <span aria-hidden="true">{period ? period.label : rangeLabel(query)}</span>
-        <select value={period?.value ?? 'personalizado'} onChange={choosePeriod}>
-          {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          <option value="personalizado">{period ? 'Rango personalizado…' : rangeLabel(query)}</option>
-        </select>
-      </label>
+      <SpringSelect
+        variant="toolbar"
+        className="history-period"
+        icon={<Icon name="date" />}
+        aria-label={`Período: ${periodLabel}`}
+        value={period?.value ?? 'personalizado'}
+        displayValue={periodLabel}
+        menuMinWidth={210}
+        options={periodOptions}
+        onChange={choosePeriod}
+      />
       <button ref={toggle} type="button" className="btn history-filter-toggle" aria-expanded={open} aria-controls={open ? panel : undefined}
         onClick={() => setOpen(!open)}>
         <Icon name="filters" />Filtros{count > 0 && <span className="history-count" aria-label={count + (count === 1 ? ' activo' : ' activos')}>{count}</span>}
       </button>
       <button type="button" className="btn ghost" disabled={!isFiltered(query)} onClick={() => { setOpen(false); onClear(); }}>Limpiar</button>
-      {open && <FilterPanel id={panel} query={query} catalog={catalog} onClose={close}
+      {open && <FilterPanel id={panel} query={query} today={today} catalog={catalog} onClose={close}
         onApply={(filters) => { onChange(filters); close(); }} />}
     </div>
   );

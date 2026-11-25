@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { IsoDatePicker } from '../../components/DatePicker.jsx';
+import { SpringSelect } from '../../components/SpringSelect.jsx';
 import { currencies } from './draft.js';
 import { CatalogEditor } from '../catalog/CatalogEditor.jsx';
 
@@ -12,7 +14,7 @@ function Field({ name, title, error, wide, children }) {
   );
 }
 
-export function ExpenseFields({ draft, original, catalog, errors, change, locked, api }) {
+export function ExpenseFields({ draft, original, catalog, errors, change, locked, api, today }) {
   const [creator, setCreator] = useState(null);
   const amount = useRef(null);
   useEffect(() => { if (window.matchMedia('(min-width: 861px)').matches) amount.current.focus(); }, []);
@@ -27,11 +29,23 @@ export function ExpenseFields({ draft, original, catalog, errors, change, locked
       onChange: (event) => change(name, event.target.value),
     };
   }
-  function select(event) {
-    const { name, value } = event.target;
+  function selectValue(name, value) {
     if (value === '__create__') setCreator(name);
     else change(name, value);
   }
+  const categoryOptions = [
+    { value: '', label: 'Elegí una categoría' },
+    ...parents.map((row) => ({ value: row.id, label: row.name + (row.archived ? ' · Archivada' : '') })),
+    { value: '__create__', label: '＋ Crear categoría' },
+  ];
+  const subcategoryOptions = [
+    { value: '', label: 'Sin subcategoría' },
+    ...children.map((row) => ({
+      value: row.id,
+      label: row.name + ((row.archived || parent?.archived) ? ' · Archivada' : ''),
+    })),
+    ...(parent && !parent.archived ? [{ value: '__create__', label: '＋ Crear subcategoría' }] : []),
+  ];
   return (
     <>
       <fieldset disabled={locked} className="expense-fieldset">
@@ -53,23 +67,46 @@ export function ExpenseFields({ draft, original, catalog, errors, change, locked
         </div>
         <div className="expense-grid">
           <Field name="spent_on" title="Fecha" error={errors.spent_on}>
-            <input {...props('spent_on')} type="date" min="0001-01-01" max="9999-12-31" required />
+            <IsoDatePicker
+              id="spent_on"
+              name="spent_on"
+              value={draft.spent_on}
+              min="0001-01-01"
+              max="9999-12-31"
+              today={today}
+              disabled={locked}
+              placeholder="Elegí una fecha"
+              aria-invalid={Boolean(errors.spent_on)}
+              aria-describedby={errors.spent_on ? 'spent_on-error' : undefined}
+              onChange={(value) => change('spent_on', value)}
+            />
           </Field>
           <Field name="category_id" title="Categoría" error={errors.category_id}>
-            <select {...props('category_id')} required onChange={select}>
-              <option value="">Elegí una categoría</option>
-              {parents.map((row) => <option key={row.id} value={row.id}>{row.name}{row.archived && ' · Archivada'}</option>)}
-              <option value="__create__">＋ Crear categoría</option>
-            </select>
+            <SpringSelect
+              id="category_id"
+              name="category_id"
+              value={draft.category_id}
+              required
+              disabled={locked}
+              placeholder="Elegí una categoría"
+              aria-invalid={Boolean(errors.category_id)}
+              aria-describedby={errors.category_id ? 'category_id-error' : undefined}
+              options={categoryOptions}
+              onChange={(value) => selectValue('category_id', value)}
+            />
           </Field>
           <Field name="subcategory_id" title="Subcategoría · opcional" error={errors.subcategory_id} wide>
-            <select {...props('subcategory_id')} onChange={select} disabled={!parent}>
-              <option value="">Sin subcategoría</option>
-              {children.map((row) => <option key={row.id} value={row.id}>
-                {row.name}{(row.archived || parent.archived) && ' · Archivada'}
-              </option>)}
-              {parent && !parent.archived && <option value="__create__">＋ Crear subcategoría</option>}
-            </select>
+            <SpringSelect
+              id="subcategory_id"
+              name="subcategory_id"
+              value={draft.subcategory_id}
+              disabled={locked || !parent}
+              placeholder="Sin subcategoría"
+              aria-invalid={Boolean(errors.subcategory_id)}
+              aria-describedby={errors.subcategory_id ? 'subcategory_id-error' : undefined}
+              options={subcategoryOptions}
+              onChange={(value) => selectValue('subcategory_id', value)}
+            />
           </Field>
           <Field name="description" title="Descripción · opcional" error={errors.description} wide>
             <textarea {...props('description')} rows="2" />

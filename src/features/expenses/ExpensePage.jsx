@@ -167,7 +167,7 @@ function ExpenseForm({ api, catalog, preferences, expense }) {
     <>
       <form className="expense-card" onSubmit={submit} noValidate>
         <ExpenseFields api={api} catalog={catalog} draft={draft} original={original} change={change}
-          errors={errors} locked={busy || Boolean(pending)} />
+          errors={errors} locked={busy || Boolean(pending)} today={preferences.today} />
         {(message || (pending && !busy)) && <div className="form-feedback" role="alert">
           <p>{message || 'El envío está pendiente de comprobación.'}</p>
           {pending && <button type="button" className="btn ghost" onClick={() => write(pending, true)} disabled={busy}>Reintentar</button>}

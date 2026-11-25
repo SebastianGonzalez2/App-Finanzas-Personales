@@ -1,13 +1,14 @@
 import { mkdir } from 'node:fs/promises';
 import { expect, test } from './database-fixture.js';
+import { chooseOption } from './controls.js';
 
 test.use({ locale: 'es-UY' });
 
 const MINUS = '−';
 const panel = (page, id) => page.locator(`section[data-panel="${id}"]`);
 const currencyButton = (page, code) => page.getByRole('group', { name: 'Moneda de consulta' }).getByRole('button', { name: code, exact: true });
-const periodSelect = (page) => page.locator('.stats-filters select').first();
-const categorySelect = (page) => page.locator('.stats-filters select').nth(1);
+const periodSelect = (page) => page.locator('.stats-filters .spring-select__trigger').first();
+const categorySelect = (page) => page.locator('.stats-filters .spring-select__trigger').nth(1);
 const viewButton = (page, name) => page.getByRole('group', { name: 'Paneles' }).getByRole('button', { name });
 
 async function catalog(ledger) {
@@ -166,7 +167,7 @@ test('evolución anual: ventana de cinco años, navegación, independencia del p
   ]);
   await expect(annual.locator('.chart-foot')).toContainText('2022 · Sin registros');
 
-  await categorySelect(page).selectOption(c.food);
+  await chooseOption(categorySelect(page), c.food);
   await expect(annual.locator('.annual-meta')).toContainText('Alimentación · UYU');
   await expect(table).toHaveText([/^2022\s*0\s*Sin registros/, /^2023\s*2\s*500,00/, /^2024\s*1\s*600,00\+100,00 \(\+20%\)/,
     new RegExp(`^2025\\s*1\\s*540,00${MINUS}60,00 \\(${MINUS}10%\\)`), /^2026 · parcial\s*4\s*850,00/]);
@@ -182,7 +183,7 @@ test('evolución anual: ventana de cinco años, navegación, independencia del p
   // Cambiar el período general conserva el bloque y sus importes.
   const annualCalls = ledger.calls.filter((call) => call.name === 'get_annual').length;
   for (const value of ['6m', 'anio', 'mes-anterior', 'mes']) {
-    await periodSelect(page).selectOption(value);
+    await chooseOption(periodSelect(page), value);
     await expect(annual.locator('.year-nav')).toContainText('2017 – 2021');
     await expect(table).toHaveText(older);
   }

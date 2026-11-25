@@ -1,5 +1,6 @@
 import { mkdir } from 'node:fs/promises';
 import { expect, test } from './database-fixture.js';
+import { chooseOption } from './controls.js';
 
 test.use({ locale: 'es-UY' });
 
@@ -67,7 +68,7 @@ test('RF-024/025 · crear un límite con gastos previos, validar, detectar dupli
   await button(page, 'Crear límite').first().click();
   const dialog = page.getByRole('dialog', { name: 'Crear límite' });
   await expect(dialog.getByRole('button', { name: 'UYU', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await dialog.getByLabel('Categoría').selectOption({ label: 'Alimentación' });
+  await chooseOption(dialog.getByLabel('Categoría'), { label: 'Alimentación' });
   for (const invalid of ['0', '-5', 'abc', '1,234', '0,00']) {
     await dialog.getByLabel('Límite mensual').fill(invalid);
     await button(dialog, 'Crear límite').click();
@@ -76,7 +77,9 @@ test('RF-024/025 · crear un límite con gastos previos, validar, detectar dupli
   }
   expect(ledger.calls.filter((call) => call.name === 'create_budget')).toHaveLength(0);
   // Subcategorías no se ofrecen; solo categorías activas.
-  await expect(dialog.getByLabel('Categoría').locator('option', { hasText: 'Supermercado' })).toHaveCount(0);
+  await dialog.getByLabel('Categoría').click();
+  await expect(page.getByRole('listbox').getByRole('option', { name: /Supermercado/ })).toHaveCount(0);
+  await page.keyboard.press('Escape');
   await dialog.getByLabel('Límite mensual').fill('15000');
   await button(dialog, 'Crear límite').click();
   await expect(dialog).toHaveCount(0);
@@ -97,7 +100,7 @@ test('RF-024/025 · crear un límite con gastos previos, validar, detectar dupli
   // Duplicado: la combinación existente se identifica antes de enviar y se ofrece editarla.
   await button(page, 'Crear límite').first().click();
   const again = page.getByRole('dialog', { name: 'Crear límite' });
-  await again.getByLabel('Categoría').selectOption({ label: 'Alimentación · ya tiene límite en UYU' });
+  await chooseOption(again.getByLabel('Categoría'), { label: 'Alimentación · ya tiene límite en UYU' });
   await expect(again.getByRole('alert')).toContainText('Alimentación ya tiene un límite de UYU 15.000,00');
   await expect(button(again, 'Crear límite')).toBeDisabled();
   // Otra moneda de la misma categoría sí está disponible.
@@ -122,7 +125,9 @@ test('RF-024/025 · crear un límite con gastos previos, validar, detectar dupli
   await button(page, 'Crear límite').first().click();
   const usd = page.getByRole('dialog', { name: 'Crear límite' });
   await button(usd, 'USD').click();
-  await expect(usd.getByLabel('Categoría').locator('option', { hasText: 'Salud · ya tiene límite en USD' })).toHaveCount(1);
+  await usd.getByLabel('Categoría').click();
+  await expect(page.getByRole('listbox').getByRole('option', { name: 'Salud · ya tiene límite en USD' })).toHaveCount(1);
+  await page.keyboard.press('Escape');
   await button(usd, 'Cancelar').click();
 
   // Retirar: confirmación con categoría y moneda; los gastos se conservan.
@@ -204,8 +209,8 @@ test('el consumo sigue a los gastos: alta, edición de importe, fecha, categorí
   // Alta desde «Registrar gasto» en Presupuestos: al volver, 5.000 + 1.000,50 = 6.000,50 (40 %).
   await page.getByRole('link', { name: 'Registrar gasto', exact: true }).first().click();
   await page.getByLabel('Importe del gasto').fill('1000,50');
-  await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Alimentación' });
-  await page.getByLabel('Subcategoría · opcional').selectOption({ label: 'Delivery' });
+  await chooseOption(page.getByLabel('Categoría', { exact: true }), { label: 'Alimentación' });
+  await chooseOption(page.getByLabel('Subcategoría · opcional'), { label: 'Delivery' });
   await button(page, 'Guardar gasto').click();
   await expect(page).toHaveURL(/\/presupuestos$/);
   await expect(food.locator('td').nth(0)).toHaveText('6.000,50');
@@ -250,7 +255,9 @@ test('categoría archivada: el límite sigue visible, editable y retirable; no a
   await expect(home.locator('td').nth(0)).toHaveText('9.600,00');
   await button(page, 'Crear límite').first().click();
   const create = page.getByRole('dialog', { name: 'Crear límite' });
-  await expect(create.getByLabel('Categoría').locator('option', { hasText: 'Vivienda' })).toHaveCount(0);
+  await create.getByLabel('Categoría').click();
+  await expect(page.getByRole('listbox').getByRole('option', { name: /Vivienda/ })).toHaveCount(0);
+  await page.keyboard.press('Escape');
   await button(create, 'Cancelar').click();
   // Teclado: abrir el menú, Escape lo cierra y devuelve el foco.
   const trigger = page.getByRole('button', { name: 'Acciones para el límite de Vivienda' });
@@ -292,7 +299,7 @@ for (const [width, height, name] of [[1440, 960, '1440'], [834, 1112, '834'], [3
     await page.screenshot({ path: `docs/imp-05/capturas/presupuestos-${name}.png`, fullPage: true });
     await button(page, 'Crear límite').first().click();
     const dialog = page.getByRole('dialog', { name: 'Crear límite' });
-    await dialog.getByLabel('Categoría').selectOption({ label: 'Transporte · ya tiene límite en UYU' });
+    await chooseOption(dialog.getByLabel('Categoría'), { label: 'Transporte · ya tiene límite en UYU' });
     await expect(dialog.getByRole('alert')).toBeVisible();
     await page.screenshot({ path: `docs/imp-05/capturas/presupuesto-duplicado-${name}.png` });
     await button(dialog, 'Cancelar').click();
@@ -311,7 +318,7 @@ test.describe('toque en móvil', () => {
     await panel(page, 'overview-budgets').getByRole('link', { name: 'Crear presupuesto' }).tap();
     const dialog = page.getByRole('dialog', { name: 'Crear límite' });
     await expect(dialog).toBeVisible();
-    await dialog.getByLabel('Categoría').selectOption({ label: 'Transporte' });
+    await chooseOption(dialog.getByLabel('Categoría'), { label: 'Transporte' });
     await dialog.getByLabel('Límite mensual').fill('3600');
     await button(dialog, 'Crear límite').tap();
     await expect(dialog).toHaveCount(0);
