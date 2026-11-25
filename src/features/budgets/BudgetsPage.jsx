@@ -44,7 +44,7 @@ function BudgetTable({ items, currency, archived, menu }) {
       <thead><tr>
         <th scope="col">Categoría</th><th scope="col" className="right">Gastado · {currency}</th>
         <th scope="col" className="right">Límite · {currency}</th><th scope="col" className="right">Margen</th>
-        <th scope="col">Uso</th><th scope="col"><span className="sr-only">Acciones</span></th>
+        <th scope="col" className="usage">Uso</th><th scope="col"><span className="sr-only">Acciones</span></th>
       </tr></thead>
       <tbody>
         {items.map((item) => {
@@ -55,8 +55,13 @@ function BudgetTable({ items, currency, archived, menu }) {
               <th scope="row"><Name item={item} archived={archived(item.category_id)} /><small className={'budget-state ' + state.tone}>{state.label}</small></th>
               <td className="right money">{money(item.spent)}</td>
               <td className="right money">{money(item.monthly_limit)}</td>
-              <td className="right"><small className="margin-label">{margin.over ? 'Exceso' : 'Restan'}</small><span className={'money ' + (margin.over ? 'neg' : '')}>{money(margin.amount)}</span></td>
-              <td className="usage"><span className={'budget-percent ' + state.tone}>{percentage(item.percent)}</span><Track item={item} state={state} /></td>
+              <td className={'right money' + (margin.over ? ' neg' : '')} title={margin.over ? 'Exceso sobre el límite' : 'Margen restante'}>{money(margin.amount)}</td>
+              <td className="usage">
+                <div className="usage-meter">
+                  <span className={'budget-percent ' + state.tone}>{percentage(item.percent)}</span>
+                  <Track item={item} state={state} />
+                </div>
+              </td>
               <td className="actions-cell">{menu(item)}</td>
             </tr>
           );

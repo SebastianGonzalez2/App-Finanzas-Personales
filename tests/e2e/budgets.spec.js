@@ -88,7 +88,8 @@ test('RF-024/025 · crear un límite con gastos previos, validar, detectar dupli
   const food = row(page, 'Alimentación');
   await expect(food.locator('td').nth(0)).toHaveText('5.000,00');
   await expect(food.locator('td').nth(1)).toHaveText('15.000,00');
-  await expect(food.locator('td').nth(2)).toHaveText('Restan10.000,00');
+  await expect(food.locator('td').nth(2)).toHaveText('10.000,00');
+  await expect(food.locator('td').nth(2)).not.toHaveClass(/\bneg\b/);
   await expect(food.locator('.budget-percent')).toHaveText('33,33%');
   await expect(food.locator('.budget-state')).toHaveText('Dentro del límite');
   await expect(page.locator('.highlight')).toContainText('Alimentación');
@@ -113,7 +114,7 @@ test('RF-024/025 · crear un límite con gastos previos, validar, detectar dupli
   await button(edit, 'Guardar límite').click();
   await expect(edit).toHaveCount(0);
   await expect(food.locator('.budget-percent')).toHaveText('27,78%');
-  await expect(food.locator('td').nth(2)).toHaveText('Restan13.000,00');
+  await expect(food.locator('td').nth(2)).toHaveText('13.000,00');
   expect(ledger.calls.filter((call) => call.name === 'create_budget')).toHaveLength(1);
 
   // Una combinación creada en otra pestaña se detecta al elegir su moneda.
@@ -155,13 +156,14 @@ test('RF-025 · estados, exceso saturado, orden por porcentaje y moneda comparti
   await expect(page.locator('.budget-table .budget-state')).toHaveText(['Superado', 'Límite alcanzado', 'Cerca del límite', 'Dentro del límite', 'Dentro del límite']);
   await expect(page.locator('.budget-table .budget-percent')).toHaveText(['106,67%', '100%', '96%', '33,33%', '0%']);
   const transport = row(page, 'Transporte');
-  await expect(transport.locator('td').nth(2)).toHaveText('Exceso240,00');
+  await expect(transport.locator('td').nth(2)).toHaveText('240,00');
+  await expect(transport.locator('td').nth(2)).toHaveClass(/\bneg\b/);
   // La barra se satura al 100 %, el texto conserva 106,67 %.
   const width = await transport.locator('.fill').evaluate((element) => element.style.width);
   expect(width).toBe('100%');
-  await expect(row(page, 'Servicios').locator('td').nth(2)).toHaveText('Restan0,00');
+  await expect(row(page, 'Servicios').locator('td').nth(2)).toHaveText('0,00');
   await expect(row(page, 'Salud').locator('td').nth(0)).toHaveText('0,00');
-  await expect(row(page, 'Salud').locator('td').nth(2)).toHaveText('Restan500,00');
+  await expect(row(page, 'Salud').locator('td').nth(2)).toHaveText('500,00');
   const highlight = page.locator('.highlight');
   await expect(highlight.locator('.tag')).toHaveText('Superado');
   await expect(highlight.locator('.eyebrow')).toHaveText('Transporte');
@@ -177,7 +179,8 @@ test('RF-025 · estados, exceso saturado, orden por porcentaje y moneda comparti
   await expect(page.getByRole('status').filter({ hasText: 'Cargando presupuestos…' })).toBeAttached();
   await currencyButton(page, 'USD').click();
   await expect(row(page, 'Alimentación').locator('td').nth(0)).toHaveText('50,00');
-  await expect(row(page, 'Alimentación').locator('td').nth(2)).toHaveText('Exceso10,00');
+  await expect(row(page, 'Alimentación').locator('td').nth(2)).toHaveText('10,00');
+  await expect(row(page, 'Alimentación').locator('td').nth(2)).toHaveClass(/\bneg\b/);
   await expect(row(page, 'Alimentación').locator('.budget-percent')).toHaveText('125%');
   release();
   await page.waitForTimeout(300);

@@ -51,7 +51,8 @@
   letter-spacing: -.065em;
   overflow-wrap: anywhere;
 }
-.hero-value .history-link { text-decoration-thickness: 1px; text-underline-offset: 10px; }
+.hero-value .history-link { text-decoration: none; }
+.hero-value .history-link:hover { opacity: .82; }
 .hero-value.muted { color: var(--secondary); font-size: clamp(34px, 3.4vw, 48px); }
 .hero-note { margin: 6px 0 0; color: var(--secondary); font-size: 13px; }
 .hero-empty .btn { margin-top: 16px; }
@@ -140,15 +141,18 @@
 .budget-table tbody th { font-weight: 500; }
 .budget-table .right { text-align: right; }
 .budget-table td.money { font-size: 14px; }
-.budget-table .usage { width: 22%; min-width: 120px; }
-.budget-table .track { margin-top: 8px; }
+.budget-table :is(th, td).usage { padding-left: 20px; }
+.budget-table .usage { width: 25%; min-width: 140px; }
+.budget-table .usage-meter { display: flex; align-items: center; gap: 10px; }
+.budget-table .usage-meter .budget-percent { flex: none; min-width: 5.5ch; white-space: nowrap; }
+.budget-table .usage-meter .track { flex: 1; min-width: 48px; margin-top: 0; }
+.budget-table td.actions-cell { vertical-align: middle; }
 .budget-state { display: block; margin-top: 6px; color: var(--muted); font: 12px var(--mono); }
 .budget-state.neg { color: var(--rose); }
 .budget-state.warn { color: var(--amber); }
 .budget-percent { font: 14px var(--mono); }
 .budget-percent.neg { color: var(--rose); }
 .budget-percent.warn { color: var(--amber); }
-.margin-label { display: block; color: var(--muted); font-size: 12px; }
 .budget-cards { list-style: none; margin: 0; padding: 0; }
 .budget-card { padding: 20px 24px; border-top: 1px solid var(--border); }
 .budget-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }

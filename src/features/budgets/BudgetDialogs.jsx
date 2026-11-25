@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Dialog } from '../../components/Dialog.jsx';
 import { Icon } from '../../components/Icon.jsx';
@@ -10,35 +11,71 @@ const LIMIT_ERROR = 'Ingresá un límite mayor que cero, con hasta 12 enteros y 
 const UNCERTAIN = 'No pudimos confirmar el cambio. Revisá tu conexión y volvé a intentar.';
 
 // Menú de cada límite (UI-01): «Editar límite» y «Retirar límite».
+// Se monta en un portal con posición fija para no quedar recortado por el overflow del panel.
 export function BudgetMenu({ budget, open, onToggle, onEdit, onRetire }) {
+  const trigger = useRef(null);
   const menu = useRef(null);
   const id = 'budget-menu-' + budget.category_id;
   // The dialog returns focus to the element focused when it opens: the menu trigger, which stays.
-  const choose = (event, action) => {
-    event.currentTarget.closest('.row-menu').querySelector('button').focus();
+  const choose = (action) => {
+    trigger.current?.focus();
     onToggle(null);
     action(budget);
   };
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    function place() {
+      if (!trigger.current || !menu.current) return;
+      const anchor = trigger.current.getBoundingClientRect();
+      const box = menu.current.getBoundingClientRect();
+      const gap = 6;
+      const pad = 8;
+      const left = Math.max(pad, Math.min(anchor.right - box.width, window.innerWidth - box.width - pad));
+      const below = anchor.bottom + gap + box.height <= window.innerHeight - pad;
+      const top = below ? anchor.bottom + gap : Math.max(pad, anchor.top - box.height - gap);
+      menu.current.style.top = top + 'px';
+      menu.current.style.left = left + 'px';
+    }
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [open]);
   useEffect(() => {
     if (!open) return undefined;
-    menu.current.querySelector('button').focus();
-    function outside(event) { if (!menu.current?.parentElement.contains(event.target)) onToggle(null); }
+    menu.current?.querySelector('button')?.focus();
+    function outside(event) {
+      if (!menu.current?.contains(event.target) && !trigger.current?.contains(event.target)) onToggle(null);
+    }
     document.addEventListener('pointerdown', outside);
     return () => document.removeEventListener('pointerdown', outside);
   }, [open, onToggle]);
+  const handleKeyDown = (event) => {
+    if (event.key === 'Escape' && open) {
+      event.stopPropagation();
+      onToggle(null);
+      trigger.current?.focus();
+    }
+  };
   return (
-    <div className="row-menu" onKeyDown={(event) => {
-      if (event.key === 'Escape' && open) { event.stopPropagation(); onToggle(null); event.currentTarget.querySelector('button').focus(); }
-    }}>
-      <button type="button" className="square row-menu-trigger" aria-label={'Acciones para el límite de ' + budget.category_name}
+    <div className="row-menu" onKeyDown={handleKeyDown}>
+      <button ref={trigger} type="button" className="square row-menu-trigger" aria-label={'Acciones para el límite de ' + budget.category_name}
         title="Acciones" aria-expanded={open} aria-controls={open ? id : undefined}
         onClick={() => onToggle(open ? null : budget.category_id)}>
         <Icon name="more" />
       </button>
-      {open && <div ref={menu} id={id} className="row-menu-list" role="group" aria-label={'Acciones para el límite de ' + budget.category_name}>
-        <button type="button" onClick={(event) => choose(event, onEdit)}><Icon name="edit" />Editar límite</button>
-        <button type="button" className="danger" onClick={(event) => choose(event, onRetire)}><Icon name="trash" />Retirar límite</button>
-      </div>}
+      {open && createPortal(
+        <div ref={menu} id={id} className="row-menu-list floating" role="group"
+          aria-label={'Acciones para el límite de ' + budget.category_name}
+          onKeyDown={handleKeyDown}>
+          <button type="button" onClick={() => choose(onEdit)}><Icon name="edit" />Editar límite</button>
+          <button type="button" className="danger" onClick={() => choose(onRetire)}><Icon name="trash" />Retirar límite</button>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }
