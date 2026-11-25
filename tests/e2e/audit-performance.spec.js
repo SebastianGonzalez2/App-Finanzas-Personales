@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { asUser, sessions, users } from '../../supabase/tests/database/fixture.js';
 import { expect, test } from './database-fixture.js';
+import { chooseOption } from './controls.js';
 
 // IMP-06 · Rendimiento en celular emulado (Chromium, no un dispositivo físico): 375 px, CPU 4×
 // y la red móvil de Lighthouse (150 ms de RTT, 1,6 Mbps de bajada, 750 kbps de subida) para los
@@ -83,7 +84,7 @@ test('carga en frío del Resumen y navegación entre pantallas en celular', asyn
     () => page.locator('.expense-table tbody tr').nth(59));
   await step('Historial → Presupuestos', () => nav('Presupuestos'), () => page.getByText('Mayor uso del límite'));
   await step('Presupuestos → Estadísticas', () => nav('Estadísticas'), () => page.locator('[data-panel="annual"] .recharts-surface'));
-  await step('Estadísticas · Últimos 12 meses', () => page.getByLabel(/^Período/).selectOption('12m'),
+  await step('Estadísticas · Últimos 12 meses', () => chooseOption(page.getByRole('button', { name: /^Período/ }), '12m'),
     () => page.locator('[data-panel="monthly"] .recharts-bar-rectangle').nth(11));
   await step('Estadísticas → Resumen', () => nav('Resumen'), () => page.locator('section[aria-labelledby="overview-month"] .hero-value'));
   await step('Resumen → Nuevo gasto', () => page.getByRole('link', { name: 'Registrar gasto', exact: true }).click(), () => page.getByLabel('Importe del gasto'));

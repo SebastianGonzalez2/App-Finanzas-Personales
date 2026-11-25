@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Dialog } from '../../components/Dialog.jsx';
 import { Icon } from '../../components/Icon.jsx';
+import { SpringSelect } from '../../components/SpringSelect.jsx';
 import { currencies } from '../expenses/draft.js';
 import { money } from '../stats/format.js';
 import { budgetsKey, editableLimit, normalizeLimit, useBudgets } from './budgets.js';
@@ -169,16 +170,28 @@ export function BudgetFormDialog({ api, initial = null, catalog, currency: prefe
             <div><dt>Consumido este mes</dt><dd className="money">{editing.currency} {money(editing.spent)}</dd></div>
           </dl>
         ) : <>
-          <label className="field">
-            Categoría
-            <select ref={categorySelect} value={category} aria-invalid={Boolean(errors.category_id || duplicate)}
-              aria-describedby={ids + '-category'} onChange={(event) => { setCategory(event.target.value); setErrors({}); setMessage(''); }}>
-              <option value="">Elegí una categoría</option>
-              {active.map((row) => <option key={row.id} value={row.id}>{row.name}{taken.has(row.id) ? ` · ya tiene límite en ${currency}` : ''}</option>)}
-            </select>
+          <div className="field">
+            <label htmlFor={ids + '-category-select'}>Categoría</label>
+            <SpringSelect
+              ref={categorySelect}
+              id={ids + '-category-select'}
+              value={category}
+              required
+              placeholder="Elegí una categoría"
+              aria-invalid={Boolean(errors.category_id || duplicate)}
+              aria-describedby={ids + '-category'}
+              options={[
+                { value: '', label: 'Elegí una categoría' },
+                ...active.map((row) => ({
+                  value: row.id,
+                  label: row.name + (taken.has(row.id) ? ` · ya tiene límite en ${currency}` : ''),
+                })),
+              ]}
+              onChange={(next) => { setCategory(next); setErrors({}); setMessage(''); }}
+            />
             <span id={ids + '-category'} className="field-help">Las subcategorías se suman a su categoría. Las archivadas no admiten límites nuevos.</span>
             {errors.category_id && <span className="field-error">{errors.category_id}</span>}
-          </label>
+          </div>
           <div className="field">
             <span id={ids + '-currency'}>Moneda</span>
             <div className="segments currencies" role="group" aria-labelledby={ids + '-currency'}>

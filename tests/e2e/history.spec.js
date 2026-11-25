@@ -1,5 +1,6 @@
 import { asUser, sessions, users } from '../../supabase/tests/database/fixture.js';
 import { expect, test } from './database-fixture.js';
+import { chooseOption, pickDate } from './controls.js';
 
 test.use({ locale: 'es-UY' });
 
@@ -50,9 +51,9 @@ test('historial vacío ofrece el primer alta y el gasto nuevo aparece al volver'
   await expect(button(page, 'Limpiar')).toBeDisabled();
   await page.getByRole('link', { name: 'Registrar el primer gasto' }).click();
   await page.getByLabel('Importe del gasto').fill('1280,5');
-  await page.getByLabel('Fecha', { exact: true }).fill('2026-11-20');
-  await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Alimentación' });
-  await page.getByLabel('Subcategoría · opcional').selectOption({ label: 'Supermercado' });
+  await pickDate(page.getByLabel('Fecha', { exact: true }), '2026-11-20');
+  await chooseOption(page.getByLabel('Categoría', { exact: true }), { label: 'Alimentación' });
+  await chooseOption(page.getByLabel('Subcategoría · opcional'), { label: 'Supermercado' });
   await button(page, 'Guardar gasto').click();
   await expect(page).toHaveURL(/\/historial$/);
   await expect(page.getByRole('status').filter({ hasText: 'Gasto guardado' })).toBeVisible();
@@ -88,14 +89,14 @@ test('búsqueda literal, filtros combinados en la URL, categoría archivada y si
   await page.getByLabel('Buscar por descripción').fill('');
   await expect(rows(page)).toHaveCount(5);
 
-  await page.getByLabel(/Período/).selectOption({ label: 'Noviembre 2026' });
+  await chooseOption(page.getByRole('button', { name: /^Período/ }), { label: 'Noviembre 2026' });
   await expect(page.getByRole('heading', { name: 'Gastos de noviembre' })).toBeVisible();
   await expect(rows(page)).toHaveCount(4);
   await page.getByRole('button', { name: /^Filtros/ }).click();
   const panel = page.getByRole('form', { name: 'Filtros del historial' });
-  await panel.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Transporte · Archivada' });
-  await panel.getByLabel('Subcategoría').selectOption({ label: 'Taxi/Uber · Archivada' });
-  await panel.getByLabel('Moneda').selectOption('UYU');
+  await chooseOption(panel.getByLabel('Categoría', { exact: true }), { label: 'Transporte · Archivada' });
+  await chooseOption(panel.getByLabel('Subcategoría'), { label: 'Taxi/Uber · Archivada' });
+  await chooseOption(panel.getByLabel('Moneda'), 'UYU');
   await button(panel, 'Aplicar').click();
   await expect(titles(page)).toHaveText(['Viaje al centro']);
   await expect(page.getByRole('button', { name: /Filtros/ })).toContainText('4');
@@ -148,7 +149,7 @@ test('ordenar por fecha e importe con empates deterministas', async ({ page, led
   await expect(page.getByRole('columnheader', { name: /Importe/ })).toHaveAttribute('aria-sort', 'ascending');
   await expect(titles(page).last()).toHaveText('Mayor importe');
   await expect(titles(page)).toHaveText([...descending].reverse());
-  await page.getByLabel('Ordenar').selectOption({ label: 'Fecha ↑ · antiguos' });
+  await chooseOption(page.getByRole('button', { name: 'Ordenar', exact: true }), { label: 'Fecha ↑ · antiguos' });
   await expect(titles(page)).toHaveText(['Mayor importe', ...[...tied].reverse(), 'Mayor fecha']);
   expect(listCalls(ledger).at(-1).args).toMatchObject({ sort: 'spent_on', direction: 'asc' });
 });
@@ -190,8 +191,8 @@ test('editar y eliminar desde la fila vuelve a la misma consulta y actualiza la 
   await page.getByRole('link', { name: 'Editar' }).click();
   await expect(page.getByLabel('Importe del gasto')).toHaveValue('200,00');
   await page.getByLabel('Importe del gasto').fill('210,40');
-  await page.getByLabel('Fecha', { exact: true }).fill('2026-11-25');
-  await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Servicios' });
+  await pickDate(page.getByLabel('Fecha', { exact: true }), '2026-11-25');
+  await chooseOption(page.getByLabel('Categoría', { exact: true }), { label: 'Servicios' });
   await button(page, 'Guardar cambios').click();
   await expect(page).toHaveURL(/\/historial\?desde=2026-11-01&hasta=2026-11-30$/);
   await expect(page.getByRole('status').filter({ hasText: 'Cambios guardados' })).toBeVisible();

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useToast } from '../../app/toastContext.js';
 import { Icon } from '../../components/Icon.jsx';
+import { SpringSelect } from '../../components/SpringSelect.jsx';
 import { useCatalog, useExpenseList, useFinance } from '../../lib/finance.js';
 import { DeleteExpenseDialog } from './DeleteExpenseDialog.jsx';
 import { ExpenseDetail } from './ExpenseDetail.jsx';
@@ -97,17 +98,20 @@ function HistoryList({ api, today }) {
       <section className="panel table-panel history-panel-list" aria-labelledby="history-title" aria-busy={list.isFetching}>
         <div className="panel-title">
           <h2 id="history-title">{listTitle(query, today)}</h2>
-          <label className="history-sort">
-            <span className="sr-only">Ordenar</span>
-            <span aria-hidden="true">{order.short}</span>
-            <select value={order.value} onChange={(event) => {
-              const next = sorts.find((option) => option.value === event.target.value);
+          <SpringSelect
+            variant="compact"
+            align="end"
+            className="history-sort"
+            aria-label="Ordenar"
+            value={order.value}
+            displayValue={order.short}
+            menuMinWidth={200}
+            options={sorts.map((option) => ({ value: option.value, label: option.label }))}
+            onChange={(value) => {
+              const next = sorts.find((option) => option.value === value);
               sortBy(next.sort, next.direction);
-            }}>
-              {sorts.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-            <Icon name="down" />
-          </label>
+            }}
+          />
         </div>
         <p className="sr-only" aria-live="polite">
           {list.isFetching && !list.isFetchingNextPage ? 'Actualizando gastos' : `Orden: ${order.label}`}

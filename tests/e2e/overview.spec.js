@@ -1,5 +1,6 @@
 import { mkdir } from 'node:fs/promises';
 import { expect, test } from './database-fixture.js';
+import { chooseOption } from './controls.js';
 
 test.use({ locale: 'es-UY' });
 
@@ -205,7 +206,7 @@ test('cuenta sin gastos: registrar el primer gasto desde el Resumen y crear un p
   await hero.getByRole('link', { name: 'Registrar un gasto' }).click();
   await expect(page.getByRole('heading', { name: 'Nuevo gasto', level: 1 })).toBeVisible();
   await page.getByLabel('Importe del gasto').fill('1280');
-  await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Alimentación' });
+  await chooseOption(page.getByLabel('Categoría', { exact: true }), { label: 'Alimentación' });
   await page.getByLabel('Descripción · opcional').fill('Primer gasto');
   await button(page, 'Guardar gasto').click();
   await expect(page).toHaveURL((url) => url.pathname === '/');
@@ -216,7 +217,7 @@ test('cuenta sin gastos: registrar el primer gasto desde el Resumen y crear un p
   // Crear presupuesto desde el Resumen abre el formulario en Presupuestos.
   await panel(page, 'overview-budgets').getByRole('link', { name: 'Crear presupuesto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Crear límite' });
-  await dialog.getByLabel('Categoría').selectOption({ label: 'Alimentación' });
+  await chooseOption(dialog.getByLabel('Categoría'), { label: 'Alimentación' });
   await dialog.getByLabel('Límite mensual').fill('1280');
   await button(dialog, 'Crear límite').click();
   await expect(dialog).toHaveCount(0);

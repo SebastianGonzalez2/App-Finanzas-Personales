@@ -42,15 +42,6 @@
 .history-search input::placeholder { color: var(--secondary); opacity: 1; }
 .history-search input::-webkit-search-cancel-button { filter: invert(1) opacity(.6); }
 .history-period { position: relative; }
-.history-period select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  opacity: 0;
-  cursor: pointer;
-  font: 14px var(--sans);
-}
-.history-period:has(select:focus-visible) { outline: 2px solid var(--sage); outline-offset: 3px; }
 .history-count {
   display: inline-grid;
   place-items: center;
@@ -76,25 +67,7 @@
 .history-panel-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 .history-panel-actions > :first-child { margin-right: auto; }
 
-.history-sort {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  color: var(--secondary);
-}
-.history-sort {
-  gap: 6px;
-  min-height: 36px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  font: 12px var(--mono);
-  white-space: nowrap;
-}
-.history-sort:hover { border-color: var(--border); color: var(--text); }
-.history-sort:has(select:focus-visible) { outline: 2px solid var(--sage); outline-offset: 2px; }
-.history-sort select { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; font: 14px var(--sans); }
-.history-sort .ico { width: 14px; height: 14px; }
+.history-sort { flex: none; }
 
 .history-body { transition: opacity 120ms ease; }
 .history-body.updating { opacity: .55; }
@@ -214,10 +187,9 @@
   .entry small.desk-only, .hide-phone { display: none; }
   .entry small.mobile-only, .mobile-only { display: block; }
   .history-toolbar { gap: 6px; }
-  .history-sort { min-height: 44px; }
   .history-search { flex: auto; width: 100%; }
   .history-period { flex: 1 1 0; min-width: 0; }
-  .history-period > span[aria-hidden] { overflow: hidden; text-overflow: ellipsis; }
+  .history-period .spring-select__trigger { width: 100%; }
   .history-toolbar > .btn { padding-inline: 10px; gap: 6px; font-size: 13px; }
   .history-panel { padding: 16px; }
   .history-panel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }

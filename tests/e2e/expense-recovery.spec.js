@@ -1,9 +1,10 @@
 import { expect, test } from './database-fixture.js';
+import { chooseOption } from './controls.js';
 
 test('un doble envío invoca una sola alta y confirma el UUID persistido', async ({ page, ledger }) => {
   await page.goto('/gastos/nuevo');
   await page.getByLabel('Importe del gasto').fill('10,50');
-  await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Alimentación' });
+  await chooseOption(page.getByLabel('Categoría', { exact: true }), { label: 'Alimentación' });
   // Dispatch both before React can replace the button with the saving state.
   await page.getByRole('button', { name: 'Guardar gasto' }).evaluate((button) => { button.click(); button.click(); });
   await expect(page.getByRole('link', { name: 'Ver gasto' })).toBeVisible();

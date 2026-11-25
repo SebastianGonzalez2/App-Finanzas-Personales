@@ -1,4 +1,5 @@
 import { expect, test } from './database-fixture.js';
+import { chooseOption, pickDate } from './controls.js';
 
 test.use({ locale: 'es-UY' });
 
@@ -10,8 +11,8 @@ async function fillExpense(page, { amount = '1250,50', currency = 'UYU', parent 
   await page.goto('/gastos/nuevo');
   await page.getByLabel('Importe del gasto').fill(amount);
   await button(page, currency).click();
-  await page.getByLabel('Fecha', { exact: true }).fill('2024-02-29');
-  await category(page).selectOption({ label: parent });
+  await pickDate(page.getByLabel('Fecha', { exact: true }), '2024-02-29');
+  await chooseOption(category(page), { label: parent });
   await page.getByLabel('Descripción · opcional').fill('Compra en la feria');
 }
 
@@ -43,15 +44,15 @@ test('crear, renombrar, archivar y restaurar una categoría', async ({ page, led
 
 test('alta en dos monedas, clasificación en el formulario, edición y borrado confirmados', async ({ page, ledger }) => {
   await fillExpense(page);
-  await category(page).selectOption('__create__');
+  await chooseOption(category(page), '__create__');
   await createFromDialog(page, 'categoría', 'Mercado');
-  await expect(category(page).locator('option:checked')).toHaveText('Mercado');
-  await child(page).selectOption('__create__');
+  await expect(category(page)).toHaveText('Mercado');
+  await chooseOption(child(page), '__create__');
   await button(page.getByRole('dialog'), 'Cancelar').click();
   await expect(page.getByLabel('Importe del gasto')).toHaveValue('1250,50');
-  await child(page).selectOption('__create__');
+  await chooseOption(child(page), '__create__');
   await createFromDialog(page, 'subcategoría', 'Verdulería');
-  await expect(child(page).locator('option:checked')).toHaveText('Verdulería');
+  await expect(child(page)).toHaveText('Verdulería');
   await expect(page.getByLabel('Descripción · opcional')).toHaveValue('Compra en la feria');
   expect(ledger.calls.filter((call) => call.name === 'create_expense')).toHaveLength(0);
   await button(page, 'Guardar gasto').click();
@@ -108,7 +109,7 @@ test('un enlace histórico permite consultar y editar un gasto con la categoría
   const edit = detail.getByRole('link', { name: 'Editar gasto' });
   await expect(edit).toHaveAttribute('href', '/gastos/' + id + '/editar');
   await edit.click();
-  await expect(category(page).locator('option:checked')).toHaveText(/Alimentación.*Archivada/i);
+  await expect(category(page)).toHaveText(/Alimentación.*Archivada/i);
   await page.getByLabel('Importe del gasto').fill('137,20');
   await button(page, 'Guardar cambios').click();
   await expect.poll(async () => (await ledger.rpc('get_expense', { id })).amount).toBe('137.20');
@@ -137,9 +138,9 @@ for (const [width, height] of [[1440, 960], [834, 1112], [375, 812]]) {
       await page.screenshot({ path: info.outputPath(name + '-' + width + '.png') });
     }
     await fillExpense(page);
-    await child(page).selectOption({ label: 'Supermercado' });
+    await chooseOption(child(page), { label: 'Supermercado' });
     await capture('nuevo');
-    await child(page).selectOption('__create__');
+    await chooseOption(child(page), '__create__');
     await expect(page.getByRole('dialog')).toBeVisible();
     await capture('dialogo');
     await button(page.getByRole('dialog'), 'Cancelar').click();

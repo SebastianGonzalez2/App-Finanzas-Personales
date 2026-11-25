@@ -1,0 +1,393 @@
+/*
+ * SpringSelect: port a CSS propio del componente original de EasyUI
+ * (https://easyui.site/components/spring-select, MIT, © 2026 Suraj Maurya).
+ *
+ * Curvas de resorte expresadas con linear() (solución analítica cada 10 ms):
+ * - --spring-select-snappy: stiffness 500, damping 30, mass 0.8 (365 ms, sobrepaso 2,8 %)
+ *   para el despliegue del menú y mensajes de error.
+ * - --spring-select-chevron: stiffness 500, damping 24, mass 0.8 (457 ms, sobrepaso 9,4 %)
+ *   para que el chevron gire levemente más allá de 180° (~197°) antes de asentarse en 180°.
+ */
+
+:root {
+  --spring-select-snappy: linear(0, 0.0283, 0.0992, 0.1957, 0.3043, 0.4156, 0.5228, 0.6214,
+    0.709, 0.7843, 0.8473, 0.8985, 0.9389, 0.9697, 0.9924, 1.0084, 1.0188, 1.025, 1.0278,
+    1.0283, 1.0271, 1.0249, 1.022, 1.0189, 1.0158, 1.0128, 1.0101, 1.0077, 1.0056, 1.0039,
+    1.0026, 1.0015, 1.0007, 1.0001, 0.9997, 0.9994, 1);
+  --spring-select-chevron: linear(0, 0.029, 0.1041, 0.209, 0.33, 0.4563, 0.5795, 0.6935,
+    0.7946, 0.8804, 0.9504, 1.0047, 1.0444, 1.0713, 1.0872, 1.0941, 1.094, 1.0887, 1.0799,
+    1.069, 1.0571, 1.0452, 1.034, 1.0238, 1.0149, 1.0076, 1.0018, 0.9974, 0.9943, 0.9923,
+    0.9913, 0.991, 0.9913, 0.992, 0.993, 0.9941, 0.9952, 0.9963, 0.9973, 0.9982, 0.999,
+    0.9996, 1.0001, 1.0004, 1.0007, 1);
+}
+
+.spring-select {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.spring-select--toolbar,
+.spring-select--compact {
+  width: auto;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.spring-select__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--secondary);
+  user-select: none;
+}
+
+.spring-select__trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 36px 9px 12px;
+  border: 1px solid var(--control);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--text);
+  font: 14px/1.45 var(--sans);
+  text-align: left;
+  outline: none;
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+.spring-select__trigger:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 3px;
+}
+
+.spring-select__trigger--placeholder {
+  color: var(--muted);
+}
+
+@media (hover: hover) {
+  .spring-select__trigger:not(:disabled):hover {
+    border-color: #93989c;
+  }
+}
+
+.spring-select__trigger[aria-expanded="true"] {
+  border-color: #a6abad;
+  background: #141517;
+}
+
+.spring-select__trigger[aria-invalid="true"] {
+  border-color: var(--rose);
+  outline: 1px solid var(--rose);
+}
+
+.spring-select__trigger[aria-invalid="true"]:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 3px;
+}
+
+.spring-select__trigger:disabled {
+  opacity: 0.55;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* Variante barra de herramientas (Historial / Estadísticas: Período, Categoría) */
+.spring-select--toolbar .spring-select__trigger {
+  min-height: 44px;
+  padding: 0 34px 0 14px;
+  border-color: #4d5052;
+  background: linear-gradient(#282a2c, #202123);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .spring-select--toolbar .spring-select__trigger:not(:disabled):hover {
+    background: #2c2e30;
+    border-color: #63676a;
+  }
+}
+
+.spring-select--toolbar .spring-select__trigger[aria-expanded="true"] {
+  background: #2c2e30;
+  border-color: #7c8185;
+}
+
+/* Variante compacta (Ordenar en cabecera de tabla del Historial) */
+.spring-select--compact .spring-select__trigger {
+  min-height: 36px;
+  padding: 0 28px 0 10px;
+  border-color: transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--secondary);
+  font: 12px/1.3 var(--mono);
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .spring-select--compact .spring-select__trigger:not(:disabled):hover {
+    border-color: var(--border);
+    color: var(--text);
+  }
+}
+
+.spring-select--compact .spring-select__trigger[aria-expanded="true"] {
+  border-color: var(--border);
+  background: var(--raised);
+  color: var(--text);
+}
+
+.spring-select--compact .spring-select__chevron {
+  right: 8px;
+}
+
+.spring-select--compact .spring-select__chevron svg {
+  width: 14px;
+  height: 14px;
+}
+
+.spring-select__content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.spring-select__icon {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  color: var(--secondary);
+}
+
+.spring-select__value {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spring-select__chevron {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary);
+  pointer-events: none;
+  transform: translateY(-50%) rotate(0deg);
+  transition: transform 457ms var(--spring-select-chevron), color 150ms ease;
+}
+
+.spring-select__chevron svg {
+  width: 15px;
+  height: 15px;
+}
+
+.spring-select__trigger[aria-expanded="true"] .spring-select__chevron {
+  color: var(--text);
+  transform: translateY(-50%) rotate(180deg);
+}
+
+/* Lista desplegable flotante */
+.spring-select__menu {
+  position: fixed;
+  z-index: 60;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #44474a;
+  border-radius: 10px;
+  background: #17181a;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.56),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  outline: none;
+  transform-origin: top center;
+  will-change: transform, opacity;
+  animation: spring-select-open-down 365ms var(--spring-select-snappy) both;
+}
+
+.spring-select__menu[data-side="top"] {
+  transform-origin: bottom center;
+  animation: spring-select-open-up 365ms var(--spring-select-snappy) both;
+}
+
+.spring-select__menu[data-state="closing"] {
+  pointer-events: none;
+  animation: spring-select-close-down 120ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.spring-select__menu[data-side="top"][data-state="closing"] {
+  animation: spring-select-close-up 120ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.spring-select__option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 36px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: var(--secondary);
+  font: 13.5px/1.35 var(--sans);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 110ms ease, color 110ms ease;
+}
+
+.spring-select__option[aria-selected="true"] {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.spring-select__option[data-active="true"]:not([aria-disabled="true"]) {
+  background: var(--raised);
+  color: var(--text);
+}
+
+.spring-select__option[aria-disabled="true"] {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.spring-select__option-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.spring-select__option-label {
+  overflow-wrap: anywhere;
+}
+
+.spring-select__option-desc {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.spring-select__check {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--text);
+}
+
+.spring-select__error {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--rose);
+  animation: spring-select-error 240ms var(--spring-select-snappy) both;
+}
+
+@keyframes spring-select-open-down {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes spring-select-open-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes spring-select-close-down {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@keyframes spring-select-close-up {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+@keyframes spring-select-error {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (width <= 620px) {
+  .spring-select--compact .spring-select__trigger {
+    min-height: 44px;
+  }
+
+  .spring-select--toolbar .spring-select__trigger {
+    padding: 0 30px 0 10px;
+    font-size: 13px;
+  }
+
+  .spring-select--toolbar .spring-select__content {
+    gap: 6px;
+  }
+
+  .spring-select__option {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spring-select__trigger,
+  .spring-select__chevron,
+  .spring-select__option {
+    transition: none;
+  }
+
+  .spring-select__menu,
+  .spring-select__menu[data-side="top"],
+  .spring-select__menu[data-state="closing"],
+  .spring-select__menu[data-side="top"][data-state="closing"],
+  .spring-select__error {
+    animation: none;
+  }
+}
