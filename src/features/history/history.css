@@ -140,21 +140,24 @@
 .money small { margin-right: 6px; color: var(--muted); font-size: 11px; }
 .actions-cell { width: 64px; }
 .row-menu { position: relative; z-index: 1; display: flex; justify-content: flex-end; }
+.row-menu:has(.row-menu-list) { z-index: 10; }
 .row-menu-trigger { border-color: transparent; background: transparent; color: var(--muted); }
 .row-menu-trigger[aria-expanded="true"], .row-menu-trigger:hover { border-color: var(--border); color: var(--text); }
 .row-menu-list {
   position: absolute;
-  z-index: 2;
-  top: calc(100% + 4px);
+  z-index: 10;
+  top: calc(100% + 6px);
   right: 0;
   display: grid;
-  min-width: 160px;
+  gap: 2px;
+  min-width: 176px;
   padding: 4px;
-  border: 1px solid var(--border);
+  border: 1px solid #4d5052;
   border-radius: 8px;
   background: var(--raised);
-  box-shadow: 0 12px 32px #0007;
+  box-shadow: 0 12px 32px #000a;
 }
+.row-menu-list.floating { position: fixed; z-index: 40; top: auto; right: auto; }
 .row-menu-list :is(a, button) {
   display: flex;
   align-items: center;
@@ -167,6 +170,7 @@
   color: var(--text);
   font-size: 14px;
   text-align: left;
+  white-space: nowrap;
 }
 .row-menu-list .danger { color: var(--rose); }
 .row-menu-list :is(a, button):hover { background: #2c2e30; }

@@ -63,6 +63,8 @@
 .metric-note { margin-top: 4px !important; color: var(--muted); font: 12px var(--mono); }
 .history-link { text-decoration: underline; text-decoration-color: #ffffff40; text-underline-offset: 4px; }
 .history-link:hover { text-decoration-color: currentColor; }
+.metrics .figure .history-link { text-decoration: none; }
+.metrics .figure .history-link:hover { opacity: .82; }
 .history-link .ico { display: inline; width: 13px; height: 13px; margin-left: 4px; vertical-align: -1px; }
 .period-line {
   display: flex;
