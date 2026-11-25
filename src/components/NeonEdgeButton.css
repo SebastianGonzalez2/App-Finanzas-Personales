@@ -82,6 +82,12 @@
   }
 }
 
+.neon-edge-button__surface .ico {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.85;
+}
+
 /* select-none */
 .neon-edge-button__label {
   -webkit-user-select: none;

@@ -13,6 +13,7 @@ const paths = {
   menu: 'M3 6h18M3 12h18M3 18h18',
   up: 'M6 18 18 6M6 6h12v12',
   plus: 'M12 5v14M5 12h14',
+  peso: 'M12 2v20 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
   date: 'M3 6h18v15H3z M7 3v6m10-6v6M3 11h18',
   lock: 'M5 10h14v11H5z M8 10V7a4 4 0 0 1 8 0v3',
   fold: 'M5 4h14v16H5z M8 8h8 M8 12h6',

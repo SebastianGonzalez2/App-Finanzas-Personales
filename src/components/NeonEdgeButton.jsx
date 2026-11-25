@@ -1,8 +1,9 @@
 /*
  * Neon Edge Button: port a JavaScript y CSS propio del componente original de EasyUI
  * (src/components/ui/NeonEdgeButton.tsx, commit ec2e6e6 de github.com/Surajmaurya1/easyui).
- * Cambios respecto al original: fondo #000000, texto #FFFFFF, Inter Variable, sin el icono
- * del rayo y elemento configurable (`as`) para poder renderizarlo como enlace de navegación.
+ * Cambios respecto al original: fondo #000000, texto #FFFFFF, Inter Variable, icono
+ * configurable (`icon`) en lugar del rayo fijo y elemento configurable (`as`) para poder
+ * renderizarlo como enlace de navegación.
  *
  * MIT License
  *
@@ -30,6 +31,7 @@ import './NeonEdgeButton.css';
 
 export function NeonEdgeButton({
   as: Component = 'button',
+  icon,
   children = 'Deploy preview',
   speed = 1,
   glow = true,
@@ -48,6 +50,7 @@ export function NeonEdgeButton({
 
       {/* Button Interior Surface */}
       <span className="neon-edge-button__surface">
+        {icon}
         <span className="neon-edge-button__label">{children}</span>
       </span>
     </Component>

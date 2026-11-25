@@ -103,10 +103,8 @@ test('RF-027 · total, categorías, seis meses, presupuestos y gastos recientes 
   expect(list).toEqual({ filters: { from: '2026-11-01', to: '2026-11-30', currency: 'UYU' }, q: null, sort: 'spent_on',
     direction: 'desc', limit: 5, cursor: null });
 
-  // Accesos rápidos visibles.
-  const quick = page.getByRole('navigation', { name: 'Accesos rápidos' });
-  await expect(quick.getByRole('link')).toHaveText([
-    'Registrar gastoImporte, fecha y categoría', 'HistorialBuscar, editar y eliminar', 'EstadísticasPeríodos y categorías', 'PresupuestosLímites mensuales']);
+  // Sin bloque inferior de accesos rápidos.
+  await expect(page.getByRole('navigation', { name: 'Accesos rápidos' })).toHaveCount(0);
 });
 
 test('RF-027 · el Resumen coincide con Estadísticas, Presupuestos e Historial', async ({ page, ledger }) => {
@@ -225,16 +223,6 @@ test('cuenta sin gastos: registrar el primer gasto desde el Resumen y crear un p
   await expect(panel(page, 'overview-budgets').locator('.tag')).toHaveText('Límite alcanzado');
   await expect(panel(page, 'overview-budgets').locator('.figure')).toHaveText('0,00 UYU');
   expect(ledger.calls.find((call) => call.name === 'create_budget').args.monthly_limit).toBe('1280.00');
-  // Accesos rápidos.
-  const quick = page.getByRole('navigation', { name: 'Accesos rápidos' });
-  await quick.getByRole('link', { name: /^Historial/ }).click();
-  await expect(page.getByRole('heading', { name: 'Historial', level: 1 })).toBeVisible();
-  await page.goBack();
-  await quick.getByRole('link', { name: /^Estadísticas/ }).click();
-  await expect(page.getByRole('heading', { name: 'Estadísticas', level: 1 })).toBeVisible();
-  await page.goBack();
-  await quick.getByRole('link', { name: /^Presupuestos/ }).click();
-  await expect(page.getByRole('heading', { name: 'Presupuestos', level: 1 })).toBeVisible();
 });
 
 test('error en un bloque: los demás se muestran y el bloque permite reintentar', async ({ page, ledger }) => {

@@ -56,7 +56,11 @@ function NewExpenseLink() {
   const location = useLocation();
   // Estadísticas conserva su consulta (período, filtros y ventana anual) al volver del registro.
   const from = location.pathname === '/estadisticas' ? location.pathname + location.search : location.pathname;
-  return <NeonEdgeButton as={Link} to="/gastos/nuevo" state={{ from }}>Registrar gasto</NeonEdgeButton>;
+  return (
+    <NeonEdgeButton as={Link} to="/gastos/nuevo" state={{ from }} icon={<Icon name="peso" />}>
+      Registrar gasto
+    </NeonEdgeButton>
+  );
 }
 
 export function AppShell({ title, subtitle, actions, today, children }) {
