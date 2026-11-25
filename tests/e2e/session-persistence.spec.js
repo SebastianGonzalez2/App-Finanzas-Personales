@@ -449,3 +449,178 @@ test('CA-08 · mantiene aislamiento entre usuarios tras cerrar sesión y reabrir
     await third.context.close();
   }
 }));
+
+test('HOTFIX-AUTH-02 · reabrir la PWA en /auth/callback (sin código o con código usado) conserva la sesión tras múltiples cierres', withTempProfile(async ({ baseURL, userDataDir }) => {
+  const state = { user: ownerA, generation: 0, activeSession: null };
+
+  // Proceso 1: inicio de sesión con Google una sola vez.
+  const first = await launchAppProcess(userDataDir);
+  try {
+    await attachBackend(first.context, state);
+    await first.page.goto(`${baseURL}/login`);
+    await enter(first.page);
+    expect((await readIdbSession(first.page))?.user?.id).toBe(ownerA.id);
+  } finally {
+    await first.context.close();
+  }
+
+  // Proceso 2: cierre total y reapertura desde un acceso directo PWA que abre /auth/callback sin parámetros.
+  const second = await launchAppProcess(userDataDir);
+  try {
+    const calls = await attachBackend(second.context, state);
+    let sawExpired = false;
+    await second.page.addInitScript(() => {
+      window.__sawExpired = false;
+      const check = () => {
+        if (document.body?.textContent?.includes('El enlace de acceso venció')) window.__sawExpired = true;
+      };
+      document.addEventListener('DOMContentLoaded', () => {
+        check();
+        new MutationObserver(check).observe(document.body, { childList: true, subtree: true, characterData: true });
+      });
+    });
+    await second.page.goto(`${baseURL}/auth/callback`);
+    await expect(second.page).toHaveURL(`${baseURL}/`);
+    await expect(second.page.getByRole('heading', { name: 'Resumen' })).toBeVisible();
+    sawExpired = await second.page.evaluate(() => window.__sawExpired);
+    expect(sawExpired).toBe(false);
+    expect(calls.exchanges).toBe(0);
+    expect(calls.logouts).toBe(0);
+  } finally {
+    await second.context.close();
+  }
+
+  // Proceso 3: nuevo cierre total y reapertura con un ?code= vencido/reutilizado en /auth/callback.
+  const third = await launchAppProcess(userDataDir);
+  try {
+    const calls = await attachBackend(third.context, state);
+    await third.page.goto(`${baseURL}/auth/callback?code=stale-code`);
+    await expect(third.page).toHaveURL(`${baseURL}/`);
+    await expect(third.page.getByRole('heading', { name: 'Resumen' })).toBeVisible();
+    await expect(third.page.getByRole('heading', { name: 'El enlace de acceso venció' })).toHaveCount(0);
+    expect(calls.exchanges).toBe(0);
+    expect(calls.logouts).toBe(0);
+
+    // Prepara un access token vencido con refresh token válido para el siguiente reinicio.
+    const expired = { ...state.activeSession, expires_at: Math.floor(Date.now() / 1000) - 120 };
+    state.rejectToken = expired.access_token;
+    await writeIdbSession(third.page, expired);
+  } finally {
+    await third.context.close();
+  }
+
+  // Proceso 4: reabrir en /auth/callback con access token vencido renueva la sesión y entra a Resumen.
+  const fourth = await launchAppProcess(userDataDir);
+  try {
+    const calls = await attachBackend(fourth.context, state);
+    await fourth.page.goto(`${baseURL}/auth/callback`);
+    await expect(fourth.page).toHaveURL(`${baseURL}/`);
+    await expect(fourth.page.getByRole('heading', { name: 'Resumen' })).toBeVisible();
+    expect(calls.refreshes).toBe(1);
+    expect(calls.logouts).toBe(0);
+  } finally {
+    await fourth.context.close();
+  }
+}));
+
+test('HOTFIX-AUTH-02 · reabrir en /auth/callback con falla temporal de red no destruye la sesión y se recupera al reconectar', withTempProfile(async ({ baseURL, userDataDir }) => {
+  const state = { user: ownerA, generation: 0, activeSession: null, refreshMode: 'ok' };
+
+  const first = await launchAppProcess(userDataDir);
+  try {
+    await attachBackend(first.context, state);
+    await first.page.goto(`${baseURL}/login`);
+    await enter(first.page);
+
+    const expired = { ...state.activeSession, expires_at: Math.floor(Date.now() / 1000) - 120 };
+    state.rejectToken = expired.access_token;
+    await writeIdbSession(first.page, expired);
+  } finally {
+    await first.context.close();
+  }
+
+  const second = await launchAppProcess(userDataDir);
+  try {
+    state.refreshMode = 'serverError';
+    const calls = await attachBackend(second.context, state);
+    await second.page.clock.install();
+    await second.page.goto(`${baseURL}/auth/callback`);
+    await expect.poll(() => calls.refreshes).toBeGreaterThanOrEqual(1);
+    await second.page.clock.fastForward(35_000);
+
+    await expect(second.page.getByRole('heading', { name: 'No pudimos verificar tu sesión' })).toBeVisible();
+    await expect(second.page.getByRole('heading', { name: 'El enlace de acceso venció' })).toHaveCount(0);
+    expect((await readIdbSession(second.page))?.refresh_token).toBeTruthy();
+
+    state.refreshMode = 'ok';
+    await second.page.evaluate(() => window.dispatchEvent(new Event('online')));
+    await expect(second.page).toHaveURL(`${baseURL}/`);
+    await expect(second.page.getByRole('heading', { name: 'Resumen' })).toBeVisible();
+    expect(calls.logouts).toBe(0);
+  } finally {
+    await second.context.close();
+  }
+}));
+
+test('HOTFIX-AUTH-02 · un solo clic en «Volver a ingresar» o «Salir» en /auth/callback lleva directo a /login sin doble pulsación', withTempProfile(async ({ baseURL, userDataDir }) => {
+  const state = { user: ownerA, generation: 0, activeSession: null, refreshMode: 'ok' };
+
+  // Caso A: sesión revocada en el servidor con access token aún no vencido localmente al reabrir /auth/callback.
+  const first = await launchAppProcess(userDataDir);
+  try {
+    await attachBackend(first.context, state);
+    await first.page.goto(`${baseURL}/login`);
+    await enter(first.page);
+    state.rejectToken = state.activeSession.access_token;
+  } finally {
+    await first.context.close();
+  }
+
+  const second = await launchAppProcess(userDataDir);
+  try {
+    state.refreshMode = 'revoked';
+    await attachBackend(second.context, state);
+    await second.page.goto(`${baseURL}/auth/callback`);
+    await expect(second.page.getByRole('heading', { name: 'Tu sesión venció' })).toBeVisible();
+
+    // Un solo clic cierra la sesión inválida y navega directo a /login (sin volver a mostrar un error).
+    await second.page.getByRole('button', { name: 'Volver a ingresar' }).click();
+    await expect(second.page).toHaveURL(`${baseURL}/login`);
+    await expect(second.page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible();
+    expect(await readIdbSession(second.page)).toBeNull();
+  } finally {
+    await second.context.close();
+  }
+
+  // Caso B: error explícito signup_disabled en /auth/callback con sesión existente sale y lleva a /login en un solo clic.
+  const third = await launchAppProcess(userDataDir);
+  try {
+    state.refreshMode = 'ok';
+    state.rejectToken = null;
+    await attachBackend(third.context, state);
+    await third.page.goto(`${baseURL}/login`);
+    await enter(third.page);
+
+    await third.page.goto(`${baseURL}/auth/callback?error_code=signup_disabled`);
+    await expect(third.page.getByRole('heading', { name: 'Esta cuenta no tiene acceso' })).toBeVisible();
+    await third.page.getByRole('button', { name: 'Salir y elegir otra cuenta' }).click();
+    await expect(third.page).toHaveURL(`${baseURL}/login`);
+    await expect(third.page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible();
+    expect(await readIdbSession(third.page)).toBeNull();
+  } finally {
+    await third.context.close();
+  }
+
+  // Caso C: tras cerrar sesión, reabrir /auth/callback sin sesión permite ir a /login en un clic sin cerrar sesión.
+  const fourth = await launchAppProcess(userDataDir);
+  try {
+    const calls = await attachBackend(fourth.context, state);
+    await fourth.page.goto(`${baseURL}/auth/callback`);
+    await expect(fourth.page.getByRole('heading', { name: 'El enlace de acceso venció' })).toBeVisible();
+    await fourth.page.getByRole('link', { name: 'Volver a ingresar' }).click();
+    await expect(fourth.page).toHaveURL(`${baseURL}/login`);
+    expect(calls.logouts).toBe(0);
+  } finally {
+    await fourth.context.close();
+  }
+}));

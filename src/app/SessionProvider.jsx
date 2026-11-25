@@ -185,7 +185,7 @@ export function SessionProvider({ client, children }) {
   }
 
   async function signOut() {
-    if (logoutInFlight.current) return;
+    if (logoutInFlight.current) return false;
     logoutInFlight.current = true;
     persistPendingLogout(true);
     memory.current = sessionMemory();
@@ -205,7 +205,7 @@ export function SessionProvider({ client, children }) {
         if (remoteError && !['session_not_found', 'user_not_found'].includes(remoteError.code)) {
           throw remoteError;
         }
-        if (current.current.session?.access_token === session.access_token) {
+        if (!current.current.session || current.current.session.access_token === session.access_token) {
           await client.auth.signOut({ scope: 'local' });
         }
       }
@@ -214,8 +214,10 @@ export function SessionProvider({ client, children }) {
       if (current.current.recoveryError) applySession(null, false);
       persistPendingLogout(false);
       setLogout(null);
+      return true;
     } catch {
       setLogout('logoutPending');
+      return false;
     } finally {
       logoutInFlight.current = false;
     }

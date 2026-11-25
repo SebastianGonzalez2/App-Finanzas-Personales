@@ -138,6 +138,76 @@ describe('authStorage (persistencia transaccional sin duplicación)', () => {
     expect(await storage.getItem('sb-test-auth-token')).toBe('{"access_token":"compat"}');
   });
 
+  it('reabre una conexión IndexedDB cerrada por suspensión móvil antes de hacer fallback', async () => {
+    const data = new Map([['sb-test-auth-token', '{"access_token":"persisted"}']]);
+    let opens = 0;
+    let firstConnectionBroken = false;
+    const idb = {
+      open() {
+        const request = {};
+        opens += 1;
+        const connId = opens;
+        queueMicrotask(() => {
+          const db = {
+            objectStoreNames: { contains: () => true },
+            createObjectStore() {},
+            close() {},
+            transaction() {
+              if (connId === 1 && firstConnectionBroken) {
+                throw new Error('InvalidStateError: connection is closing');
+              }
+              const tx = { oncomplete: null, onerror: null, onabort: null };
+              let pending = 0;
+              const settle = () => {
+                if (pending === 0) queueMicrotask(() => tx.oncomplete?.());
+              };
+              const store = {
+                get(key) {
+                  pending += 1;
+                  const req = {};
+                  queueMicrotask(() => {
+                    req.result = data.get(key);
+                    req.onsuccess?.();
+                    pending -= 1;
+                    settle();
+                  });
+                  return req;
+                },
+                put(value, key) {
+                  pending += 1;
+                  const req = {};
+                  queueMicrotask(() => {
+                    data.set(key, value);
+                    req.onsuccess?.();
+                    pending -= 1;
+                    settle();
+                  });
+                  return req;
+                },
+              };
+              tx.objectStore = () => store;
+              return tx;
+            },
+          };
+          request.result = db;
+          request.onsuccess?.();
+        });
+        return request;
+      },
+    };
+    const ls = createMemoryLocalStorage();
+    const storage = createAuthStorage({ indexedDB: idb, localStorage: ls, storageManager: null });
+
+    expect(await storage.getItem('sb-test-auth-token')).toBe('{"access_token":"persisted"}');
+    expect(opens).toBe(1);
+
+    // Simula suspensión móvil que invalida la conexión en caché sin emitir onclose.
+    firstConnectionBroken = true;
+    expect(await storage.getItem('sb-test-auth-token')).toBe('{"access_token":"persisted"}');
+    expect(opens).toBe(2);
+    expect(ls.getItem('sb-test-auth-token')).toBeNull();
+  });
+
   it('hace fallback a localStorage como único almacén si IndexedDB no está disponible', async () => {
     const idb = createFakeIndexedDB({ failOpen: true });
     const ls = createMemoryLocalStorage();
