@@ -26,7 +26,7 @@ describe('vercel.json', () => {
 
   it('los archivos estáticos no se reescriben: un asset ausente da 404 en lugar de HTML', () => {
     for (const path of ['/assets/index-abc123.js', '/assets/no-existe.js', '/cifra.svg', '/manifest.webmanifest',
-      '/icon-192.png', '/icon-512.png', '/index.html']) {
+      '/pwa/v2/icon-192.png', '/pwa/v2/no-existe.png', '/index.html']) {
       expect(rewritten(path), path).toBe(false);
     }
   });
@@ -59,6 +59,42 @@ describe('vercel.json', () => {
       display: 'standalone',
     });
     expect(manifest.icons.map(({ sizes }) => sizes)).toEqual(expect.arrayContaining(['192x192', '512x512']));
+  });
+
+  // Ancho y alto declarados en la cabecera IHDR del PNG.
+  const pngSize = (path) => {
+    const file = readFileSync(new URL(`../../public${path}`, import.meta.url));
+    return `${file.readUInt32BE(16)}x${file.readUInt32BE(20)}`;
+  };
+
+  it('los iconos del manifiesto son PNG del tamaño declarado, con variantes any y maskable', () => {
+    const { icons } = JSON.parse(readFileSync(new URL('../../public/manifest.webmanifest', import.meta.url), 'utf8'));
+    for (const { src, sizes, type } of icons) {
+      // Sin SVG: cifra.svg no declara tamaño propio y los móviles lo rasterizan a 150 px.
+      expect(type, src).toBe('image/png');
+      expect(pngSize(src), src).toBe(sizes);
+    }
+    for (const purpose of ['any', 'maskable']) {
+      expect(icons.filter((icon) => icon.purpose === purpose).map(({ sizes }) => sizes), purpose)
+        .toEqual(expect.arrayContaining(['192x192', '512x512']));
+    }
+  });
+
+  it('los iconos y las imágenes de arranque de iOS existen con el tamaño que pide cada dispositivo', () => {
+    const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+    const touch = [...html.matchAll(/rel="apple-touch-icon" sizes="([^"]+)" href="([^"]+)"/g)];
+    expect(touch.map(([, sizes]) => sizes)).toContain('180x180');
+    for (const [, sizes, href] of touch) expect(pngSize(href), href).toBe(sizes);
+
+    const splashes = [...html.matchAll(/rel="apple-touch-startup-image" media="([^"]+)" href="([^"]+)"/g)];
+    expect(splashes.length).toBeGreaterThan(0);
+    expect(new Set(splashes.map(([, media]) => media)).size).toBe(splashes.length);
+    for (const [, media, href] of splashes) {
+      const [, width, height, ratio, orientation] = media.match(
+        /device-width: (\d+)px\) and \(device-height: (\d+)px\).*device-pixel-ratio: (\d)\) and \(orientation: (\w+)/);
+      const sides = [width * ratio, height * ratio];
+      expect(pngSize(href), media).toBe((orientation === 'portrait' ? sides : sides.reverse()).join('x'));
+    }
   });
 
   it('todo lo publicado bajo /assets lleva hash en el nombre', () => {

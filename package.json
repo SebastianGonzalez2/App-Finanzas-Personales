@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "assets:pwa": "node scripts/generate-pwa-assets.mjs",
     "lint": "eslint .",
     "test": "vitest run",
     "test:db": "node --test supabase/tests/database/*.test.js",
