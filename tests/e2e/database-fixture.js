@@ -23,6 +23,10 @@ const signatures = {
   create_budget: ['category_id', 'currency', 'monthly_limit'],
   update_budget: ['category_id', 'currency', 'monthly_limit'],
   delete_budget: ['category_id', 'currency'],
+  list_recurring_payments: [],
+  create_recurring_payment: ['name', 'amount', 'currency', 'category_id', 'subcategory_id', 'billing_day'],
+  update_recurring_payment: ['id', 'version', 'name', 'amount', 'currency', 'category_id', 'subcategory_id', 'billing_day'],
+  delete_recurring_payment: ['id', 'version'],
 };
 const jsonArgs = ['patch', 'filters', 'reference'];
 

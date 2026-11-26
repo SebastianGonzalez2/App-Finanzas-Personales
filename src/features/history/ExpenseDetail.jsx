@@ -35,6 +35,16 @@ export function ExpenseDetail({ api, id, back }) {
         <dt>Subcategoría</dt><dd>{child?.name ?? row.subcategory_name ?? 'Sin subcategoría'}{' '}
           {row.subcategory_id && (parent?.archived || child?.archived) && <small>Archivada</small>}</dd>
         <dt>Descripción</dt><dd>{row.description ?? <span className="muted-text">Sin descripción</span>}</dd>
+        {row.is_recurring && (
+          <>
+            <dt>Origen</dt>
+            <dd>
+              <span className="recurring-badge">
+                <Icon name="recurrentes" />Pago recurrente automático
+              </span>
+            </dd>
+          </>
+        )}
       </dl>
       <div className="form-actions">
         <button type="button" className="btn ghost danger delete-trigger" onClick={() => setConfirm(true)}>

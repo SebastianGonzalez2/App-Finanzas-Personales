@@ -6,6 +6,7 @@ import './features/finance.css';
 import './features/history/history.css';
 import './features/stats/stats.css';
 import './features/budgets/budgets.css';
+import './features/recurring/recurring.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode><App /></StrictMode>,

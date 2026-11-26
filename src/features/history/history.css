@@ -109,6 +109,19 @@
 .row-link:focus-visible::after { outline: 2px solid var(--sage); outline-offset: -3px; border-radius: 4px; }
 .expense-table td.small-data { white-space: nowrap; }
 .archived-mark { display: block; color: var(--muted); font: 11px var(--mono); }
+.recurring-mark { color: var(--secondary); font: 11px var(--mono); }
+.recurring-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--raised);
+  color: var(--secondary);
+  font: 12px var(--mono);
+}
+.recurring-badge .ico { width: 14px; height: 14px; }
 .money { white-space: nowrap; font-size: 14px; }
 .money small { margin-right: 6px; color: var(--muted); font-size: 11px; }
 .actions-cell { width: 64px; }

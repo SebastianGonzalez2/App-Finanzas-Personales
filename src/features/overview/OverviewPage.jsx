@@ -219,7 +219,7 @@ function RecentPanel({ query, filters, today }) {
                   return (
                     <tr key={expense.id}>
                       <td><div className="entry">
-                        <span className="tile" aria-hidden="true"><Icon name="historial" /></span>
+                        <span className="tile" aria-hidden="true"><Icon name={expense.is_recurring ? 'recurrentes' : 'historial'} /></span>
                         <div className="entry-text">
                           <Link className="row-link" to={'/historial?' + detail}>{rowTitle(expense)}</Link>
                           <small className="desk-only">{expense.subcategory_name ?? '—'}</small>

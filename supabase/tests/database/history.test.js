@@ -86,7 +86,7 @@ test('IMP-03 · list_expenses: filtros, orden, cursor y aislamiento en PostgreSQ
     assert.equal(next_cursor, null);
     assert.deepEqual(new Set(items.map((row) => row.currency)), new Set(['UYU', 'USD', 'EUR']));
     assert.deepEqual(Object.keys(items[0]).sort(), ['amount', 'category_id', 'category_name', 'created_at', 'currency',
-      'description', 'id', 'spent_on', 'subcategory_id', 'subcategory_name', 'updated_at', 'version']);
+      'description', 'id', 'is_recurring', 'spent_on', 'subcategory_id', 'subcategory_name', 'updated_at', 'version']);
     const bare = items.find((row) => row.id === fixed[4].id);
     assert.equal(bare.description, null);
     assert.equal(bare.amount, '999999999999.99');
