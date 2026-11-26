@@ -199,7 +199,7 @@ test('RF-021 · cambio de moneda sin datos obsoletos ni respuesta tardía', asyn
   await expect(panel(page, 'overview-recent')).toContainText('Sin gastos en EUR este mes');
   await expect(panel(page, 'overview-months').locator('.month-value')).toHaveText(['—', '—', '—', '—', '—', '—']);
   // Persistencia tras volver a iniciar sesión.
-  await page.goto('/cuenta');
+  await page.getByRole('button', { name: 'Mi cuenta' }).click();
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
   await page.getByRole('button', { name: 'Continuar con Google' }).click();
   await expect(currencyButton(page, 'EUR')).toHaveAttribute('aria-pressed', 'true');

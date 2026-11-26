@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router';
-import { account, categories, sections } from '../app/navigation.js';
+import { categories, sections } from '../app/navigation.js';
+import { AccountMenu } from '../features/settings/AccountMenu.jsx';
 import { Brand } from './Brand.jsx';
 import { Icon } from './Icon.jsx';
 import { NeonEdgeButton } from './NeonEdgeButton.jsx';
@@ -22,7 +23,7 @@ function Navigation({ onNavigate }) {
       <div className="navdiv" />
       <div className="rail-label">Organización</div>
       <NavItem item={categories} onNavigate={onNavigate} />
-      <div className="rail-foot"><NavItem item={account} onNavigate={onNavigate} /></div>
+      <div className="rail-foot"><AccountMenu /></div>
     </nav>
   );
 }

@@ -117,7 +117,26 @@ for (const width of WIDTHS) {
         await check('recurrente-dialogo');
         await page.keyboard.press('Escape');
         await visit('/categorias', 'categorias', () => page.getByText('Alimentación').first());
-        await visit('/cuenta', 'cuenta', () => page.getByRole('button', { name: 'Cerrar sesión' }));
+        await visit('/categorias', 'categorias', () => page.getByText('Alimentación').first());
+        if (width <= 860) {
+          await page.getByRole('button', { name: width <= 620 ? 'Ver menú' : 'Expandir barra lateral' }).click();
+          const navDialog = page.getByRole('dialog', { name: 'Navegación' });
+          await expect(navDialog).toBeVisible();
+          await navDialog.getByRole('button', { name: 'Mi cuenta' }).click();
+          await expect(navDialog.getByRole('button', { name: 'Cerrar sesión' })).toBeVisible();
+          await check('cuenta');
+          await page.keyboard.press('Escape');
+          await expect(navDialog.getByRole('button', { name: 'Cerrar sesión' })).toBeHidden();
+          await expect(navDialog).toBeVisible();
+          await page.keyboard.press('Escape');
+          await expect(navDialog).toHaveCount(0);
+        } else {
+          await page.getByRole('button', { name: 'Mi cuenta' }).click();
+          await expect(page.getByRole('button', { name: 'Cerrar sesión' })).toBeVisible();
+          await check('cuenta');
+          await page.keyboard.press('Escape');
+          await expect(page.getByRole('button', { name: 'Cerrar sesión' })).toBeHidden();
+        }
         await visit('/gastos/nuevo', 'nuevo-gasto', () => page.getByLabel('Importe del gasto'));
         await visit(`/gastos/${expense}/editar`, 'editar-gasto', () => page.getByRole('button', { name: 'Guardar cambios' }));
         await page.getByRole('button', { name: 'Eliminar gasto', exact: true }).click();

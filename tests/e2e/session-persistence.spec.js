@@ -215,7 +215,7 @@ test('CA-02 · la sesión sobrevive al cierre total y reapertura en un proceso n
     await second.page.goto(`${baseURL}/login`);
     await expect(second.page).toHaveURL(`${baseURL}/`);
     await second.page.getByRole('button', { name: 'Ver menú' }).click();
-    await second.page.getByRole('dialog').getByRole('link', { name: 'Mi cuenta' }).click();
+    await second.page.getByRole('dialog').getByRole('button', { name: 'Mi cuenta' }).click();
     await expect(second.page.getByText(ownerA.email)).toBeVisible();
   } finally {
     await second.context.close();
@@ -361,7 +361,7 @@ test('CA-06 · cerrar sesión limpia el almacenamiento persistente y solicita in
     await first.page.goto(`${baseURL}/login`);
     await enter(first.page);
     await first.page.getByRole('button', { name: 'Ver menú' }).click();
-    await first.page.getByRole('dialog').getByRole('link', { name: 'Mi cuenta' }).click();
+    await first.page.getByRole('dialog').getByRole('button', { name: 'Mi cuenta' }).click();
     await first.page.getByRole('button', { name: 'Cerrar sesión' }).click();
     await expect(first.page).toHaveURL(`${baseURL}/login`);
     expect(await readIdbSession(first.page)).toBeNull();
@@ -417,7 +417,7 @@ test('CA-08 · mantiene aislamiento entre usuarios tras cerrar sesión y reabrir
     await first.page.goto(`${baseURL}/login`);
     await enter(first.page);
     await first.page.getByRole('button', { name: 'Ver menú' }).click();
-    await first.page.getByRole('dialog').getByRole('link', { name: 'Mi cuenta' }).click();
+    await first.page.getByRole('dialog').getByRole('button', { name: 'Mi cuenta' }).click();
     await expect(first.page.getByText(ownerA.email)).toBeVisible();
     await first.page.getByRole('button', { name: 'Cerrar sesión' }).click();
     await expect(first.page).toHaveURL(`${baseURL}/login`);
@@ -432,7 +432,7 @@ test('CA-08 · mantiene aislamiento entre usuarios tras cerrar sesión y reabrir
     await second.page.goto(`${baseURL}/login`);
     await enter(second.page);
     await second.page.getByRole('button', { name: 'Ver menú' }).click();
-    await second.page.getByRole('dialog').getByRole('link', { name: 'Mi cuenta' }).click();
+    await second.page.getByRole('dialog').getByRole('button', { name: 'Mi cuenta' }).click();
     await expect(second.page.getByText(ownerB.email)).toBeVisible();
     await expect(second.page.getByText(ownerA.email)).toHaveCount(0);
   } finally {
@@ -442,7 +442,9 @@ test('CA-08 · mantiene aislamiento entre usuarios tras cerrar sesión y reabrir
   const third = await launchAppProcess(userDataDir);
   try {
     await attachBackend(third.context, state);
-    await third.page.goto(`${baseURL}/cuenta`);
+    await third.page.goto(`${baseURL}/`);
+    await third.page.getByRole('button', { name: 'Ver menú' }).click();
+    await third.page.getByRole('dialog').getByRole('button', { name: 'Mi cuenta' }).click();
     await expect(third.page.getByText(ownerB.email)).toBeVisible();
     await expect(third.page.getByText(ownerA.email)).toHaveCount(0);
   } finally {

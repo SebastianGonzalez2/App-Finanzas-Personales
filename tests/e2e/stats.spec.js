@@ -191,7 +191,7 @@ test('moneda compartida: tres monedas separadas, persistencia y respuesta tardí
   await page.getByRole('link', { name: 'Historial' }).first().click();
   await page.getByRole('link', { name: 'Estadísticas' }).first().click();
   await expect(currencyButton(page, 'USD')).toHaveAttribute('aria-pressed', 'true');
-  await page.goto('/cuenta');
+  await page.getByRole('button', { name: 'Mi cuenta' }).click();
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
   await expect(page).toHaveURL(/\/login$/);
   await page.getByRole('button', { name: 'Continuar con Google' }).click();
