@@ -112,6 +112,54 @@ test('indicadores, categorías, desglose, comparación y resumen con valores exa
   await expect(page.locator('body')).not.toContainText('600,30');
 });
 
+test('comparación entre períodos y evolución acumulada mensual con tramo justo y datos reales', async ({ page, ledger }) => {
+  const { c } = await seed(ledger);
+  await page.goto('/estadisticas');
+
+  // ── Evolución acumulada mensual: 1–23 nov (300,30) vs 1–23 oct (399,99, sin el 31 oct de 250,00) → −99,69 (−24,92%).
+  const cum = page.locator('section[data-card="cumulative-monthly"]');
+  await expect(cum.locator('dd.figure').nth(0)).toHaveText('300,30 UYU');
+  await expect(cum.locator('dd.figure').nth(1)).toHaveText('399,99 UYU');
+  await expect(cum.locator('.metric-note').nth(1)).toContainText('Mes completo: 649,99 UYU');
+  await expect(cum.locator('dd.figure').nth(2)).toHaveText(`${MINUS}99,69 UYU`);
+  await expect(cum.locator('.metric-note').nth(2)).toHaveText(`${MINUS}24,92%`);
+
+  // Filtrar por categoría Alimentación dentro de Evolución acumulada: 300,00 vs 300,00 al día 23 → 0,00 (0%).
+  await chooseOption(cum.getByLabel('Categoría'), c.food);
+  await expect(cum.locator('dd.figure').nth(0)).toHaveText('300,00 UYU');
+  await expect(cum.locator('dd.figure').nth(1)).toHaveText('300,00 UYU');
+  await expect(cum.locator('dd.figure').nth(2)).toHaveText('0,00 UYU');
+  await chooseOption(cum.getByLabel('Categoría'), '');
+
+  // Recorrer días con teclado muestra el tooltip diario.
+  await cum.locator('.cm-svg').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(cum.locator('.cm-tip')).toContainText('Día 1');
+  await expect(cum.locator('.cm-tip')).toContainText('UYU 300,00');
+
+  // ── Comparación entre períodos: por defecto Mensual 1–23 nov vs 1–23 oct (tramo equivalente).
+  const pc = page.locator('section[data-card="period-comparison"]');
+  await expect(pc.locator('.pc-context')).toContainText('Tramo equivalente');
+  await expect(pc.locator('dd.figure').nth(0)).toHaveText('300,30 UYU');
+  await expect(pc.locator('dd.figure').nth(1)).toHaveText('399,99 UYU');
+  await expect(pc.locator('dd.figure').nth(2)).toHaveText(`${MINUS}99,69 UYU`);
+  await expect(pc.locator('.metric-note').nth(2)).toHaveText(`${MINUS}24,92%`);
+  // Ordenadas por impacto: Vivienda (−99,99) primero, luego Transporte (+0,30), luego Alimentación (0,00).
+  await expect(pc.locator('.pc-cat-name')).toHaveText(['Vivienda', 'Transporte', 'Alimentación']);
+
+  // Cambiar a comparación Anual: 2026 (1 ene – 23 nov: 950,29) vs 2025 (1 ene – 23 nov: 540,00) → +410,29 (+75,98%).
+  await pc.getByRole('group', { name: 'Tipo de comparación' }).getByRole('button', { name: 'Anual' }).click();
+  await expect(pc.locator('dd.figure').nth(0)).toHaveText('950,29 UYU');
+  await expect(pc.locator('dd.figure').nth(1)).toHaveText('540,00 UYU');
+  await expect(pc.locator('dd.figure').nth(2)).toHaveText('+410,29 UYU');
+  await expect(pc.locator('.metric-note').nth(2)).toHaveText('+75,98%');
+
+  // Cambiar moneda global actualiza ambas tarjetas.
+  await currencyButton(page, 'USD').click();
+  await expect(cum.locator('dd.figure').nth(0)).toHaveText('300,00 USD');
+  await expect(pc.locator('dd.figure').nth(0)).toHaveText('300,00 USD');
+});
+
 test('moneda compartida: tres monedas separadas, persistencia y respuesta tardía descartada', async ({ page, ledger }) => {
   await seed(ledger);
   // RF-017: UYU 300,30/4, USD 300,00/1 y EUR 45,67/1, nunca un total combinado.

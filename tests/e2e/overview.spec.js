@@ -65,12 +65,22 @@ test('RF-027 · total, categorías, seis meses, presupuestos y gastos recientes 
   await expect(hero.locator('.tag')).toHaveText('Mes parcial');
   await expect(hero.locator('.hero-base')).toHaveText(`${MINUS}11.160,00 UYU frente a octubre completo`);
 
-  // Tres categorías principales con participación sobre el total real del mes.
+  // Gráfico circular segmentado de Principales categorías con participación sobre el total real del mes.
   const categories = panel(page, 'overview-categories');
-  await expect(categories.locator('.cat-name')).toHaveText(['Vivienda · 1', 'Alimentación · 2', 'Transporte · 2']);
-  await expect(categories.locator('.cat-amount')).toHaveText([
-    '9.600,00 · 46,07% UYU, 1 gasto', '5.000,00 · 23,99% UYU, 2 gastos', '3.840,00 · 18,43% UYU, 2 gastos']);
-  await expect(categories.locator('.panel-note')).toHaveText('Otra categoría en Estadísticas.');
+  await expect(categories.locator('.cat-donut-tick')).toHaveCount(72);
+  await expect(categories.locator('.cat-donut-center-value')).toHaveText('20.840,00');
+  await expect(categories.locator('.cat-donut-item-name')).toHaveText(['Vivienda · 1', 'Alimentación · 2', 'Transporte · 2', 'Servicios · 1']);
+  await expect(categories.locator('.cat-donut-item-amount')).toHaveText([
+    '9.600,00 · 46,07%', '5.000,00 · 23,99%', '3.840,00 · 18,43%', '2.400,00 · 11,52%']);
+  // Hover/click sincroniza el centro del gráfico y la lista asociada.
+  await categories.locator('.cat-donut-item').nth(1).click();
+  await expect(categories.locator('.cat-donut-item').nth(1)).toHaveAttribute('aria-pressed', 'true');
+  await expect(categories.locator('.cat-donut-center-name')).toHaveText('Alimentación');
+  await expect(categories.locator('.cat-donut-center-value')).toHaveText('5.000,00');
+  await expect(categories.locator('.cat-donut-center-meta')).toHaveText('UYU · 23,99%');
+  await expect(categories.locator('.cat-donut-center-sub')).toHaveText('2 gastos');
+  await categories.getByRole('button', { name: 'Ver total' }).click();
+  await expect(categories.locator('.cat-donut-center-value')).toHaveText('20.840,00');
 
   // Seis meses: junio a noviembre, con los meses vacíos en su lugar.
   const months = panel(page, 'overview-months');
@@ -134,9 +144,11 @@ test('RF-027 · el Resumen coincide con Estadísticas, Presupuestos e Historial'
   await hero.getByRole('link', { name: /^Gasto del mes: UYU 20\.840,00/ }).click();
   await expect(page).toHaveURL(/\/historial\?desde=2026-11-01&hasta=2026-11-30&moneda=UYU$/);
   await expect(page.locator('.expense-table tbody tr')).toHaveCount(6);
-  // Una categoría abre su Historial; «Ver historial» abre el mes y la moneda de los recientes.
+  // Una categoría seleccionada en el donut abre su Historial; «Ver historial» abre el mes y la moneda de los recientes.
   await page.goBack();
-  await panel(page, 'overview-categories').getByRole('link', { name: /^Alimentación: UYU 5\.000,00/ }).click();
+  const overviewCats = panel(page, 'overview-categories');
+  await overviewCats.getByRole('button', { name: /^Alimentación: UYU 5\.000,00/ }).click();
+  await overviewCats.getByRole('link', { name: 'Ver gastos de Alimentación' }).click();
   await expect(page).toHaveURL(new RegExp(`categoria=${c.food}`));
   await expect(page.locator('.expense-table tbody tr')).toHaveCount(2);
   await page.goBack();
@@ -156,7 +168,7 @@ test('RF-027 · el Resumen coincide con Estadísticas, Presupuestos e Historial'
   await button(page, 'Guardar cambios').click();
   await page.getByRole('link', { name: 'Resumen' }).first().click();
   await expect(hero.locator('.hero-value')).toHaveText('19.840,00 UYU');
-  await expect(panel(page, 'overview-categories').locator('.cat-amount').nth(1)).toHaveText('4.000,00 · 20,16% UYU, 2 gastos');
+  await expect(panel(page, 'overview-categories').locator('.cat-donut-item-amount').nth(1)).toHaveText('4.000,00 · 20,16%');
   await page.getByRole('link', { name: 'Presupuestos' }).first().click();
   await expect(page.locator('.budget-table tbody tr', { hasText: 'Alimentación' }).locator('td').nth(0)).toHaveText('4.000,00');
 });
@@ -211,7 +223,7 @@ test('cuenta sin gastos: registrar el primer gasto desde el Resumen y crear un p
   await expect(hero.locator('.hero-value')).toHaveText('1.280,00 UYU');
   await expect(hero.locator('.hero-note').first()).toHaveText('1 gasto registrado');
   await expect(panel(page, 'overview-recent').locator('.row-link')).toHaveText(['Primer gasto']);
-  await expect(panel(page, 'overview-categories').locator('.cat-amount')).toHaveText(['1.280,00 · 100% UYU, 1 gasto']);
+  await expect(panel(page, 'overview-categories').locator('.cat-donut-item-amount')).toHaveText(['1.280,00 · 100%']);
   // Crear presupuesto desde el Resumen abre el formulario en Presupuestos.
   await panel(page, 'overview-budgets').getByRole('link', { name: 'Crear presupuesto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Crear límite' });
@@ -259,7 +271,10 @@ test.describe('toque en móvil', () => {
     await page.goto('/');
     await currencyButton(page, 'USD').tap();
     await expect(panel(page, 'overview-month').locator('.hero-value')).toHaveText('62,00 USD');
-    await panel(page, 'overview-categories').getByRole('link', { name: /^Alimentación: USD 50,00/ }).tap();
+    const mobileCats = panel(page, 'overview-categories');
+    await mobileCats.getByRole('button', { name: /^Alimentación: USD 50,00/ }).tap();
+    await expect(mobileCats.locator('.cat-donut-center-name')).toHaveText('Alimentación');
+    await mobileCats.getByRole('link', { name: 'Ver gastos de Alimentación' }).tap();
     await expect(page).toHaveURL(/moneda=USD/);
     await expect(page.locator('.expense-table tbody tr')).toHaveCount(1);
     await page.goBack();
