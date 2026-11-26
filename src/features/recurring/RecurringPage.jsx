@@ -176,7 +176,9 @@ export function RecurringPage({ preferences }) {
 
           <section className="panel pad recurring-stat recurring-totals" aria-label="Total mensual programado por moneda">
             <span className="eyebrow">Total mensual programado</span>
-            {!recurring.data ? (
+            {recurring.isError ? (
+              <p className="recurring-stat-value muted">No disponible</p>
+            ) : !recurring.data ? (
               <p className="hero-note">Calculando totales…</p>
             ) : totals.length === 0 ? (
               <p className="recurring-stat-value muted">Sin importes programados</p>
@@ -213,23 +215,32 @@ export function RecurringPage({ preferences }) {
             </button>
           </div>
           <div className="recurring-body">
-            <PanelBody query={recurring} height={180} loading="Cargando pagos recurrentes…">
-              {recurring.data && (items.length === 0 ? (
-                <div className="recurring-empty">
-                  <h3>Todavía no configuraste pagos recurrentes</h3>
-                  <p>
-                    Agregá tus gastos mensuales fijos (como suscripciones, alquiler o servicios) y Cifra los registrará automáticamente en el Historial cada mes.
-                  </p>
-                  <button type="button" className="btn primary" onClick={openCreate}>
-                    <Icon name="plus" />Nuevo pago recurrente
-                  </button>
+            {recurring.isError ? (
+              <div className="panel-state" role="alert">
+                <p>No pudimos cargar los pagos recurrentes. {recurring.error.message}</p>
+                <div className="panel-state-actions">
+                  <button type="button" className="btn ghost" onClick={() => recurring.refetch()}>Reintentar</button>
                 </div>
-              ) : (
-                compact
-                  ? <RecurringCards items={items} today={serverToday} menu={rowMenu} />
-                  : <RecurringTable items={items} today={serverToday} menu={rowMenu} />
-              ))}
-            </PanelBody>
+              </div>
+            ) : (
+              <PanelBody query={recurring} height={180} loading="Cargando pagos recurrentes…">
+                {recurring.data && (items.length === 0 ? (
+                  <div className="recurring-empty">
+                    <h3>Todavía no configuraste pagos recurrentes</h3>
+                    <p>
+                      Agregá tus gastos mensuales fijos (como suscripciones, alquiler o servicios) y Cifra los registrará automáticamente en el Historial cada mes.
+                    </p>
+                    <button type="button" className="btn primary" onClick={openCreate}>
+                      <Icon name="plus" />Nuevo pago recurrente
+                    </button>
+                  </div>
+                ) : (
+                  compact
+                    ? <RecurringCards items={items} today={serverToday} menu={rowMenu} />
+                    : <RecurringTable items={items} today={serverToday} menu={rowMenu} />
+                ))}
+              </PanelBody>
+            )}
           </div>
         </section>
       </div>
