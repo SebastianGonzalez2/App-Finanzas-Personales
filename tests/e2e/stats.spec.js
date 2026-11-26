@@ -79,20 +79,24 @@ test('indicadores, categorías, desglose, comparación y resumen con valores exa
   await expect(metrics.locator('.period-line')).toContainText('Actual · 1 nov 2026 – 30 nov 2026 · parcial');
   await expect(metrics.locator('.period-line')).toContainText('Referencia · 1 oct 2026 – 31 oct 2026');
 
-  // 300 / 300,30 = 99,90 %; 0,30 / 300,30 = 0,10 %.
+  // 300 / 300,30 = 99,90 %; 0,30 / 300,30 = 0,10 % en gráfico circular segmentado unificado.
   const categories = panel(page, 'categories');
-  await expect(categories.locator('.cat-row')).toHaveCount(2);
-  await expect(categories.locator('.cat-row').nth(0)).toContainText('Alimentación · 2');
-  await expect(categories.locator('.cat-row').nth(0)).toContainText('300,00 · 99,90%');
-  await expect(categories.locator('.cat-row').nth(1)).toContainText('0,30 · 0,10%');
-  await categories.locator('.cat-row').nth(0).click();
+  await expect(categories.locator('.cat-donut-tick')).toHaveCount(72);
+  await expect(categories.locator('.cat-donut-center-eyebrow')).toHaveText('Total del mes');
+  await expect(categories.locator('.cat-donut-center-value')).toHaveText('300,30');
+  await expect(categories.locator('.cat-donut-item')).toHaveCount(2);
+  await expect(categories.locator('.cat-donut-item-name').nth(0)).toContainText('Alimentación · 2');
+  await expect(categories.locator('.cat-donut-item-amount').nth(0)).toHaveText('300,00 · 99,90%');
+  await expect(categories.locator('.cat-donut-item-amount').nth(1)).toHaveText('0,30 · 0,10%');
+  await categories.locator('.cat-donut-item').nth(0).click();
+  await categories.getByRole('button', { name: 'Ver subcategorías' }).click();
   await expect(page).toHaveURL(/desglose=/);
   // Hijas 200 + 100 = 300: el padre no duplica importes.
   await expect(categories.locator('.breakdown-head')).toContainText('UYU 300,00 · 2 gastos');
-  await expect(categories.locator('.cat-row')).toHaveCount(2);
-  await expect(categories.locator('.cat-row').nth(0)).toContainText('Restaurantes');
-  await expect(categories.locator('.cat-row').nth(0)).toContainText('200,00 · 66,67%');
-  await expect(categories.locator('.cat-row').nth(1)).toContainText('100,00 · 33,33%');
+  await expect(categories.locator('.cat-donut-item')).toHaveCount(2);
+  await expect(categories.locator('.cat-donut-item-name').nth(0)).toContainText('Restaurantes');
+  await expect(categories.locator('.cat-donut-item-amount').nth(0)).toHaveText('200,00 · 66,67%');
+  await expect(categories.locator('.cat-donut-item-amount').nth(1)).toHaveText('100,00 · 33,33%');
   await categories.getByRole('button', { name: 'Todas las categorías' }).click();
   await expect(page).not.toHaveURL(/desglose=/);
 
@@ -296,8 +300,10 @@ test('cada agregado abre el Historial con los mismos gastos e importe', async ({
   await monthly.getByRole('link', { name: 'Ver los gastos de octubre 2026' }).click();
   expect(await historySum(page, 'UYU')).toEqual({ count: 3, total: '649,99' });
   await page.getByRole('link', { name: 'Volver a Estadísticas' }).click();
-  await panel(page, 'categories').locator('.cat-row', { hasText: 'Alimentación' }).click();
-  await panel(page, 'categories').getByRole('link', { name: /^Supermercado: UYU 350,00/ }).click();
+  await panel(page, 'categories').locator('.cat-donut-item', { hasText: 'Alimentación' }).click();
+  await panel(page, 'categories').getByRole('button', { name: 'Ver subcategorías' }).click();
+  await panel(page, 'categories').locator('.cat-donut-item', { hasText: 'Supermercado' }).click();
+  await panel(page, 'categories').getByRole('link', { name: 'Ver gastos de Supermercado' }).click();
   expect(await historySum(page, 'UYU')).toEqual({ count: 2, total: '350,00' });
   await expect(page).toHaveURL(new RegExp(`subcategoria=${c.market}`));
   await page.getByRole('link', { name: 'Volver a Estadísticas' }).click();
@@ -361,17 +367,69 @@ for (const [width, height, name] of [[1440, 960, '1440'], [834, 1112, '834'], [3
     await panel(page, 'annual').locator('.year-dot').nth(1).click();
     await expect(panel(page, 'annual').locator('.chart-detail')).toContainText('2024');
     await panel(page, 'annual').screenshot({ path: `docs/imp-04/capturas/anual-detalle-${name}.png` });
-    await panel(page, 'categories').locator('.cat-row', { hasText: 'Alimentación' }).click();
+    await panel(page, 'categories').locator('.cat-donut-item', { hasText: 'Alimentación' }).click();
+    await panel(page, 'categories').getByRole('button', { name: 'Ver subcategorías' }).click();
     await expect(panel(page, 'categories').locator('.breakdown-head')).toContainText('UYU 850,00 · 4 gastos');
     await panel(page, 'categories').screenshot({ path: `docs/imp-04/capturas/desglose-${name}.png` });
-    await panel(page, 'categories').getByRole('link', { name: /^Supermercado: UYU 350,00/ }).click();
+    await panel(page, 'categories').locator('.cat-donut-item', { hasText: 'Supermercado' }).click();
+    await panel(page, 'categories').getByRole('link', { name: 'Ver gastos de Supermercado' }).click();
     await expect(page.getByRole('link', { name: 'Volver a Estadísticas' })).toBeVisible();
     await expect(page.locator('.expense-table tbody tr')).toHaveCount(2);
     await page.screenshot({ path: `docs/imp-04/capturas/historial-desde-estadisticas-${name}.png`, fullPage: true });
   });
 }
 
-test.describe('toque en móvil', () => {
+  test('gráfico circular unificado: períodos, colores consistentes, agrupación «Otras», teclado y toque', async ({ page, ledger }) => {
+    const { categories } = await ledger.rpc('get_catalog');
+    const byName = (name) => categories.find((row) => row.name === name).id;
+    const seven = ['Vivienda', 'Alimentación', 'Transporte', 'Servicios', 'Salud', 'Educación', 'Entretenimiento'];
+    for (let i = 0; i < seven.length; i += 1) {
+      await ledger.rpc('create_expense', {
+        id: crypto.randomUUID(),
+        amount: String((seven.length - i) * 100),
+        currency: 'UYU',
+        spent_on: '2026-11-15',
+        category_id: byName(seven[i]),
+      });
+    }
+
+    await page.goto('/');
+    const overviewColor = await page
+      .locator('section[aria-labelledby="overview-categories"] .cat-donut-item', { hasText: 'Alimentación' })
+      .locator('.cat-donut-swatch')
+      .evaluate((el) => el.style.getPropertyValue('--swatch'));
+
+    await page.goto('/estadisticas');
+    const catPanel = panel(page, 'categories');
+    const statsColor = await catPanel
+      .locator('.cat-donut-item', { hasText: 'Alimentación' })
+      .locator('.cat-donut-swatch')
+      .evaluate((el) => el.style.getPropertyValue('--swatch'));
+    expect(statsColor).toBe(overviewColor);
+
+    // Más de 5 categorías: las excedentes se agrupan en «Otras (2)» y siguen accesibles en detalle y tabla.
+    await catPanel.locator('.cat-donut-item', { hasText: 'Otras (2)' }).click();
+    await expect(catPanel.locator('.cat-donut-other-list')).toContainText('Educación');
+    await expect(catPanel.locator('.cat-donut-other-list')).toContainText('Entretenimiento');
+    await catPanel.getByText('Ver datos').click();
+    await expect(catPanel.locator('.chart-table tbody tr')).toHaveCount(7);
+
+    // Escape limpia la selección.
+    await catPanel.locator('.cat-donut-item').first().focus();
+    await page.keyboard.press('Escape');
+    await expect(catPanel.locator('.cat-donut-detail')).toHaveCount(0);
+
+    // Período anual y personalizado adaptan los textos centrales (nunca «Total del mes»).
+    await chooseOption(periodSelect(page), 'anio');
+    await expect(catPanel.locator('.cat-donut-center-eyebrow')).toHaveText('Total 2026');
+    await expect(catPanel).not.toContainText('Total del mes');
+
+    await page.goto('/estadisticas?desde=2026-11-01&hasta=2026-11-20');
+    await expect(catPanel.locator('.cat-donut-center-eyebrow')).toHaveText('Total del período');
+    await expect(catPanel).not.toContainText('Total del mes');
+  });
+
+  test.describe('toque en móvil', () => {
   test.use({ viewport: { width: 375, height: 812 }, hasTouch: true, isMobile: true });
   test('tocar una barra y un punto muestra su detalle y abre el Historial', async ({ page, ledger }) => {
     await seed(ledger);

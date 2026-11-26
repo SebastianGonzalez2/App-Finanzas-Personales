@@ -11,7 +11,7 @@ import { ChartTable, HistoryLink, PanelBody } from '../stats/panels.jsx';
 import { isPartial, monthLong, monthShort, readStatsQuery, statsArgs } from '../stats/query.js';
 import { useStats } from '../stats/stats.js';
 import { useBudgets } from '../budgets/budgets.js';
-import { CategoryDonut } from './CategoryDonut.jsx';
+import { CategoryDonut } from '../stats/CategoryDonut.jsx';
 
 export const RECENT_LIMIT = 5;
 const NEW_EXPENSE = { pathname: '/gastos/nuevo', state: { from: '/' } };

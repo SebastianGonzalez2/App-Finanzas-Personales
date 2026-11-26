@@ -1,7 +1,9 @@
 import { lazy, Suspense, useState } from 'react';
 import { Link } from 'react-router';
 import { Icon } from '../../components/Icon.jsx';
+import { CategoryDonut } from './CategoryDonut.jsx';
 import { chartNumber, count, expensesCount, figureSize, money, percentage, signedMoney } from './format.js';
+import { donutPeriodCopy } from './insights.js';
 import { categoryFilters, childFilters, historyHref, periodFilters } from './links.js';
 import { breakdownArgs, dayShort, isOpen, isPartial, monthLong, monthShort } from './query.js';
 import { useStats } from './stats.js';
@@ -232,18 +234,55 @@ export function CategoriesContent({ api, data, query, catalog, back, onBreakdown
                   {' '}<HistoryLink filters={filters} back={back}>Ver gastos de {name}<Icon name="up" /></HistoryLink></p>
                 : <p className="muted-text">Sin registros en {currency} en este período.</p>}
             </div>
-            <p className="eyebrow">Subcategorías · {currency} · participación sobre {name}</p>
-            <ul className="cat-list">
-              {view.data.children.map((child) => {
-                const label = child.id === null ? 'Sin subcategoría' : child.name;
-                return <li key={child.id ?? 'none'}>
-                  <Link className="cat-row" to={historyHref(childFilters(filters, parentId, child.id), back)}
-                    aria-label={`${label}: ${currency} ${money(child.total)}, ${percentage(child.share)} de ${name}, ${expensesCount(child.count)}. Ver gastos`}>
-                    <CategoryRow name={label} archived={archivedChild(child.id, parentId)} total={child.total} share={child.share} count={child.count} currency={currency} />
-                  </Link>
-                </li>;
-              })}
-            </ul>
+            {view.data.indicator.current.count > 0 && (
+              <>
+                <CategoryDonut
+                  categories={view.data.children.map((child) => ({
+                    ...child,
+                    id: child.id ?? '__none__',
+                    rawId: child.id,
+                    name: child.id === null ? 'Sin subcategoría' : child.name,
+                  }))}
+                  total={view.data.indicator.current.total}
+                  totalCount={view.data.indicator.current.count}
+                  currency={currency}
+                  filters={filters}
+                  eyebrow={`Subcategorías · ${currency} · % de ${name}`}
+                  centerEyebrow={name}
+                  shareSuffix={`de ${name}`}
+                  legendLabel={`Subcategorías de ${name}`}
+                  back={back}
+                  isArchived={(id) => archivedChild(id === '__none__' ? null : id, parentId)}
+                  getHistoryFilters={(slice) => childFilters(filters, parentId, slice.rawId)}
+                  showOtherBreakdown
+                />
+                <ChartTable
+                  caption={`Gasto por subcategoría de ${name} en ${currency}. Cada subcategoría abre el Historial.`}
+                  headers={['Subcategoría', 'Gastos', currency, '%']}
+                  numeric={[1, 2, 3]}
+                  rows={view.data.children.map((child) => {
+                    const label = child.id === null ? 'Sin subcategoría' : child.name;
+                    const archived = archivedChild(child.id, parentId);
+                    return {
+                      key: child.id ?? 'none',
+                      cells: [
+                        <HistoryLink
+                          key="link"
+                          filters={childFilters(filters, parentId, child.id)}
+                          back={back}
+                          label={`Ver los gastos de ${label}${archived ? ' · Archivada' : ''}`}
+                        >
+                          {label + (archived ? ' · Archivada' : '')}
+                        </HistoryLink>,
+                        count(child.count),
+                        money(child.total),
+                        percentage(child.share),
+                      ],
+                    };
+                  })}
+                />
+              </>
+            )}
           </>}
         </PanelBody>
       </div>
@@ -251,19 +290,23 @@ export function CategoriesContent({ api, data, query, catalog, back, onBreakdown
   }
 
   if (!data.categories.length) return <p className="panel-empty">Sin registros en {currency} en este período.</p>;
+  const copy = donutPeriodCopy(query, currency);
   return <>
-    <p className="eyebrow">Gastos · {currency} · participación</p>
-    <ul className="cat-list">
-      {data.categories.map((category) => (
-        <li key={category.id}>
-          <button type="button" className="cat-row" onClick={() => onBreakdown(category.id)}
-            aria-label={`${category.name}: ${currency} ${money(category.total)}, ${percentage(category.share)} del total, ${expensesCount(category.count)}. Ver subcategorías`}>
-            <CategoryRow name={category.name} archived={archivedParent(category.id)} total={category.total} share={category.share}
-              count={category.count} currency={currency} />
-          </button>
-        </li>
-      ))}
-    </ul>
+    <CategoryDonut
+      categories={data.categories}
+      total={data.indicator.current.total}
+      totalCount={data.indicator.current.count}
+      currency={currency}
+      filters={data.filters}
+      eyebrow={copy.eyebrow}
+      centerEyebrow={copy.centerEyebrow}
+      shareSuffix={copy.shareSuffix}
+      legendLabel={copy.legendLabel}
+      back={back}
+      isArchived={archivedParent}
+      onBreakdown={onBreakdown}
+      showOtherBreakdown
+    />
     <ChartTable caption={`Gasto por categoría en ${currency}. Cada categoría abre el Historial.`} headers={['Categoría', 'Gastos', currency, '%']} numeric={[1, 2, 3]}
       rows={data.categories.map((category) => ({ key: category.id, cells: [
         <HistoryLink key="link" filters={categoryFilters(data.filters, category.id)} back={back}

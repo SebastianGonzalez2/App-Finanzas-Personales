@@ -2,8 +2,70 @@ import { cents } from './format.js';
 import { toDay } from './query.js';
 
 // Paleta sobria y armónica con el sistema oscuro de Cifra (--sage, --amber, --rose y neutros fríos).
-export const CATEGORY_PALETTE = ['#adcfba', '#e3bd84', '#8eb8d9', '#e5a6a3', '#b7a8db'];
+export const CATEGORY_PALETTE = [
+  '#adcfba', '#e3bd84', '#8eb8d9', '#e5a6a3', '#b7a8db',
+  '#8cc5bf', '#d4b59e', '#9ea9de', '#c8d19e', '#d4a8be',
+  '#a6c4d4', '#cfb48c',
+];
 export const OTHER_SLICE_COLOR = '#7b8082';
+
+function hashCategoryId(id) {
+  let hash = 2166136261;
+  const text = String(id);
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+// Asigna colores consistentes por id de categoría entre Resumen y Estadísticas,
+// resolviendo colisiones de forma determinista por orden lexicográfico de ids.
+export function assignCategoryColors(items) {
+  const colors = new Map();
+  const used = new Set();
+  const ids = [...new Set(items.map((item) => item.id).filter((id) => id && id !== '__none__'))].sort();
+
+  for (const id of ids) {
+    let slot = hashCategoryId(id) % CATEGORY_PALETTE.length;
+    if (used.size < CATEGORY_PALETTE.length) {
+      while (used.has(slot)) {
+        slot = (slot + 1) % CATEGORY_PALETTE.length;
+      }
+      used.add(slot);
+    }
+    colors.set(id, CATEGORY_PALETTE[slot]);
+  }
+  colors.set('__none__', OTHER_SLICE_COLOR);
+  return colors;
+}
+
+export function donutPeriodCopy(query, currency) {
+  const period = query?.period ?? 'mes';
+  if (period === 'mes' || period === 'mes-anterior') {
+    return {
+      eyebrow: `Importe en ${currency} · % del mes`,
+      centerEyebrow: 'Total del mes',
+      shareSuffix: 'del mes',
+      legendLabel: 'Categorías del mes',
+    };
+  }
+  if (period === 'anio') {
+    const year = query.range?.from?.slice(0, 4) ?? '';
+    return {
+      eyebrow: `Importe en ${currency} · % del año`,
+      centerEyebrow: year ? `Total ${year}` : 'Total del año',
+      shareSuffix: 'del año',
+      legendLabel: 'Categorías del año',
+    };
+  }
+  return {
+    eyebrow: `Importe en ${currency} · % del período`,
+    centerEyebrow: 'Total del período',
+    shareSuffix: 'del período',
+    legendLabel: 'Categorías del período',
+  };
+}
 
 const MONTHS_TITLE = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -452,25 +514,37 @@ export function buildDonutSlices(categories, totalText, { maxPrimary = DONUT_MAX
   const totalCents = totalText ? cents(totalText) : categories.reduce((sum, item) => sum + cents(item.total), 0n);
   if (totalCents <= 0n) return [];
 
-  const primary = categories.slice(0, maxPrimary).map((category, index) => ({
+  const normalized = categories.map((category) => ({
+    ...category,
+    id: category.id ?? '__none__',
+    rawId: category.rawId !== undefined ? category.rawId : category.id,
+  }));
+
+  const primaryList = normalized.slice(0, maxPrimary);
+  const colorMap = assignCategoryColors(primaryList);
+
+  const primary = primaryList.map((category) => ({
     id: category.id,
+    rawId: category.rawId,
     name: category.name,
     count: category.count,
     total: category.total,
     cents: cents(category.total),
     share: category.share,
-    color: CATEGORY_PALETTE[index % CATEGORY_PALETTE.length],
+    color: colorMap.get(category.id) ?? OTHER_SLICE_COLOR,
     isOther: false,
     otherCount: 0,
+    restItems: [],
   }));
 
-  const rest = categories.slice(maxPrimary);
+  const rest = normalized.slice(maxPrimary);
   const slices = [...primary];
   if (rest.length > 0) {
     const restCents = rest.reduce((sum, item) => sum + cents(item.total), 0n);
     const restCount = rest.reduce((sum, item) => sum + item.count, 0);
     slices.push({
       id: '__other__',
+      rawId: '__other__',
       name: rest.length === 1 ? 'Otra categoría' : `Otras (${rest.length})`,
       count: restCount,
       total: formatCents(restCents),
@@ -479,6 +553,14 @@ export function buildDonutSlices(categories, totalText, { maxPrimary = DONUT_MAX
       color: OTHER_SLICE_COLOR,
       isOther: true,
       otherCount: rest.length,
+      restItems: rest.map((item) => ({
+        id: item.id,
+        rawId: item.rawId,
+        name: item.name,
+        count: item.count,
+        total: item.total,
+        share: item.share,
+      })),
     });
   }
 
