@@ -230,9 +230,6 @@ export function RecurringPage({ preferences }) {
                     <p>
                       Agregá tus gastos mensuales fijos (como suscripciones, alquiler o servicios) y Cifra los registrará automáticamente en el Historial cada mes.
                     </p>
-                    <button type="button" className="btn primary" onClick={openCreate}>
-                      <Icon name="plus" />Nuevo pago recurrente
-                    </button>
                   </div>
                 ) : (
                   compact

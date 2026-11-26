@@ -77,6 +77,18 @@
   overflow: hidden;
 }
 
+.recurring-list .panel-title .btn {
+  min-height: 36px;
+  padding: 0 12px;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.recurring-list .panel-title .btn .ico {
+  width: 15px;
+  height: 15px;
+}
+
 .recurring-body > .panel-skeleton,
 .recurring-body > .panel-state {
   margin: 0 24px 24px;
@@ -96,7 +108,7 @@
 
 .recurring-empty p {
   max-width: 580px;
-  margin: 0 0 16px;
+  margin: 0;
   color: var(--secondary);
 }
 
@@ -273,8 +285,9 @@
   }
 
   .recurring-list .panel-title .btn {
-    width: 100%;
-    justify-content: center;
+    min-height: 44px;
+    width: auto;
+    padding: 0 12px;
   }
 
   .recurring-card {
