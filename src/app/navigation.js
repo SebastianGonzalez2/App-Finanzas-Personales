@@ -7,4 +7,3 @@ export const sections = [
 ];
 
 export const categories = { path: '/categorias', title: 'Categorías', icon: 'categorias' };
-export const account = { path: '/cuenta', title: 'Mi cuenta', icon: 'cuenta' };

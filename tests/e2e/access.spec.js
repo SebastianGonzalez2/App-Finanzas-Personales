@@ -20,7 +20,8 @@ test('intercambio único, consulta 401 y renovación de sesión', async ({ page 
   await enter(page);
   expect(calls.exchanges).toBe(1);
   expect(calls.refreshes).toBe(1);
-  await page.getByRole('link', { name: 'Mi cuenta' }).click();
+  await page.getByRole('button', { name: 'Mi cuenta' }).click();
+  await expect(page).toHaveURL(/\/$/);
   await expect(page.getByText(ownerB.email)).toBeVisible();
 });
 
@@ -51,7 +52,7 @@ test('cierre remoto pendiente bloquea la vista incluso tras recargar', async ({ 
   const calls = await mockSupabase(page, { offlineLogout: true });
   await page.goto('/login');
   await enter(page);
-  await page.getByRole('link', { name: 'Mi cuenta' }).click();
+  await page.getByRole('button', { name: 'Mi cuenta' }).click();
   await expect(page.getByText(ownerA.email)).toBeVisible();
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
   await expect(page.getByRole('heading', { name: 'Cierre remoto pendiente' })).toBeVisible();
@@ -90,7 +91,7 @@ for (const [width, height] of [[1440, 960], [834, 1112], [375, 812]]) {
       await menu.click();
       const dialog = page.getByRole('dialog');
       await expect(dialog.getByRole('link', { name: 'Categorías' })).toBeVisible();
-      await expect(dialog.getByRole('link', { name: 'Mi cuenta' })).toBeVisible();
+      await expect(dialog.getByRole('button', { name: 'Mi cuenta' })).toBeVisible();
       await page.keyboard.press('Escape');
       await expect(dialog).toHaveCount(0);
       await expect(menu).toBeFocused();
@@ -114,3 +115,173 @@ for (const [width, height] of [[1440, 960], [834, 1112], [375, 812]]) {
     expect(errors).toEqual([]);
   });
 }
+
+test('panel integrado de Mi cuenta: apertura, cierre, alineación, correo largo y estados responsive', async ({ page }, testInfo) => {
+  const longUser = {
+    id: ownerA.id,
+    email: 'sebastian.gonzalez.finanzas.personales.2026@gmail.com',
+  };
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await mockSupabase(page, { user: longUser });
+  await page.goto('/login');
+  await enter(page);
+
+  // La ruta independiente /cuenta ya no existe y redirige al Resumen.
+  await page.goto('/cuenta');
+  await expect(page).toHaveURL(/\/$/);
+
+  // Navegar a otra sección y comprobar que abrir Mi cuenta mantiene intacta la página actual.
+  await page.getByRole('link', { name: 'Categorías' }).click();
+  await expect(page).toHaveURL(/\/categorias$/);
+
+  const rail = page.locator('.rail');
+  const trigger = rail.getByRole('button', { name: 'Mi cuenta' });
+  const card = rail.locator('.account-menu__card');
+  const panel = rail.locator('.account-menu__panel');
+  const signOut = rail.getByRole('button', { name: 'Cerrar sesión' });
+  const navSample = rail.getByRole('link', { name: 'Categorías' });
+
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await expect(signOut).toBeHidden();
+
+  // Apertura desde el botón sin navegación.
+  await trigger.click();
+  await expect(page).toHaveURL(/\/categorias$/);
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+  await expect(panel).toBeVisible();
+  await expect(panel.getByText('Cuenta de Google')).toBeVisible();
+  await expect(panel.getByText(longUser.email)).toBeVisible();
+  await expect(signOut).toBeVisible();
+
+  // Esperar al fin de la transición de apertura antes de medir geometría y capturar.
+  await page.waitForTimeout(240);
+
+  const metrics = await page.evaluate(() => {
+    const r = document.querySelector('.rail').getBoundingClientRect();
+    const nav = document.querySelector('.rail .navitem').getBoundingClientRect();
+    const cardEl = document.querySelector('.rail .account-menu__card').getBoundingClientRect();
+    const panelEl = document.querySelector('.rail .account-menu__panel');
+    const panelBox = panelEl.getBoundingClientRect();
+    const btnBox = document.querySelector('.rail .account-menu__trigger').getBoundingClientRect();
+    const emailEl = document.querySelector('.rail .account-menu__email');
+    const emailBox = emailEl.getBoundingClientRect();
+    return {
+      railLeft: r.left,
+      railRight: r.right,
+      navLeft: nav.left,
+      navRight: nav.right,
+      navWidth: nav.width,
+      cardLeft: cardEl.left,
+      cardRight: cardEl.right,
+      cardWidth: cardEl.width,
+      panelLeft: panelBox.left,
+      panelRight: panelBox.right,
+      panelBottom: panelBox.bottom,
+      panelOverflowX: panelEl.scrollWidth - panelEl.clientWidth,
+      btnTop: btnBox.top,
+      btnLeft: btnBox.left,
+      btnRight: btnBox.right,
+      btnWidth: btnBox.width,
+      emailOverflowX: emailBox.right - panelBox.right,
+      pageOverflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+
+  // Alineación exacta y márgenes simétricos idénticos a los demás ítems del sidebar.
+  expect(Math.abs(metrics.cardLeft - metrics.navLeft)).toBeLessThanOrEqual(1);
+  expect(Math.abs(metrics.cardRight - metrics.navRight)).toBeLessThanOrEqual(1);
+  expect(Math.abs(metrics.cardWidth - metrics.navWidth)).toBeLessThanOrEqual(1);
+  const leftMargin = metrics.cardLeft - metrics.railLeft;
+  const rightMargin = metrics.railRight - metrics.cardRight;
+  expect(leftMargin).toBeGreaterThanOrEqual(11);
+  expect(rightMargin).toBeGreaterThanOrEqual(11);
+  expect(Math.abs(leftMargin - rightMargin)).toBeLessThanOrEqual(2);
+  // Panel y botón unidos directamente sin separación y con el mismo ancho.
+  expect(Math.abs(metrics.panelBottom - metrics.btnTop)).toBeLessThanOrEqual(1);
+  expect(Math.abs(metrics.panelLeft - metrics.btnLeft)).toBeLessThanOrEqual(1);
+  expect(Math.abs(metrics.panelRight - metrics.btnRight)).toBeLessThanOrEqual(1);
+  // Sin desborde del correo largo ni de la página.
+  expect(metrics.panelOverflowX).toBeLessThanOrEqual(0);
+  expect(metrics.emailOverflowX).toBeLessThanOrEqual(1);
+  expect(metrics.pageOverflowX).toBe(0);
+  await page.screenshot({ path: testInfo.outputPath('account-desktop-expanded.png') });
+
+  // Cierre al volver a pulsar «Mi cuenta».
+  await trigger.click();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await expect(signOut).toBeHidden();
+
+  // Cierre al hacer clic fuera del panel.
+  await trigger.click();
+  await expect(signOut).toBeVisible();
+  await page.locator('.page').click({ position: { x: 20, y: 20 } });
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await expect(signOut).toBeHidden();
+
+  // Cierre con Escape devolviendo el foco al botón.
+  await trigger.click();
+  await expect(signOut).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await expect(signOut).toBeHidden();
+  await expect(trigger).toBeFocused();
+
+  // Modo sidebar contraído (72 px) en escritorio.
+  await page.getByRole('button', { name: 'Colapsar barra lateral' }).click();
+  await expect.poll(async () => Math.round((await rail.boundingBox()).width)).toBe(72);
+  await trigger.click();
+  await expect(signOut).toBeVisible();
+  await page.waitForTimeout(240);
+  const compactBox = await card.boundingBox();
+  expect(compactBox.width).toBeGreaterThanOrEqual(200);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  await page.screenshot({ path: testInfo.outputPath('account-desktop-compact.png') });
+  await page.keyboard.press('Escape');
+  await expect(signOut).toBeHidden();
+
+  // Modo móvil (375 px) dentro de la hoja de navegación.
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.getByRole('button', { name: 'Ver menú' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Navegación' });
+  await expect(dialog).toBeVisible();
+  const mobileTrigger = dialog.getByRole('button', { name: 'Mi cuenta' });
+  const mobileSignOut = dialog.getByRole('button', { name: 'Cerrar sesión' });
+  await mobileTrigger.click();
+  await expect(mobileSignOut).toBeVisible();
+  await page.waitForTimeout(240);
+
+  const mobileMetrics = await page.evaluate(() => {
+    const sheet = document.querySelector('dialog.sheet');
+    const s = sheet.getBoundingClientRect();
+    const nav = sheet.querySelector('.navitem').getBoundingClientRect();
+    const c = sheet.querySelector('.account-menu__card').getBoundingClientRect();
+    const p = sheet.querySelector('.account-menu__panel');
+    return {
+      leftDelta: Math.abs(c.left - nav.left),
+      rightDelta: Math.abs(c.right - nav.right),
+      sheetOverflowX: sheet.scrollWidth - sheet.clientWidth,
+      panelOverflowX: p.scrollWidth - p.clientWidth,
+      leftMargin: c.left - s.left,
+      rightMargin: s.right - c.right,
+    };
+  });
+  expect(mobileMetrics.leftDelta).toBeLessThanOrEqual(1);
+  expect(mobileMetrics.rightDelta).toBeLessThanOrEqual(1);
+  expect(Math.abs(mobileMetrics.leftMargin - mobileMetrics.rightMargin)).toBeLessThanOrEqual(2);
+  expect(mobileMetrics.sheetOverflowX).toBeLessThanOrEqual(0);
+  expect(mobileMetrics.panelOverflowX).toBeLessThanOrEqual(0);
+  await page.screenshot({ path: testInfo.outputPath('account-mobile-open.png') });
+
+  // Primer Escape cierra solo el panel de cuenta, manteniendo abierto el menú móvil.
+  await page.keyboard.press('Escape');
+  await expect(mobileSignOut).toBeHidden();
+  await expect(dialog).toBeVisible();
+  await expect(mobileTrigger).toBeFocused();
+
+  // Reabrir y cerrar sesión desde el panel móvil.
+  await mobileTrigger.click();
+  await expect(mobileSignOut).toBeVisible();
+  await mobileSignOut.click();
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(navSample).toHaveCount(0);
+});

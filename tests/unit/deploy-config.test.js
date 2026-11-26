@@ -17,7 +17,7 @@ describe('vercel.json', () => {
   });
 
   it('las rutas de la SPA, incluido el callback de OAuth, cargan index.html al abrirse directamente', () => {
-    for (const path of ['/', '/estadisticas', '/historial', '/presupuestos', '/categorias', '/cuenta', '/login',
+    for (const path of ['/', '/estadisticas', '/historial', '/presupuestos', '/categorias', '/login',
       '/auth/callback', '/gastos/nuevo', '/gastos/00000000-0000-4000-8000-000000000101/editar', '/ruta-inexistente']) {
       expect(rewritten(path), path).toBe(true);
     }

@@ -51,7 +51,7 @@ function ExpenseForm({ api, catalog, preferences, expense }) {
   const toast = useToast();
   // The history keeps its query string, so saving or deleting returns to the same consulta.
   const from = typeof location.state?.from === 'string' ? location.state.from : '';
-  const origin = ['/', '/presupuestos', '/categorias', '/cuenta'].includes(from) ||
+  const origin = ['/', '/presupuestos', '/categorias'].includes(from) ||
     /^\/(historial|estadisticas)(\?[^#]*)?$/.test(from) ? from : '/historial';
   const dirty = Boolean(pending) || Object.keys(initial).some((field) => initial[field] !== draft[field]);
   const blocker = useBlocker(() => !finished.current && (dirty || inFlight.current));

@@ -6,7 +6,6 @@ import { ToastViewport } from '../components/ToastViewport.jsx';
 import { AccessState } from '../features/auth/AccessState.jsx';
 import { CallbackPage } from '../features/auth/CallbackPage.jsx';
 import { LoginPage } from '../features/auth/LoginPage.jsx';
-import { AccountMenu } from '../features/settings/AccountMenu.jsx';
 import { BudgetsPage } from '../features/budgets/BudgetsPage.jsx';
 import { monthTitle } from '../features/budgets/budgets.js';
 import { CatalogPage } from '../features/catalog/CatalogPage.jsx';
@@ -16,7 +15,7 @@ import { OverviewPage } from '../features/overview/OverviewPage.jsx';
 import { RecurringPage } from '../features/recurring/RecurringPage.jsx';
 import { StatsSubtitle } from '../features/stats/StatsSubtitle.jsx';
 import { CurrencySelect } from '../components/CurrencySelect.jsx';
-import { account, categories, sections } from './navigation.js';
+import { categories, sections } from './navigation.js';
 import { useAccess } from './sessionContext.js';
 
 // Estadísticas (y Recharts, en su propio chunk) solo se descargan al abrir la sección.
@@ -38,7 +37,7 @@ function PrivatePage({ title, subtitle, page }) {
   return (
     <AppShell key={access.session.user.id} title={title} today={today} subtitle={heading}
       actions={currencyPages.has(page) && <CurrencySelect current={currency} />}>
-      {page === 'account' ? <AccountMenu session={access.session} /> : page === 'catalog' ? <CatalogPage />
+      {page === 'catalog' ? <CatalogPage />
         : page === 'expense' ? <ExpensePage preferences={access.preferences} />
         : page === 'history' ? <HistoryPage today={access.preferences.today} />
         : page === 'overview' ? <OverviewPage preferences={access.preferences} />
@@ -76,7 +75,6 @@ export function AppRoutes() {
           : <PrivatePage title={title} />} />
       ))}
       <Route path={categories.path} element={<PrivatePage title={categories.title} page="catalog" />} />
-      <Route path={account.path} element={<PrivatePage title={account.title} page="account" />} />
       <Route path="/gastos/nuevo" element={<PrivatePage title="Nuevo gasto" subtitle="Registrá el importe, la fecha y la categoría." page="expense" />} />
       <Route path="/gastos/:id/editar" element={<PrivatePage title="Editar gasto" page="expense" />} />
       <Route path="*" element={<Navigate to="/" replace />} />
