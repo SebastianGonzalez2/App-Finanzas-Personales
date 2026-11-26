@@ -240,23 +240,21 @@ export function RecurringFormDialog({ api, initial = null, catalog, currency: pr
         <div className="recurring-pair">
           <label className="field">
             Importe
-            <span className="limit-input">
-              <input
-                ref={amountInput}
-                inputMode="decimal"
-                autoComplete="off"
-                placeholder="0,00"
-                value={amount}
-                autoFocus={editing && !hasArchivedSelection}
-                aria-invalid={Boolean(errors.amount)}
-                aria-describedby={errors.amount ? ids + '-amount-err' : undefined}
-                onChange={(event) => {
-                  setAmount(event.target.value);
-                  setErrors((current) => ({ ...current, amount: undefined }));
-                }}
-              />
-              <span aria-hidden="true">{currency}</span>
-            </span>
+            <input
+              ref={amountInput}
+              className="recurring-amount-input"
+              inputMode="decimal"
+              autoComplete="off"
+              placeholder="0,00"
+              value={amount}
+              autoFocus={editing && !hasArchivedSelection}
+              aria-invalid={Boolean(errors.amount)}
+              aria-describedby={errors.amount ? ids + '-amount-err' : undefined}
+              onChange={(event) => {
+                setAmount(event.target.value);
+                setErrors((current) => ({ ...current, amount: undefined }));
+              }}
+            />
             {errors.amount && <span id={ids + '-amount-err'} className="field-error">{errors.amount}</span>}
           </label>
 
