@@ -38,6 +38,9 @@ async function seed(ledger) {
   for (const [category_id, monthly_limit] of [[transport, '3600'], [home, '10000'], [food, '15000']]) {
     await ledger.rpc('create_budget', { category_id, currency: 'UYU', monthly_limit });
   }
+  await ledger.rpc('create_recurring_payment', {
+    name: 'Spotify', amount: '7.99', currency: 'USD', category_id: id(categories, 'Entretenimiento'), billing_day: 15,
+  });
   return { expense: first };
 }
 
@@ -107,6 +110,11 @@ for (const width of WIDTHS) {
         await page.getByRole('button', { name: 'Crear límite', exact: true }).first().click();
         await expect(page.getByRole('dialog', { name: 'Crear límite' })).toBeVisible();
         await check('presupuesto-dialogo');
+        await page.keyboard.press('Escape');
+        await visit('/pagos-recurrentes', 'pagos-recurrentes', () => page.getByText('Spotify'));
+        await page.getByRole('button', { name: 'Nuevo pago recurrente', exact: true }).first().click();
+        await expect(page.getByRole('dialog', { name: 'Nuevo pago recurrente' })).toBeVisible();
+        await check('recurrente-dialogo');
         await page.keyboard.press('Escape');
         await visit('/categorias', 'categorias', () => page.getByText('Alimentación').first());
         await visit('/cuenta', 'cuenta', () => page.getByRole('button', { name: 'Cerrar sesión' }));
@@ -180,7 +188,7 @@ for (const width of [375, 1440]) {
     await seed(ledger);
     await page.setViewportSize({ width, height: HEIGHT[width] });
     const missing = [];
-    for (const path of ['/', '/estadisticas', '/historial', '/presupuestos', '/categorias', '/gastos/nuevo']) {
+    for (const path of ['/', '/estadisticas', '/historial', '/presupuestos', '/pagos-recurrentes', '/categorias', '/gastos/nuevo']) {
       await page.goto(path);
       await page.waitForLoadState('networkidle');
       await page.locator('body').click({ position: { x: 1, y: 1 } });

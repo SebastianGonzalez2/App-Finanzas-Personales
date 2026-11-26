@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Icon } from '../../components/Icon.jsx';
-import { count, expensesCount, figureSize, money, percentage } from '../stats/format.js';
-import { buildDonutSlices, DONUT_TICKS } from '../stats/insights.js';
-import { categoryFilters, historyHref } from '../stats/links.js';
+import { count, expensesCount, figureSize, money, percentage } from './format.js';
+import { buildDonutSlices, DONUT_TICKS } from './insights.js';
+import { categoryFilters, historyHref } from './links.js';
 
 const CX = 110;
 const CY = 110;
@@ -44,7 +44,22 @@ function sectorPath(startAngle, endAngle, innerR, outerR) {
   ].join(' ');
 }
 
-export function CategoryDonut({ categories, total, totalCount, currency, filters }) {
+export function CategoryDonut({
+  categories,
+  total,
+  totalCount,
+  currency,
+  filters,
+  eyebrow,
+  centerEyebrow = 'Total del mes',
+  shareSuffix = 'del mes',
+  legendLabel = 'Categorías del mes',
+  back,
+  isArchived,
+  onBreakdown,
+  getHistoryFilters,
+  showOtherBreakdown = false,
+}) {
   const [hoveredId, setHoveredId] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
 
@@ -73,12 +88,16 @@ export function CategoryDonut({ categories, total, totalCount, currency, filters
     setSelectedId((current) => (current === id ? null : id));
   };
 
+  const resolveHistoryFilters = getHistoryFilters
+    ?? ((slice) => categoryFilters(filters, slice.rawId ?? slice.id));
+
   const summaryLabel = slices
     .map((slice) => `${slice.name}: ${currency} ${money(slice.total)}, ${percentage(slice.share)}`)
     .join('; ');
 
   const centerAmount = activeSlice ? money(activeSlice.total) : money(total);
   const centerSize = figureSize(centerAmount);
+  const topEyebrow = eyebrow ?? `Importe en ${currency} · % del mes`;
 
   return (
     <div
@@ -90,12 +109,14 @@ export function CategoryDonut({ categories, total, totalCount, currency, filters
         }
       }}
     >
-      <p className="eyebrow">Importe en {currency} · % del mes</p>
+      <p className="eyebrow">{topEyebrow}</p>
 
       <div className="cat-donut-layout">
         <div
           className="cat-donut-ring"
-          onMouseLeave={() => setHoveredId(null)}
+          onPointerLeave={(event) => {
+            if (event.pointerType !== 'touch') setHoveredId(null);
+          }}
         >
           <svg
             className="cat-donut-svg"
@@ -140,7 +161,9 @@ export function CategoryDonut({ categories, total, totalCount, currency, filters
                   fill="transparent"
                   className="cat-donut-hit"
                   data-slice={slice.id}
-                  onMouseEnter={() => setHoveredId(slice.id)}
+                  onPointerEnter={(event) => {
+                    if (event.pointerType !== 'touch') setHoveredId(slice.id);
+                  }}
                   onClick={() => toggleSelect(slice.id)}
                 />
               ))}
@@ -164,7 +187,7 @@ export function CategoryDonut({ categories, total, totalCount, currency, filters
               </>
             ) : (
               <>
-                <span className="cat-donut-center-eyebrow">Total del mes</span>
+                <span className="cat-donut-center-eyebrow">{centerEyebrow}</span>
                 <span className="cat-donut-center-value" data-size={centerSize}>
                   {centerAmount}
                 </span>
@@ -175,11 +198,12 @@ export function CategoryDonut({ categories, total, totalCount, currency, filters
           </div>
         </div>
 
-        <ul className="cat-donut-legend" aria-label="Categorías del mes">
+        <ul className="cat-donut-legend" aria-label={legendLabel}>
           {slices.map((slice) => {
             const isSelected = selectedSlice?.id === slice.id;
             const isActive = activeSlice?.id === slice.id;
             const isDimmed = Boolean(activeSlice && !isActive);
+            const archived = !slice.isOther && Boolean(isArchived?.(slice.id));
             return (
               <li key={slice.id}>
                 <button
@@ -189,9 +213,13 @@ export function CategoryDonut({ categories, total, totalCount, currency, filters
                   data-active={isActive || undefined}
                   data-dimmed={isDimmed || undefined}
                   data-slice={slice.id}
-                  aria-label={`${slice.name}: ${currency} ${money(slice.total)}, ${percentage(slice.share)} del mes, ${expensesCount(slice.count)}`}
-                  onMouseEnter={() => setHoveredId(slice.id)}
-                  onMouseLeave={() => setHoveredId(null)}
+                  aria-label={`${slice.name}: ${currency} ${money(slice.total)}, ${percentage(slice.share)} ${shareSuffix}, ${expensesCount(slice.count)}`}
+                  onPointerEnter={(event) => {
+                    if (event.pointerType !== 'touch') setHoveredId(slice.id);
+                  }}
+                  onPointerLeave={(event) => {
+                    if (event.pointerType !== 'touch') setHoveredId(null);
+                  }}
                   onFocus={() => setHoveredId(slice.id)}
                   onBlur={() => setHoveredId(null)}
                   onClick={() => toggleSelect(slice.id)}
@@ -199,6 +227,7 @@ export function CategoryDonut({ categories, total, totalCount, currency, filters
                   <span className="cat-donut-swatch" style={{ '--swatch': slice.color }} aria-hidden="true" />
                   <span className="cat-donut-item-name">
                     {slice.name}
+                    {archived && <small className="archived-mark">Archivada</small>}
                     <small className="muted-text"> · {count(slice.count)}</small>
                   </span>
                   <span className="cat-donut-item-amount">
@@ -214,31 +243,86 @@ export function CategoryDonut({ categories, total, totalCount, currency, filters
 
       {selectedSlice && (
         <div className="cat-donut-detail" role="region" aria-label={`Detalle de ${selectedSlice.name}`}>
-          <div className="cat-donut-detail-info">
-            <span className="cat-donut-dot" style={{ backgroundColor: selectedSlice.color }} aria-hidden="true" />
-            <strong>{selectedSlice.name}</strong>
-            <span className="small-data">
-              {currency} {money(selectedSlice.total)} · {percentage(selectedSlice.share)} · {expensesCount(selectedSlice.count)}
-            </span>
+          <div className="cat-donut-detail-head">
+            <div className="cat-donut-detail-info">
+              <span className="cat-donut-dot" style={{ backgroundColor: selectedSlice.color }} aria-hidden="true" />
+              <strong>{selectedSlice.name}</strong>
+              <span className="small-data">
+                {currency} {money(selectedSlice.total)} · {percentage(selectedSlice.share)} · {expensesCount(selectedSlice.count)}
+              </span>
+            </div>
+            <div className="cat-donut-detail-actions">
+              {selectedSlice.isOther ? (
+                !showOtherBreakdown && (
+                  <Link className="history-link" to="/estadisticas">
+                    Ver en Estadísticas<Icon name="up" />
+                  </Link>
+                )
+              ) : (
+                <>
+                  {onBreakdown && (
+                    <button
+                      type="button"
+                      className="btn ghost cat-donut-clear"
+                      onClick={() => onBreakdown(selectedSlice.rawId ?? selectedSlice.id)}
+                    >
+                      Ver subcategorías
+                    </button>
+                  )}
+                  <Link
+                    className="history-link"
+                    to={historyHref(resolveHistoryFilters(selectedSlice), back)}
+                    aria-label={`Ver gastos de ${selectedSlice.name}`}
+                  >
+                    Ver gastos<Icon name="up" />
+                  </Link>
+                </>
+              )}
+              <button type="button" className="btn ghost cat-donut-clear" onClick={() => setSelectedId(null)}>
+                Ver total
+              </button>
+            </div>
           </div>
-          <div className="cat-donut-detail-actions">
-            {selectedSlice.isOther ? (
-              <Link className="history-link" to="/estadisticas">
-                Ver en Estadísticas<Icon name="up" />
-              </Link>
-            ) : (
-              <Link
-                className="history-link"
-                to={historyHref(categoryFilters(filters, selectedSlice.id))}
-                aria-label={`Ver gastos de ${selectedSlice.name}`}
-              >
-                Ver gastos<Icon name="up" />
-              </Link>
-            )}
-            <button type="button" className="btn ghost cat-donut-clear" onClick={() => setSelectedId(null)}>
-              Ver total
-            </button>
-          </div>
+
+          {selectedSlice.isOther && showOtherBreakdown && selectedSlice.restItems?.length > 0 && (
+            <ul className="cat-donut-other-list" aria-label={`Detalle de ${selectedSlice.name}`}>
+              {selectedSlice.restItems.map((item) => {
+                const archived = Boolean(isArchived?.(item.id));
+                return (
+                  <li key={item.id} className="cat-donut-other-item">
+                    <div className="cat-donut-other-name">
+                      <span>{item.name}</span>
+                      {archived && <small className="archived-mark">Archivada</small>}
+                      <small className="muted-text"> · {count(item.count)}</small>
+                    </div>
+                    <div className="cat-donut-other-meta">
+                      <span className="small-data">
+                        {currency} {money(item.total)} · {percentage(item.share)}
+                      </span>
+                      <span className="cat-donut-other-actions">
+                        {onBreakdown && (
+                          <button
+                            type="button"
+                            className="btn ghost cat-donut-clear"
+                            onClick={() => onBreakdown(item.rawId ?? item.id)}
+                          >
+                            Subcategorías
+                          </button>
+                        )}
+                        <Link
+                          className="history-link"
+                          to={historyHref(resolveHistoryFilters(item), back)}
+                          aria-label={`Ver gastos de ${item.name}`}
+                        >
+                          Ver gastos<Icon name="up" />
+                        </Link>
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
       )}
     </div>

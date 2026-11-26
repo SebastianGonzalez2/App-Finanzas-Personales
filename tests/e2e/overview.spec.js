@@ -130,7 +130,7 @@ test('RF-027 · el Resumen coincide con Estadísticas, Presupuestos e Historial'
   await expect(metrics(page).locator('dd.figure').nth(1)).toHaveText('6 gastos');
   expect(ledger.calls.filter((call) => call.name === 'get_stats').length).toBe(statsCalls);
   // Estadísticas: Alimentación 5.000 ⇔ Presupuesto Alimentación 5.000 consumidos ⇔ incluido en el total del Resumen.
-  await expect(page.locator('section[data-panel="categories"] .cat-row', { hasText: 'Alimentación' }).locator('.money')).toHaveText('5.000,00');
+  await expect(page.locator('section[data-panel="categories"] .cat-donut-item', { hasText: 'Alimentación' }).locator('.money')).toHaveText('5.000,00');
   await page.getByRole('link', { name: 'Presupuestos' }).first().click();
   await expect(page.locator('.budget-table tbody tr', { hasText: 'Alimentación' }).locator('td').nth(0)).toHaveText('5.000,00');
   // «Últimos 6 meses» en Estadísticas comparte la consulta de la evolución mensual.

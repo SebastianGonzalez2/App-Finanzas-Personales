@@ -1,0 +1,288 @@
+/* MEJORA 02 · Pagos recurrentes mensuales. Tokens y proporciones de Cifra. */
+
+.recurring-page {
+  display: grid;
+  gap: 16px;
+}
+
+.recurring-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, .75fr) minmax(0, 1.35fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.recurring-stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.recurring-stat-value {
+  margin: 4px 0 0;
+  font-size: 32px;
+  font-weight: 550;
+  line-height: 1.1;
+  letter-spacing: -.05em;
+}
+
+.recurring-stat-value.muted {
+  color: var(--secondary);
+  font-size: 20px;
+  letter-spacing: -.02em;
+}
+
+.recurring-currency-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin: 4px 0 0;
+}
+
+.recurring-currency-item {
+  display: grid;
+  gap: 2px;
+  min-width: 110px;
+}
+
+.recurring-currency-item dt {
+  color: var(--muted);
+  font: 500 11px/1.2 var(--mono);
+  letter-spacing: .08em;
+}
+
+.recurring-currency-item dd {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 550;
+  letter-spacing: -.03em;
+}
+
+.recurring-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid #60523f;
+  border-radius: 10px;
+  background: #2e2922;
+  color: var(--amber);
+  font-size: 13.5px;
+}
+
+.recurring-list {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.recurring-body > .panel-skeleton,
+.recurring-body > .panel-state {
+  margin: 0 24px 24px;
+}
+
+.recurring-empty {
+  padding: 28px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.recurring-empty h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 570;
+  letter-spacing: -.02em;
+}
+
+.recurring-empty p {
+  max-width: 580px;
+  margin: 0 0 16px;
+  color: var(--secondary);
+}
+
+.recurring-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.recurring-table th,
+.recurring-table td {
+  padding: 14px 12px;
+  border-top: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.recurring-table :is(th, td):first-child { padding-left: 24px; }
+.recurring-table :is(th, td):last-child { padding-right: 16px; }
+
+.recurring-table thead th {
+  padding-block: 10px;
+  background: #141516;
+  color: var(--muted);
+  font: 400 10px var(--mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.recurring-table tbody th {
+  font-weight: 500;
+}
+
+.recurring-table .right { text-align: right; }
+
+.recurring-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.recurring-name-cell .tile {
+  flex: none;
+}
+
+.recurring-title {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.recurring-class {
+  display: grid;
+  gap: 2px;
+}
+
+.recurring-sub {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.recurring-warn {
+  display: block;
+  margin-top: 4px;
+  color: var(--amber);
+  font: 12px var(--mono);
+}
+
+.recurring-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.recurring-card {
+  padding: 18px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.recurring-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.recurring-card h3 {
+  margin: 0 0 2px;
+  font-size: 16px;
+  font-weight: 570;
+  letter-spacing: -.02em;
+  overflow-wrap: anywhere;
+}
+
+.recurring-card-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.recurring-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid #232527;
+}
+
+.recurring-facts dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.recurring-facts dd {
+  margin: 3px 0 0;
+  font: 13px var(--mono);
+  overflow-wrap: anywhere;
+}
+
+.recurring-form {
+  display: grid;
+  gap: 16px;
+}
+
+.recurring-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.recurring-alert {
+  padding: 10px 12px;
+  border: 1px solid #60523f;
+  border-radius: 8px;
+  background: #2e2922;
+  color: var(--amber);
+  font-size: 13px;
+}
+
+.recurring-form .dialog-actions {
+  margin-top: 4px;
+}
+
+@media (max-width: 1180px) {
+  .recurring-summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .recurring-summary-grid {
+    gap: 12px;
+  }
+
+  .recurring-list .panel-title {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .recurring-list .panel-title .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .recurring-card {
+    padding: 16px;
+  }
+
+  .recurring-empty {
+    padding: 20px 16px;
+  }
+
+  .recurring-body > .panel-skeleton,
+  .recurring-body > .panel-state {
+    margin: 0 16px 16px;
+  }
+
+  .recurring-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .recurring-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

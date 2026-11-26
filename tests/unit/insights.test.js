@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  assignCategoryColors,
   buildCumulativeMonthly,
   buildDonutSlices,
   buildPeriodComparisonFromExpenses,
   buildPeriodComparisonFromStats,
   DONUT_TICKS,
+  donutPeriodCopy,
   formatCents,
+  OTHER_SLICE_COLOR,
   percentChange,
   resolveAnnualComparison,
   resolveCustomComparison,
@@ -229,5 +232,55 @@ describe('3) gráfico circular segmentado de Principales categorías', () => {
     expect(single[0].tickCount).toBe(DONUT_TICKS);
     expect(buildDonutSlices([], null)).toEqual([]);
     expect(shiftMonthKey('2026-01', -1)).toBe('2025-12');
+  });
+
+  it('asigna colores consistentes por id y preserva las categorías agrupadas en «Otras»', () => {
+    const setA = [
+      { id: 'cat-food', name: 'Alimentación', count: 2, total: '500.00', share: '50.00' },
+      { id: 'cat-home', name: 'Vivienda', count: 1, total: '300.00', share: '30.00' },
+      { id: 'cat-trans', name: 'Transporte', count: 1, total: '200.00', share: '20.00' },
+    ];
+    const setB = [
+      { id: 'cat-trans', name: 'Transporte', count: 3, total: '700.00', share: '70.00' },
+      { id: 'cat-food', name: 'Alimentación', count: 1, total: '300.00', share: '30.00' },
+    ];
+    const slicesA = buildDonutSlices(setA, '1000.00');
+    const slicesB = buildDonutSlices(setB, '1000.00');
+    expect(slicesA.find((s) => s.id === 'cat-food').color).toBe(slicesB.find((s) => s.id === 'cat-food').color);
+    expect(slicesA.find((s) => s.id === 'cat-trans').color).toBe(slicesB.find((s) => s.id === 'cat-trans').color);
+
+    const colors = assignCategoryColors([{ id: '__none__' }]);
+    expect(colors.get('__none__')).toBe(OTHER_SLICE_COLOR);
+
+    const seven = Array.from({ length: 7 }, (_, i) => ({
+      id: `c${i + 1}`,
+      name: `Cat ${i + 1}`,
+      count: 1,
+      total: '100.00',
+      share: '14.29',
+    }));
+    const grouped = buildDonutSlices(seven, '700.00');
+    expect(grouped.at(-1).restItems.map((item) => item.id)).toEqual(['c6', 'c7']);
+  });
+
+  it('adapta los textos del gráfico circular al período seleccionado', () => {
+    expect(donutPeriodCopy({ period: 'mes', range: { from: '2026-11-01', to: '2026-11-30' } }, 'UYU')).toEqual({
+      eyebrow: 'Importe en UYU · % del mes',
+      centerEyebrow: 'Total del mes',
+      shareSuffix: 'del mes',
+      legendLabel: 'Categorías del mes',
+    });
+    expect(donutPeriodCopy({ period: 'anio', range: { from: '2026-01-01', to: '2026-12-31' } }, 'USD')).toEqual({
+      eyebrow: 'Importe en USD · % del año',
+      centerEyebrow: 'Total 2026',
+      shareSuffix: 'del año',
+      legendLabel: 'Categorías del año',
+    });
+    expect(donutPeriodCopy({ period: 'personalizado', range: { from: '2026-01-10', to: '2026-03-15' } }, 'EUR')).toEqual({
+      eyebrow: 'Importe en EUR · % del período',
+      centerEyebrow: 'Total del período',
+      shareSuffix: 'del período',
+      legendLabel: 'Categorías del período',
+    });
   });
 });

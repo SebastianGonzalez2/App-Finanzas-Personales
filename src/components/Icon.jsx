@@ -7,6 +7,7 @@ const paths = {
   historial: 'M6 3h12v18l-3-2-3 2-3-2-3 2z M9 8h6m-6 4h6',
   estadisticas: 'M4 20h16 M6 16v-4m6 4V5m6 11V9',
   presupuestos: 'M3 16a9 9 0 1 1 18 0 M12 15l4-6 M4 19h16',
+  recurrentes: 'M17 2l4 4-4 4 M3 11V9a4 4 0 0 1 4-4h14 M7 22l-4-4 4-4 M21 13v2a4 4 0 0 1-4 4H3',
   categorias: 'M3 4h8l10 10-7 7L3 10z M7 7h.01',
   cuenta: 'M4 21v-2a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v2 M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z',
   panel: 'M3 4h18v16H3z M9 4v16',

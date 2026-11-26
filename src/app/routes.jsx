@@ -13,6 +13,7 @@ import { CatalogPage } from '../features/catalog/CatalogPage.jsx';
 import { ExpensePage } from '../features/expenses/ExpensePage.jsx';
 import { HistoryPage } from '../features/history/HistoryPage.jsx';
 import { OverviewPage } from '../features/overview/OverviewPage.jsx';
+import { RecurringPage } from '../features/recurring/RecurringPage.jsx';
 import { StatsSubtitle } from '../features/stats/StatsSubtitle.jsx';
 import { CurrencySelect } from '../components/CurrencySelect.jsx';
 import { account, categories, sections } from './navigation.js';
@@ -42,6 +43,7 @@ function PrivatePage({ title, subtitle, page }) {
         : page === 'history' ? <HistoryPage today={access.preferences.today} />
         : page === 'overview' ? <OverviewPage preferences={access.preferences} />
         : page === 'budgets' ? <BudgetsPage preferences={access.preferences} />
+        : page === 'recurring' ? <RecurringPage preferences={access.preferences} />
         : page === 'stats' ? <Suspense fallback={<p className="query-state" role="status">Cargando estadísticas…</p>}>
           <StatsPage preferences={access.preferences} /></Suspense>
         : <p className="page-note">Esta sección estará disponible más adelante.</p>}
@@ -70,6 +72,7 @@ export function AppRoutes() {
           : path === '/estadisticas' ? <PrivatePage title={title} page="stats" />
           : path === '/' ? <PrivatePage title={title} page="overview" />
           : path === '/presupuestos' ? <PrivatePage title={title} page="budgets" />
+          : path === '/pagos-recurrentes' ? <PrivatePage title={title} subtitle="Gastos mensuales que se registran automáticamente." page="recurring" />
           : <PrivatePage title={title} />} />
       ))}
       <Route path={categories.path} element={<PrivatePage title={categories.title} page="catalog" />} />

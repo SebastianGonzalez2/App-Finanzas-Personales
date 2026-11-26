@@ -11,7 +11,7 @@ import { ChartTable, HistoryLink, PanelBody } from '../stats/panels.jsx';
 import { isPartial, monthLong, monthShort, readStatsQuery, statsArgs } from '../stats/query.js';
 import { useStats } from '../stats/stats.js';
 import { useBudgets } from '../budgets/budgets.js';
-import { CategoryDonut } from './CategoryDonut.jsx';
+import { CategoryDonut } from '../stats/CategoryDonut.jsx';
 
 export const RECENT_LIMIT = 5;
 const NEW_EXPENSE = { pathname: '/gastos/nuevo', state: { from: '/' } };
@@ -219,7 +219,7 @@ function RecentPanel({ query, filters, today }) {
                   return (
                     <tr key={expense.id}>
                       <td><div className="entry">
-                        <span className="tile" aria-hidden="true"><Icon name="historial" /></span>
+                        <span className="tile" aria-hidden="true"><Icon name={expense.is_recurring ? 'recurrentes' : 'historial'} /></span>
                         <div className="entry-text">
                           <Link className="row-link" to={'/historial?' + detail}>{rowTitle(expense)}</Link>
                           <small className="desk-only">{expense.subcategory_name ?? '—'}</small>

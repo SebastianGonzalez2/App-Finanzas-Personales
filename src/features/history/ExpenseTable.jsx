@@ -34,15 +34,21 @@ const Row = memo(function Row({ expense, archived, today, detailTo, editFrom, me
   const title = rowTitle(expense);
   const classification = expense.category_name + (expense.subcategory_name ? ' · ' + expense.subcategory_name : '');
   const detail = expense.description ? expense.subcategory_name ?? '—' : expense.subcategory_name ? expense.category_name : 'Sin descripción';
+  const recurring = Boolean(expense.is_recurring);
   return (
     <tr>
       <td>
         <div className="entry">
-          <span className="tile" aria-hidden="true"><Icon name="historial" /></span>
+          <span className="tile" aria-hidden="true"><Icon name={recurring ? 'recurrentes' : 'historial'} /></span>
           <div className="entry-text">
             <Link className="row-link" to={detailTo}>{title}</Link>
-            <small className="desk-only">{detail}</small>
-            <small className="mobile-only">{rowDate(expense.spent_on, today)} · {classification}{archived && ' · Archivada'}</small>
+            <small className="desk-only">
+              {detail}
+              {recurring && <span className="recurring-mark"> · Recurrente</span>}
+            </small>
+            <small className="mobile-only">
+              {rowDate(expense.spent_on, today)} · {classification}{recurring && ' · Recurrente'}{archived && ' · Archivada'}
+            </small>
           </div>
         </div>
       </td>

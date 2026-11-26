@@ -33,6 +33,9 @@ const messages = {
   INVALID_MONTHLY_LIMIT: ['monthly_limit', 'Ingresá un límite mayor que cero, con hasta 12 enteros y 2 decimales.'],
   DUPLICATE_BUDGET: ['category_id', 'Esta categoría ya tiene un límite en esa moneda.'],
   BUDGET_NOT_FOUND: [null, 'Este límite ya no existe.'],
+  INVALID_RECURRING_NAME: ['name', 'Ingresá un nombre de 1 a 120 caracteres.'],
+  INVALID_BILLING_DAY: ['billing_day', 'Elegí un día del 1 al 31.'],
+  RECURRING_NOT_FOUND: [null, 'Este pago recurrente ya no existe.'],
 };
 
 export function useFinance() {
