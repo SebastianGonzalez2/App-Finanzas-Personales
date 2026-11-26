@@ -5,6 +5,7 @@ import {
   buildDonutSlices,
   buildPeriodComparisonFromExpenses,
   buildPeriodComparisonFromStats,
+  CATEGORY_PALETTE,
   DONUT_TICKS,
   donutPeriodCopy,
   formatCents,
@@ -261,6 +262,17 @@ describe('3) gráfico circular segmentado de Principales categorías', () => {
     }));
     const grouped = buildDonutSlices(seven, '700.00');
     expect(grouped.at(-1).restItems.map((item) => item.id)).toEqual(['c6', 'c7']);
+
+    // Cada par de colores de la paleta debe ser claramente distinguible en RGB.
+    const rgb = (hex) => [1, 3, 5].map((offset) => Number.parseInt(hex.slice(offset, offset + 2), 16));
+    for (let i = 0; i < CATEGORY_PALETTE.length; i += 1) {
+      for (let j = i + 1; j < CATEGORY_PALETTE.length; j += 1) {
+        const a = rgb(CATEGORY_PALETTE[i]);
+        const b = rgb(CATEGORY_PALETTE[j]);
+        const dist = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+        expect(dist).toBeGreaterThanOrEqual(75);
+      }
+    }
   });
 
   it('adapta los textos del gráfico circular al período seleccionado', () => {

@@ -10,9 +10,10 @@ test('pagos recurrentes: alta, totales por moneda, edición, generación automá
   await page.goto('/pagos-recurrentes');
   await expect(page.getByRole('heading', { name: 'Pagos recurrentes', level: 1 })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Todavía no configuraste pagos recurrentes' })).toBeVisible();
+  await expect(button(page, 'Nuevo pago recurrente')).toHaveCount(1);
 
   // Crear Spotify USD 7,99 el día 23 (hoy = 2026-11-23)
-  await button(page, 'Nuevo pago recurrente').first().click();
+  await button(page, 'Nuevo pago recurrente').click();
   const dialog = page.getByRole('dialog', { name: 'Nuevo pago recurrente' });
   await dialog.getByLabel('Nombre o descripción').fill('Spotify');
   await dialog.getByLabel('Importe').fill('7,99');

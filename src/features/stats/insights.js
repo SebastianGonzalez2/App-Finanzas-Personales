@@ -1,13 +1,13 @@
 import { cents } from './format.js';
 import { toDay } from './query.js';
 
-// Paleta sobria y armónica con el sistema oscuro de Cifra (--sage, --amber, --rose y neutros fríos).
+// Paleta clara y de alto contraste sobre fondo oscuro (rojo, verde, amarillo, azul, rosa,
+// cian, naranja y violeta), intercalando tonos opuestos para distinguirse de inmediato.
 export const CATEGORY_PALETTE = [
-  '#adcfba', '#e3bd84', '#8eb8d9', '#e5a6a3', '#b7a8db',
-  '#8cc5bf', '#d4b59e', '#9ea9de', '#c8d19e', '#d4a8be',
-  '#a6c4d4', '#cfb48c',
+  '#ef4444', '#22c55e', '#fde047', '#3b82f6',
+  '#f472b6', '#22d3ee', '#fb923c', '#a855f7',
 ];
-export const OTHER_SLICE_COLOR = '#7b8082';
+export const OTHER_SLICE_COLOR = '#9ca3af';
 
 function hashCategoryId(id) {
   let hash = 2166136261;
