@@ -1,13 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router';
 import { useToast } from '../../app/toastContext.js';
 import { useCatalog, useFinance } from '../../lib/finance.js';
 import { usePreferenceActions } from '../settings/preferences.js';
 import { AnnualPanelBody, AnnualTools } from './AnnualPanel.jsx';
+import { CumulativeMonthlyCard } from './CumulativeMonthlyCard.jsx';
+import { shiftMonthKey } from './insights.js';
 import { CategoriesContent, ComparisonContent, FavoriteButton, MetricsContent, MonthlyContent, PanelBody, StatsPanel,
   SummaryContent } from './panels.jsx';
+import { PeriodComparisonCard } from './PeriodComparisonCard.jsx';
 import { annualArgs, PANELS, readStatsQuery, statsArgs, writeStatsQuery, yearOf } from './query.js';
-import { useAnnual, useStats } from './stats.js';
+import { useAnnual, useExpensesWindow, useStats } from './stats.js';
 import { StatsFilters } from './StatsFilters.jsx';
 
 function ViewTabs({ view, count, onChange }) {
@@ -40,10 +43,17 @@ export function StatsPage({ preferences }) {
   const [pendingFavorites, setPendingFavorites] = useState(() => new Set());
 
   const visible = query.view === 'favoritos' ? PANELS.filter((panel) => favorites.includes(panel.id)) : PANELS;
+  const showInsights = query.view === 'todas';
   const args = useMemo(() => statsArgs(query, currency), [query, currency]);
   const yearArgs = useMemo(() => annualArgs(query, currency), [query, currency]);
+  const twoMonthArgs = useMemo(() => {
+    const currentMonth = today.slice(0, 7);
+    const prevMonth = shiftMonthKey(currentMonth, -1) ?? currentMonth;
+    return { from: `${prevMonth}-01`, to: today, currency };
+  }, [today, currency]);
   const stats = useStats(api, args, visible.some((panel) => panel.id !== 'annual'));
   const annual = useAnnual(api, yearArgs, visible.some((panel) => panel.id === 'annual'));
+  const twoMonthExpenses = useExpensesWindow(api, twoMonthArgs, showInsights);
   // «Limpiar filtros» vuelve al mes actual sin clasificación, conservando la vista y la ventana anual.
   const clear = useCallback(() => setParams((current) => {
     const previous = readStatsQuery(current, today);
@@ -92,12 +102,32 @@ export function StatsPage({ preferences }) {
       ) : (
         <div className="stats-grid">
           {visible.map((panel) => (
-            <StatsPanel key={panel.id} panel={panel} busy={(panel.id === 'annual' ? annual : stats).isFetching}
-              tools={panel.id === 'annual' && <AnnualTools query={query} data={annual.data} onWindow={(end) => update({ annualEnd: end >= yearOf(today) ? null : end })} />}
-              favorite={<FavoriteButton title={panel.title} pressed={favorites.includes(panel.id)}
-                pending={pendingFavorites.has(panel.id)} onToggle={() => toggleFavorite(panel)} />}>
-              {content(panel)}
-            </StatsPanel>
+            <Fragment key={panel.id}>
+              <StatsPanel panel={panel} busy={(panel.id === 'annual' ? annual : stats).isFetching}
+                tools={panel.id === 'annual' && <AnnualTools query={query} data={annual.data} onWindow={(end) => update({ annualEnd: end >= yearOf(today) ? null : end })} />}
+                favorite={<FavoriteButton title={panel.title} pressed={favorites.includes(panel.id)}
+                  pending={pendingFavorites.has(panel.id)} onToggle={() => toggleFavorite(panel)} />}>
+                {content(panel)}
+              </StatsPanel>
+              {showInsights && panel.id === 'categories' && (
+                <>
+                  <CumulativeMonthlyCard
+                    api={api}
+                    today={today}
+                    currency={currency}
+                    catalog={catalog.data}
+                    defaultTwoMonthQuery={twoMonthExpenses}
+                  />
+                  <PeriodComparisonCard
+                    api={api}
+                    today={today}
+                    currency={currency}
+                    back={back}
+                    defaultTwoMonthQuery={twoMonthExpenses}
+                  />
+                </>
+              )}
+            </Fragment>
           ))}
         </div>
       )}

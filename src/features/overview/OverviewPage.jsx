@@ -6,11 +6,12 @@ import { budgetMargin, budgetState, countsLine } from '../budgets/budgets.js';
 import { Gauge } from '../budgets/Gauge.jsx';
 import { rowDate, rowTitle, writeQuery } from '../history/query.js';
 import { chartNumber, count, expensesCount, figureSize, money, percentage, signedMoney } from '../stats/format.js';
-import { categoryFilters, historyHref, periodFilters } from '../stats/links.js';
-import { CategoryRow, ChartTable, HistoryLink, PanelBody } from '../stats/panels.jsx';
+import { periodFilters } from '../stats/links.js';
+import { ChartTable, HistoryLink, PanelBody } from '../stats/panels.jsx';
 import { isPartial, monthLong, monthShort, readStatsQuery, statsArgs } from '../stats/query.js';
 import { useStats } from '../stats/stats.js';
 import { useBudgets } from '../budgets/budgets.js';
+import { CategoryDonut } from './CategoryDonut.jsx';
 
 export const RECENT_LIMIT = 5;
 const NEW_EXPENSE = { pathname: '/gastos/nuevo', state: { from: '/' } };
@@ -140,30 +141,22 @@ function SixMonths({ data, today }) {
   </>;
 }
 
-// ── Tres categorías de mayor importe, con su participación sobre el total real del mes.
+// ── Principales categorías del mes: gráfico circular segmentado e interactivo.
 function CategoriesPanel({ query }) {
   const data = query.data;
   return (
     <section className="panel pad" aria-labelledby="overview-categories" aria-busy={query.isFetching}>
       <PanelTitle id="overview-categories" title="Principales categorías" link={<PanelLink to="/estadisticas">Ver todas</PanelLink>} />
-      <PanelBody query={query} height={150} loading="Cargando las categorías del mes…">
+      <PanelBody query={query} height={220} loading="Cargando las categorías del mes…">
         {data && (data.categories.length === 0
           ? <p className="panel-empty">Sin gastos en {data.filters.currency} este mes.</p>
-          : <>
-            <p className="eyebrow">Importe en {data.filters.currency} · % del mes</p>
-            <ul className="cat-list">
-              {data.categories.slice(0, 3).map((category) => (
-                <li key={category.id}>
-                  <Link className="cat-row" to={historyHref(categoryFilters(data.filters, category.id))}
-                    aria-label={`${category.name}: ${data.filters.currency} ${money(category.total)}, ${percentage(category.share)} del mes, ${expensesCount(category.count)}. Ver gastos`}>
-                    <CategoryRow name={category.name} total={category.total} share={category.share} count={category.count} currency={data.filters.currency} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            {data.categories.length > 3 && <p className="panel-note">
-              {data.categories.length - 3 === 1 ? 'Otra categoría' : `Otras ${data.categories.length - 3} categorías`} en Estadísticas.</p>}
-          </>)}
+          : <CategoryDonut
+              categories={data.categories}
+              total={data.indicator.current.total}
+              totalCount={data.indicator.current.count}
+              currency={data.filters.currency}
+              filters={data.filters}
+            />)}
       </PanelBody>
     </section>
   );

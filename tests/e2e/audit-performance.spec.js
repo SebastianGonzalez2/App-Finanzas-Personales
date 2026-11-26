@@ -79,12 +79,12 @@ test('carga en frío del Resumen y navegación entre pantallas en celular', asyn
     await page.getByRole('button', { name: 'Ver menú' }).click();
     await page.getByRole('dialog', { name: 'Navegación' }).getByRole('link', { name: label, exact: true }).click();
   };
-  await step('Resumen → Historial', () => nav('Historial'), () => page.locator('.expense-table tbody tr').first());
+  await step('Resumen → Historial', () => nav('Historial'), () => page.locator('section.history-panel-list .expense-table tbody tr').first());
   await step('Historial · cargar más', () => page.getByRole('button', { name: 'Cargar más gastos' }).click(),
     () => page.locator('.expense-table tbody tr').nth(59));
   await step('Historial → Presupuestos', () => nav('Presupuestos'), () => page.getByText('Mayor uso del límite'));
   await step('Presupuestos → Estadísticas', () => nav('Estadísticas'), () => page.locator('[data-panel="annual"] .recharts-surface'));
-  await step('Estadísticas · Últimos 12 meses', () => chooseOption(page.getByRole('button', { name: /^Período/ }), '12m'),
+  await step('Estadísticas · Últimos 12 meses', () => chooseOption(page.getByRole('button', { name: /^Período:/ }), '12m'),
     () => page.locator('[data-panel="monthly"] .recharts-bar-rectangle').nth(11));
   await step('Estadísticas → Resumen', () => nav('Resumen'), () => page.locator('section[aria-labelledby="overview-month"] .hero-value'));
   await step('Resumen → Nuevo gasto', () => page.getByRole('link', { name: 'Registrar gasto', exact: true }).click(), () => page.getByLabel('Importe del gasto'));
