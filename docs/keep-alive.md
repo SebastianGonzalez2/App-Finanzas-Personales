@@ -49,6 +49,8 @@ gh secret set CIFRA_PROD_SUPABASE_PUBLISHABLE_KEY
 
 ## Puesta en marcha
 
+**Estado al 27/11/2026:** la migración está aplicada en producción (`cifra-production`, desde el SQL Editor, así que no figura en el historial de la CLI) y una [ejecución de GitHub Actions contra producción](https://github.com/SebastianGonzalez2/App-Finanzas-Personales/actions/runs/46048651551) terminó correctamente en su segundo intento. El primero, anterior a la migración, falló con `404`. Los pasos sirven para reinstalarlo o replicarlo.
+
 1. En el proyecto de **producción**, abrir el SQL Editor y ejecutar completo el contenido de la migración `20261127190000_health_check.sql`. Es repetible. Si más adelante se usa `supabase db push`, puede volver a ejecutarla sin problema, o se la puede marcar antes con `supabase migration repair 20261127190000 --status applied`.
 2. Integrar el pull request en `main`. Las ejecuciones programadas solo corren desde la rama predeterminada.
 3. Lanzar una ejecución manual (ver abajo) y confirmar que termina en verde.
