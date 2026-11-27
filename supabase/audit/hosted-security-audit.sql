@@ -1,5 +1,7 @@
 -- IMP-06 · Auditoría de seguridad del proyecto alojado. SOLO LECTURA: no modifica datos ni
 -- permisos. Ejecutar en el SQL Editor como postgres. No devuelve correos, UUID ni tokens.
+-- Excepción esperada desde la migración health_check (docs/keep-alive.md): "health_check" aparece
+-- en api_anon_or_public_execute y api_without_authenticated, y schema_usage marca api anon=true.
 select jsonb_build_object(
   'migrations', (select jsonb_agg(version || ' ' || name order by version) from supabase_migrations.schema_migrations),
   'tables', (select jsonb_agg(n.nspname || '.' || c.relname || ' rls=' || c.relrowsecurity

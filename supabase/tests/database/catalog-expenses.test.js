@@ -224,7 +224,9 @@ test('IMP-02 · contratos, integridad y aislamiento en PostgreSQL', async (t) =>
         has_function_privilege('anon', oid, 'execute') as anon,
         has_function_privilege('service_role', oid, 'execute') as service,
         has_function_privilege('authenticated', oid, 'execute') as member
-      from pg_proc where pronamespace='api'::regnamespace order by proname`);
+      from pg_proc where pronamespace='api'::regnamespace
+        and proname <> 'health_check' -- única RPC anónima: se verifica en health-check.test.js
+      order by proname`);
     assert.deepEqual(procedures.map((p) => p.proname), [
       'create_budget', 'create_category', 'create_expense', 'create_recurring_payment', 'delete_budget', 'delete_expense',
       'delete_recurring_payment', 'get_annual', 'get_budgets', 'get_catalog', 'get_expense', 'get_preferences', 'get_stats',

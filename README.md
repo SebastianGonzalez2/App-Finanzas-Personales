@@ -21,6 +21,8 @@ npm run test:e2e
 
 La aplicación local se abre en `http://localhost:5173`. El build y las pruebas unitarias y de PostgreSQL embebido también se pueden ejecutar con las variables de Supabase vacías.
 
+La disponibilidad de la base de producción se comprueba cada 8 horas con GitHub Actions: ver [keep alive y monitoreo](docs/keep-alive.md).
+
 **Especificación detallada:** [Requisitos funcionales V1](docs/requisitos-v1.md) (requisitos numerados, criterios de aceptación y decisiones aprobadas).
 
 La [arquitectura técnica aprobada de la V1](docs/arquitectura-v1.md) define el acceso a datos, los permisos y los procedimientos de verificación.
