@@ -33,7 +33,8 @@ test('migraciones desde cero, privilegios, políticas y sesiones en PostgreSQL e
     assert.deepEqual(policies.map((table) => table.relrowsecurity), [true, true, true]);
 
     assert.equal(await value("select has_schema_privilege('authenticated', 'graphql_public', 'USAGE') as value"), false);
-    assert.equal(await value("select has_schema_privilege('anon', 'api', 'USAGE') as value"), false);
+    // anon usa `api` solo para health_check(); el alcance exacto se verifica en health-check.test.js.
+    assert.equal(await value("select has_schema_privilege('anon', 'api', 'USAGE') as value"), true);
     for (const role of ['anon', 'service_role']) {
       for (const name of ['private.allowed()', 'private.before_user_created(jsonb)', 'api.get_preferences()', 'api.set_currency(text)']) {
         assert.equal(await value("select has_function_privilege($1, $2, 'EXECUTE') as value", [role, name]), false);

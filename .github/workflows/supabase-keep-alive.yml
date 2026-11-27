@@ -1,0 +1,32 @@
+name: Supabase keep alive
+
+# Comprobación de disponibilidad de la base de producción. Reduce el riesgo de pausa por
+# inactividad del plan Free; no la garantiza. Funcionamiento y límites: docs/keep-alive.md
+on:
+  schedule:
+    # Cada 8 horas, fuera del inicio de la hora (UTC). En Montevideo: 00:17, 08:17 y 16:17.
+    - cron: '17 3,11,19 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-keep-alive
+
+jobs:
+  health-check:
+    name: Health check de producción
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts
+
+      - name: Consultar api.health_check()
+        env:
+          SUPABASE_URL: ${{ vars.CIFRA_PROD_SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.CIFRA_PROD_SUPABASE_PUBLISHABLE_KEY }}
+        run: node scripts/supabase-health-check.mjs
